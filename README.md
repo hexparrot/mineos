@@ -1,0 +1,1 @@
+This is the github repository for MineOS Minecraft hosting and management scripts.
