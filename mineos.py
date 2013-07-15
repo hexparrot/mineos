@@ -15,29 +15,33 @@ from conf_parse import config_file
 from collections import namedtuple
 from binascii import b2a_qp
 
-class mineos(object):
-
-    DEFAULT_PATHS = {
-        'live': r'z:\mineos\servers',
-        'backup': r'z:\mineos\backup',
-        'archive': r'z:\mineos\archive',
-        'logging': r'z:\mineos\log'
-        }
+class mc(object):
 
     PROCFS_PATHS = ['/proc',
                      '/usr/compat/linux/proc']
     
-    def __init__(self, server_name=None):
+    def __init__(self, server_name=None, owner=None):
         self.server_name = server_name
+        self._set_owner(owner)
         self._create_logger()
         self._set_environment()
         self._load_config()
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self, type, value, traceback):
         pass
+
+    def _set_owner(self, owner):
+        from pwd import getpwnam
+
+        if owner is None:
+            from getpass import getuser
+            owner = getuser()
+
+        self._owner = getpwnam(owner)
+        self._homepath = self._owner.pw_dir
 
     def _set_environment(self):
         if not self.server_name:
@@ -48,13 +52,13 @@ class mineos(object):
         
         self.env = {}
 
-        self.env['cwd'] = os.path.join(self.DEFAULT_PATHS['live'], self.server_name)
-        self.env['bwd'] = os.path.join(self.DEFAULT_PATHS['backup'], self.server_name)
-        self.env['awd'] = os.path.join(self.DEFAULT_PATHS['archive'], self.server_name)
+        self.env['cwd'] = os.path.join(self._homepath, 'servers', self.server_name)
+        self.env['bwd'] = os.path.join(self._homepath, 'backup', self.server_name)
+        self.env['awd'] = os.path.join(self._homepath, 'archive', self.server_name)
         self.env['sp'] = os.path.join(self.env['cwd'], 'server.properties')
         self.env['sc'] = os.path.join(self.env['cwd'], 'server.config')
         self.env['sp_backup'] = os.path.join(self.env['bwd'], 'server.properties')
-        self.env['sc_backup'] = os.path.join(self.env['bwd'], 'server.config')        
+        self.env['sc_backup'] = os.path.join(self.env['bwd'], 'server.config')
 
     def _load_config(self, load_backup=False, generate_missing=False):
         def load_sp():
@@ -63,7 +67,7 @@ class mineos(object):
         def load_sc():
             self.server_config = config_file(self.env['sc_backup']) if load_backup else config_file(self.env['sc'])
 
-        if self.env:
+        if hasattr(self, 'env'):
             if not self.server_config:
                 try:
                     load_sc()
@@ -183,22 +187,67 @@ class mineos(object):
         self._load_config(generate_missing=True)
         self._logger.info('Executing command {start}; server %s:%s', self.ip_address, self.port)
 
+        self._command_direct(self.command_start, self.env['cwd'])
+
+    def archive(self):
+        from time import strftime
+        archive_filename = 'server-%s_%s.tar.gz' % (self.server_name, strftime("%Y-%m-%d_%H:%M:%S"))
+        command = 'nice -n 10 tar czf %s .' % os.path.join(self.env['awd'], archive_filename)
+        self._logger.info('Executing command {archive}: %s', command)
+
+    def _command_direct(self, command, working_directory):
+        def demote(user_uid, user_gid):
+            def set_ids():
+                os.setgid(user_gid)
+                os.getuid(user_uid)
+
+            return set_ids
+
+        #FIXME: still must implement sanitization, incl "../'
+        from subprocess import call
+
+        self._logger.info('Executing "%s" as %s from %s.', command,
+                                                           self._owner.pw_name,
+                                                           working_directory)
+
+        current_user = (os.getuid(), os.getgid())
+
+        if current_user == (self._owner.pw_uid, self._owner.pw_gid):
+            exitcode = call(command,
+                            shell=True,
+                            cwd=working_directory)
+            if int(exitcode) != 0:
+                raise RuntimeError('Command returned exit code %s', exitcode)
+        else:
+            exitcode = call(command,
+                            shell=True,
+                            cwd=working_directory,
+                            preexec_fn=demote(self._owner.pw_uid,
+                                              self._owner.pw_gid))
+            if int(exitcode) != 0:
+                raise RuntimeError('Command returned exit code %s', exitcode)
+            
+    def _command_direct_output(self, command, working_directory, user=None):
+        pass
+
     def _make_directory(self, path):
         try:
-            os.makedirs(self.DEFAULT_PATHS['logging'])
+            os.makedirs(path)
         except OSError:
             pass
 
     def _create_logger(self):
         try:
-            os.makedirs(self.DEFAULT_PATHS['logging'])
+            os.makedirs(os.path.join(self._homepath, 'log'))
         except OSError:
             pass
 
         try:
             self._logger = logging.getLogger(self.server_name)
-            self._logger_fh = logging.FileHandler(os.path.join(self.DEFAULT_PATHS['logging'], self.server_name))
-        except TypeError:
+            self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
+                                                               'log',
+                                                               self.server_name))
+        except (TypeError, AttributeError):
             self._logger = None
             self._logger_fh = None
         else:
@@ -214,12 +263,12 @@ class mineos(object):
     ''' properties '''
 
     @property
-    def cmdline(self):
+    def command_start(self):
         from distutils.spawn import find_executable
 
         if not self.server_config:
             return None
-        #this doesnt implement profiles--we want profiles!
+        #FIXME: this doesnt implement profiles--we want profiles!
 
         required_arguments = {
             'screen_name': 'mc-%s' % self.server_name,
@@ -229,12 +278,14 @@ class mineos(object):
             'java_xms': self.server_config.get_attr('java_xms', 'java') or
                         self.server_config.get_attr('java_xmx', 'java'),
             'java_tweaks': self.server_config.get_attr('java_tweaks', 'java'),
+            'jar_file': 'minecraft_server.1.6.2.jar',
+            'jar_args': '-nogui'
             }
 
         if all(value is not None for value in required_arguments.values()):
             return '%(screen)s -dmS %(screen_name)s ' \
-                   '%(java)s %(java_tweaks)s -Xmx%(java_xmx)s -Xms%(java_xms)s ' \
-                   '-jar JAR_FILE_HERE JAR_ARGS_HERE' % required_arguments
+                   '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
+                   '-jar %(jar_file)s %(jar_args)s' % required_arguments
         else:
             self._logger.error('Cannot construct start command; missing value')
             self._logger.error(str(required_arguments))
@@ -263,8 +314,8 @@ class mineos(object):
     def list_servers(self):
         from itertools import chain
         return set(chain(
-            self._list_subdirs(self.DEFAULT_PATHS['live']),
-            self._list_subdirs(self.DEFAULT_PATHS['backup'])
+            self._list_subdirs(os.path.join(self._homepath, 'servers')),
+            self._list_subdirs(os.path.join(self._homepath, 'backup'))
             ))
 
     def list_servers_up(self):
