@@ -224,6 +224,24 @@ class mc(object):
             self._command_stuff('save-on')
         else:
             self._command_direct(self.command_backup, self.env['cwd'])
+
+    def restore(self, steps='now', overwrite=False):
+        if self.server_name not in self.list_servers():
+            raise RuntimeWarning('Ignoring command {restore}; no server by this name.')
+        elif self.up:
+            raise RuntimeWarning('Ignoring command {restore}; server %s currently up' % self.server_name)
+        
+        self._load_config(load_backup=True)
+
+        if self.server_properties or self.server_config:
+            self._rdiff_backup_steps = steps
+            self._rdiff_backup_force = '--force' if overwrite else ''
+
+            self._command_direct(self.command_restore, self.env['cwd'])
+
+            self._load_config(generate_missing=True)
+        else:
+            raise RuntimeWarning('Ignoring command {restore}; Unable to ')
             
     def _command_direct(self, command, working_directory):
         def demote(user_uid, user_gid):
@@ -234,7 +252,7 @@ class mc(object):
             return set_ids
 
         #FIXME: still must implement sanitization, incl "../'
-        from subprocess import call
+        from subprocess import check_call
 
         self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
                                                          working_directory,
@@ -243,19 +261,15 @@ class mc(object):
         current_user = (os.getuid(), os.getgid())
 
         if current_user == (self._owner.pw_uid, self._owner.pw_gid):
-            exitcode = call(command,
-                            shell=True,
-                            cwd=working_directory)
-            if int(exitcode) != 0:
-                raise RuntimeError('Command returned exit code %s', exitcode)
+            check_call(command,
+                       shell=True,
+                       cwd=working_directory)
         else:
-            exitcode = call(command,
-                            shell=True,
-                            cwd=working_directory,
-                            preexec_fn=demote(self._owner.pw_uid,
-                                              self._owner.pw_gid))
-            if int(exitcode) != 0:
-                raise RuntimeError('Command returned exit code %s', exitcode)
+            check_call(command,
+                       shell=True,
+                       cwd=working_directory,
+                       preexec_fn=demote(self._owner.pw_uid,
+                                         self._owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
         from subprocess import call
@@ -404,6 +418,23 @@ class mc(object):
         else:
             return '%(nice)s -n %(nice_value)s ' \
                    '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
+
+    @property
+    def command_restore(self):
+        required_arguments = {
+            'rdiff': find_executable('rdiff-backup'),
+            'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
+            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else 'now',
+            'bwd': self.env['bwd'],
+            'cwd': self.env['cwd']
+            }
+
+        if any(value is None for value in required_arguments.values()):
+            self._logger.error('Cannot construct restore command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
+            return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
+                   '%(bwd)s %(cwd)s' % required_arguments
 
     @property
     def port(self):
