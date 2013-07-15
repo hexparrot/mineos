@@ -192,11 +192,18 @@ class mc(object):
         self._command_direct(self.command_start, self.env['cwd'])
 
     def archive(self):
-        from time import strftime
-        archive_filename = 'server-%s_%s.tar.gz' % (self.server_name, strftime("%Y-%m-%d_%H:%M:%S"))
-        command = 'nice -n 10 tar czf %s .' % os.path.join(self.env['awd'], archive_filename)
-        self._logger.info('Executing command {archive}: %s', command)
+        if self.server_name not in self.list_servers():
+            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
 
+        if self.up:
+            self._logger.info('Executing command {archive}: %s', command)
+            self._command_stuff('save-off')
+            self._command_stuff('save-all')
+            self._command_direct(self.command_archive, self.env['cwd'])
+            self._command_stuff('save-on')
+        else:
+            self._command_direct(self.command_archive, self.env['cwd'])
+            
     def _command_direct(self, command, working_directory):
         def demote(user_uid, user_gid):
             def set_ids():
@@ -340,6 +347,17 @@ class mc(object):
             self._logger.error('Cannot construct start command; missing value')
             self._logger.error(str(required_arguments))
             return None
+
+    @property
+    def command_archive(self):
+        from time import strftime
+
+        nice_value = 10
+
+        archive_filename = 'server-%s_%s.tar.gz' % (self.server_name, strftime("%Y-%m-%d_%H:%M:%S"))
+        command = 'nice -n %s tar czf %s .' % (nice_value,
+                                               os.path.join(self.env['awd'], archive_filename))
+        return command
 
     @property
     def port(self):
