@@ -19,7 +19,7 @@ from string import ascii_letters, digits
 class mc(object):
 
     PROCFS_PATHS = ['/proc',
-                     '/usr/compat/linux/proc']
+                    '/usr/compat/linux/proc']
     
     def __init__(self, server_name=None, owner=None):
         if self.valid_server_name(server_name):
@@ -204,7 +204,7 @@ class mc(object):
         def demote(user_uid, user_gid):
             def set_ids():
                 os.setgid(user_gid)
-                os.getuid(user_uid)
+                os.setuid(user_uid)
 
             return set_ids
 
