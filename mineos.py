@@ -241,7 +241,7 @@ class mc(object):
 
             self._load_config(generate_missing=True)
         else:
-            raise RuntimeWarning('Ignoring command {restore}; Unable to ')
+            raise RuntimeWarning('Ignoring command {restore}; Unable to locate backup')
             
     def _command_direct(self, command, working_directory):
         def demote(user_uid, user_gid):
@@ -272,17 +272,17 @@ class mc(object):
                                          self._owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
-        from subprocess import call
+        from subprocess import check_call
 
         if self.up:
             command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
             self._logger.info('Executing as %s: %s', self._owner.pw_name,
                                                      command)
 
-            if call(command, shell=True):
-                logging.error('Stuff command returned non-zero error code: "%s"', stuff_text)
+            if check_call(command, shell=True):
+                self._logger.error('Stuff command returned non-zero error code: "%s"', stuff_text)
         else:
-            logging.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
+            self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeWarning('Server must be running to send screen commands')
 
 
