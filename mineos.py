@@ -164,10 +164,7 @@ class mc(object):
             raise RuntimeWarning('Ignoring command {create}; server already exists.')
 
         for d in ('cwd', 'bwd', 'awd'):
-            try:
-                os.makedirs(self.env[d])
-            except OSError:
-                pass
+            self._make_directory(self.env[d])
 
         properties = properties if type(properties) is dict else {}
         self._create_sc(properties)
@@ -252,12 +249,13 @@ class mc(object):
             os.makedirs(path)
         except OSError:
             pass
+        else:
+            os.chown(path,
+                     self._owner.pw_uid,
+                     self._owner.pw_gid)
 
     def _create_logger(self):
-        try:
-            os.makedirs(os.path.join(self._homepath, 'log'))
-        except OSError:
-            pass
+        self._make_directory(os.path.join(self._homepath, 'log'))
 
         try:
             self._logger = logging.getLogger(self.server_name)
