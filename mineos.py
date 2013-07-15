@@ -454,6 +454,19 @@ class mc(object):
                 self._ip_address = None
         return self._ip_address
 
+    @property
+    def procfs(self):
+        if not hasattr(self, '_procfs'):
+            for procfs in self.PROCFS_PATHS:
+                try:
+                    with open(os.path.join(procfs, 'uptime'), 'rb') as procdump:
+                        self._procfs = procfs
+                        break
+                except IOError:
+                    continue
+
+        return self._procfs
+
     ''' generator expressions '''
 
     def list_servers(self):
@@ -489,28 +502,25 @@ class mc(object):
         except StopIteration:
             return []
 
+    def _list_procfs_entries(self, pid, page):
+        with open(os.path.join(self.procfs, str(pid), page)) as proc_status:
+            for line in proc_status:
+                split = b2a_qp(line).partition(':')
+                yield (split[0].strip(), split[2].strip())
+
     def _list_pids(self):
         """
         Generator: all servers and corresponding processes' pids
 
         """
-        if not hasattr(self, '_procfs'):
-            for procfs in self.PROCFS_PATHS:
-                try:
-                    with open(os.path.join(procfs, 'uptime'), 'rb') as procdump:
-                        self._procfs = procfs
-                        break
-                except IOError:
-                    continue
-
         try:        
-            pids = frozenset([pid for pid in os.listdir(self._procfs) if pid.isdigit()])
+            pids = frozenset([pid for pid in os.listdir(self.procfs) if pid.isdigit()])
         except TypeError:
             raise IOError('No suitable procfs filesystem found')
 
         for pid in pids:
             try:
-                fh = open(os.path.join(self._procfs, pid, 'cmdline'), 'rb')
+                fh = open(os.path.join(self.procfs, pid, 'cmdline'), 'rb')
                 cmdline = fh.read()
             except IOError:
                 continue
@@ -529,7 +539,7 @@ class mc(object):
         import re
 
         instance_pids = namedtuple('instance_pids', 'server_name java_pid screen_pid')
-        pids = frozenset(self._list_pids())
+        pids = set(self._list_pids())
         servers = []
         retval = {}
         
