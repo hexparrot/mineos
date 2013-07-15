@@ -191,6 +191,14 @@ class mc(object):
 
         self._command_direct(self.command_start, self.env['cwd'])
 
+    def kill(self):
+        if self.up:
+            from signal import SIGTERM
+            self._logger.info('Executing command {kill}: %s', self.server_name)
+            os.kill(self.java_pid, SIGTERM)
+        else:
+            raise RuntimeWarning('Ignoring command {kill}: no live process for server %s', self.server_name)
+
     def archive(self):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
