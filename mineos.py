@@ -14,6 +14,7 @@ import logging
 from conf_parse import config_file
 from collections import namedtuple
 from binascii import b2a_qp
+from string import ascii_letters, digits
 
 class mc(object):
 
@@ -21,7 +22,8 @@ class mc(object):
                      '/usr/compat/linux/proc']
     
     def __init__(self, server_name=None, owner=None):
-        self.server_name = server_name
+        if self.valid_server_name(server_name):
+            self.server_name = server_name
         self._set_owner(owner)
         self._create_logger()
         self._set_environment()
@@ -174,18 +176,21 @@ class mc(object):
     
     def start(self):
         if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {start}; no server by this name.' % self.server_name)
+            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
+
+        if self.up:
+            raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.', self.ip_address, self.port)
         
         if self.port in [s.port for s in self.list_ports_up()]:
             if (self.port, self.ip_address) in [(s.port, s.ip_address) for s in self.list_ports_up()]:
-                raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
+                raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.', self.ip_address, self.port)
             elif self.ip_address == '0.0.0.0':
-                raise RuntimeWarning('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
+                raise RuntimeWarning('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.', self.port)
             elif any(s for s in self.list_ports_up() if s.ip_address == '0.0.0.0'):
                 raise RuntimeWarning('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        self._logger.info('Executing command {start}; server %s:%s', self.ip_address, self.port)
+        self._logger.info('Executing command {start}; %s@%s:%s', self.server_name, self.ip_address, self.port)
 
         self._command_direct(self.command_start, self.env['cwd'])
 
@@ -206,9 +211,9 @@ class mc(object):
         #FIXME: still must implement sanitization, incl "../'
         from subprocess import call
 
-        self._logger.info('Executing "%s" as %s from %s.', command,
-                                                           self._owner.pw_name,
-                                                           working_directory)
+        self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
+                                                         working_directory,
+                                                         command)
 
         current_user = (os.getuid(), os.getgid())
 
@@ -226,9 +231,21 @@ class mc(object):
                                               self._owner.pw_gid))
             if int(exitcode) != 0:
                 raise RuntimeError('Command returned exit code %s', exitcode)
-            
-    def _command_direct_output(self, command, working_directory, user=None):
-        pass
+
+    def _command_stuff(self, stuff_text):
+        from subprocess import call
+
+        if self.up:
+            command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
+            self._logger.info('Executing as %s: %s', self._owner.pw_name,
+                                                     command)
+
+            if call(command, shell=True):
+                logging.error('Stuff command returned non-zero error code: "%s"', stuff_text)
+        else:
+            logging.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
+            raise RuntimeWarning('Server must be running to send screen commands')
+
 
     def _make_directory(self, path):
         try:
@@ -260,7 +277,38 @@ class mc(object):
         if self._logger_fh:
             self._logger_fh.close()
 
+    def valid_server_name(self, name):
+        valid_chars = set('%s%s_.' % (ascii_letters, digits))
+
+        if name is None:
+            return False
+        if any(c for c in name if c not in valid_chars):
+            return False
+        elif name.startswith('.'):
+            return False
+        return True
+
     ''' properties '''
+
+    @property
+    def up(self):
+        return self.server_name in self.list_servers_up()
+
+    @property
+    def java_pid(self):
+        for server, java_pid, screen_pid in self._list_server_pids():
+            if self.server_name == server:
+                return java_pid
+        else:
+            return 0
+
+    @property
+    def screen_pid(self):
+        for server, java_pid, screen_pid in self._list_server_pids():
+            if self.server_name == server:
+                return screen_pid
+        else:
+            return 0
 
     @property
     def command_start(self):
@@ -278,7 +326,7 @@ class mc(object):
             'java_xms': self.server_config.get_attr('java_xms', 'java') or
                         self.server_config.get_attr('java_xmx', 'java'),
             'java_tweaks': self.server_config.get_attr('java_tweaks', 'java'),
-            'jar_file': 'minecraft_server.1.6.2.jar',
+            'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.1.6.2.jar'),
             'jar_args': '-nogui'
             }
 
@@ -329,7 +377,7 @@ class mc(object):
     def list_ports_up(self):
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
         for server in self.list_servers_up():
-            instance = mineos(server)
+            instance = mc(server)
             yield instance_connection(server, instance.port, instance.ip_address)
     
     def _list_subdirs(self, directory):
@@ -390,7 +438,7 @@ class mc(object):
         
         for cmdline, pid in pids:
             if 'screen' in cmdline.lower():
-                serv = re.match(r'SCREEN.*?mc-([\w._]+)', cmdline, re.IGNORECASE)
+                serv = re.search(r'SCREEN.*?mc-([\w._]+)', cmdline, re.IGNORECASE)
                 try:
                     servers.append(serv.groups()[0])
                 except AttributeError:
@@ -401,10 +449,10 @@ class mc(object):
             screen = None
             for cmdline, pid in pids:
                 if '-jar' in cmdline:
-                    if cmdline.lower().startswith('screen ') and 'mc-%s ' % serv in cmdline:
-                        screen = pid
+                    if 'screen ' in cmdline.lower() and 'mc-%s ' % serv in cmdline:
+                        screen = int(pid)
                     elif '/%s/' % serv in cmdline:
-                        java = pid
+                        java = int(pid)
                 if java and screen:
                     break
             yield instance_pids(serv, java, screen)
