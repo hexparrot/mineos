@@ -23,7 +23,7 @@ class mc(object):
     
     def __init__(self, server_name=None, owner=None):
         if self.valid_server_name(server_name):
-            self.server_name = server_name
+            self._server_name = server_name
         self._set_owner(owner)
         self._create_logger()
         self._set_environment()
@@ -289,6 +289,10 @@ class mc(object):
         return True
 
     ''' properties '''
+
+    @property
+    def server_name(self):
+        return self._server_name
 
     @property
     def up(self):
