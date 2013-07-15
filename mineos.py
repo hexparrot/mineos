@@ -15,6 +15,7 @@ from conf_parse import config_file
 from collections import namedtuple
 from binascii import b2a_qp
 from string import ascii_letters, digits
+from distutils.spawn import find_executable
 
 class mc(object):
 
@@ -211,6 +212,18 @@ class mc(object):
             self._command_stuff('save-on')
         else:
             self._command_direct(self.command_archive, self.env['cwd'])
+
+    def backup(self):
+        if self.server_name not in self.list_servers():
+            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
+        
+        if self.up:
+            self._command_stuff('save-off')
+            self._command_stuff('save-all')
+            self._command_direct(self.command_backup, self.env['cwd'])
+            self._command_stuff('save-on')
+        else:
+            self._command_direct(self.command_backup, self.env['cwd'])
             
     def _command_direct(self, command, working_directory):
         def demote(user_uid, user_gid):
@@ -329,8 +342,6 @@ class mc(object):
 
     @property
     def command_start(self):
-        from distutils.spawn import find_executable
-
         if not self.server_config:
             return None
         #FIXME: this doesnt implement profiles--we want profiles!
@@ -347,25 +358,52 @@ class mc(object):
             'jar_args': '-nogui'
             }
 
-        if all(value is not None for value in required_arguments.values()):
+        if any(value is None for value in required_arguments.values()):
+            self._logger.error('Cannot construct start command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
             return '%(screen)s -dmS %(screen_name)s ' \
                    '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
                    '-jar %(jar_file)s %(jar_args)s' % required_arguments
-        else:
-            self._logger.error('Cannot construct start command; missing value')
-            self._logger.error(str(required_arguments))
-            return None
 
     @property
     def command_archive(self):
         from time import strftime
 
-        nice_value = 10
+        required_arguments = {
+            'nice': find_executable('nice'),
+            'tar': find_executable('tar'),
+            'nice_value': 10,
+            'archive_filename': os.path.join(self.env['awd'],
+                                             'server-%s_%s.tar.gz' % (self.server_name,
+                                                                      strftime("%Y-%m-%d_%H:%M:%S"))),
+            'cwd': '.' #self.env['cwd']
+            }
 
-        archive_filename = 'server-%s_%s.tar.gz' % (self.server_name, strftime("%Y-%m-%d_%H:%M:%S"))
-        command = 'nice -n %s tar czf %s .' % (nice_value,
-                                               os.path.join(self.env['awd'], archive_filename))
-        return command
+
+        if any(value is None for value in required_arguments.values()):
+            self._logger.error('Cannot construct archive command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
+            return '%(nice)s -n %(nice_value)s ' \
+                   '%(tar)s czf %(archive_filename)s %(cwd)s' % required_arguments
+
+    @property
+    def command_backup(self):
+        required_arguments = {
+            'nice': find_executable('nice'),
+            'nice_value': 10,
+            'rdiff': find_executable('rdiff-backup'),
+            'cwd': self.env['cwd'],
+            'bwd': self.env['bwd']
+            }
+
+        if any(value is None for value in required_arguments.values()):
+            self._logger.error('Cannot construct backup command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
+            return '%(nice)s -n %(nice_value)s ' \
+                   '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
 
     @property
     def port(self):
