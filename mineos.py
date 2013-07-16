@@ -25,6 +25,8 @@ class mc(object):
     def __init__(self, server_name=None, owner=None):
         if self.valid_server_name(server_name):
             self._server_name = server_name
+        else:
+            self._server_name = None
         self._set_owner(owner)
         self._create_logger()
         self._set_environment()
@@ -453,6 +455,16 @@ class mc(object):
             except AttributeError:
                 self._ip_address = None
         return self._ip_address
+
+    @property
+    def memory(self):
+        return dict(self._list_procfs_entries(self.java_pid, 'status'))['VmRSS']
+
+    @property
+    def proc_uptime(self):
+        #return these as floats
+        raw = list(self._list_procfs_entries('', 'uptime'))[0]
+        return raw[0].split()
 
     @property
     def procfs(self):
