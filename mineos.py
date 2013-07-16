@@ -23,10 +23,7 @@ class mc(object):
                     '/usr/compat/linux/proc']
     
     def __init__(self, server_name=None, owner=None):
-        if self.valid_server_name(server_name):
-            self._server_name = server_name
-        else:
-            self._server_name = None
+        self._server_name = server_name if self.valid_server_name(server_name) else None
         self._set_owner(owner)
         self._create_logger()
         self._set_environment()
@@ -462,9 +459,13 @@ class mc(object):
 
     @property
     def proc_uptime(self):
-        #return these as floats
-        raw = list(self._list_procfs_entries('', 'uptime'))[0]
-        return raw[0].split()
+        raw = self._list_procfs_entries('', 'uptime').next()[0]
+        return tuple(float(v) for v in raw.split())
+
+    @property
+    def proc_loadavg(self):
+        raw = self._list_procfs_entries('', 'loadavg').next()[0]
+        return tuple(float(v) for v in raw.split()[:3])
 
     @property
     def procfs(self):
