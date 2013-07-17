@@ -265,7 +265,6 @@ class mc(object):
             def set_ids():
                 os.setgid(user_gid)
                 os.setuid(user_uid)
-
             return set_ids
 
         #FIXME: still must implement sanitization, incl "../'
@@ -289,6 +288,18 @@ class mc(object):
                                          self._owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
+        def demote(user_uid, user_gid):
+            '''
+            this is duplicated from _command_direct because it is not needed
+            anywhere else in the entire program but it seems fitting to be
+            placed somewhere where it is also isolated from other
+            methods and functionality
+            '''
+            def set_ids():
+                os.setgid(user_gid)
+                os.setuid(user_uid)
+            return set_ids
+        
         from subprocess import check_call
 
         if self.up:
@@ -296,12 +307,19 @@ class mc(object):
             self._logger.info('Executing as %s: %s', self._owner.pw_name,
                                                      command)
 
-            if check_call(command, shell=True):
-                self._logger.error('Stuff command returned non-zero error code: "%s"', stuff_text)
+            current_user = (os.getuid(), os.getgid())
+
+            if current_user == (self._owner.pw_uid, self._owner.pw_gid):
+                check_call(command,
+                           shell=True)
+            else:
+                check_call(command,
+                           shell=True,
+                           preexec_fn=demote(self._owner.pw_uid,
+                                             self._owner.pw_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeWarning('Server must be running to send screen commands')
-
 
     def _make_directory(self, path):
         try:
