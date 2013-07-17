@@ -259,7 +259,11 @@ class mc(object):
             self._load_config(generate_missing=True)
         else:
             raise RuntimeWarning('Ignoring command {restore}; Unable to locate backup')
-            
+
+    def prune(self, steps=None):
+        self._rdiff_backup_steps = steps
+        self._command_direct(self.command_prune, self.env['bwd'])
+
     def _command_direct(self, command, working_directory):
         def demote(user_uid, user_gid):
             def set_ids():
@@ -396,7 +400,7 @@ class mc(object):
         if self.server_config.has_option('java','java_xms') :
             required_arguments['java_xms'] = self.server_config['java':'java_xms']
 
-        if any(value is None for value in required_arguments.values()):
+        if None in required_arguments.values():
             self._logger.error('Cannot construct start command; missing value')
             self._logger.error(str(required_arguments))
         else:
@@ -419,7 +423,7 @@ class mc(object):
             }
 
 
-        if any(value is None for value in required_arguments.values()):
+        if None in required_arguments.values():
             self._logger.error('Cannot construct archive command; missing value')
             self._logger.error(str(required_arguments))
         else:
@@ -436,7 +440,7 @@ class mc(object):
             'bwd': self.env['bwd']
             }
 
-        if any(value is None for value in required_arguments.values()):
+        if None in required_arguments.values():
             self._logger.error('Cannot construct backup command; missing value')
             self._logger.error(str(required_arguments))
         else:
@@ -453,12 +457,26 @@ class mc(object):
             'cwd': self.env['cwd']
             }
 
-        if any(value is None for value in required_arguments.values()):
+        if None in required_arguments.values():
             self._logger.error('Cannot construct restore command; missing value')
             self._logger.error(str(required_arguments))
         else:
             return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
                    '%(bwd)s %(cwd)s' % required_arguments
+
+    @property
+    def command_prune(self):
+        required_arguments = {
+            'rdiff': find_executable('rdiff-backup'),
+            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else None,
+            'bwd': self.env['bwd']
+            }
+
+        if None in required_arguments.values():
+            self._logger.error('Cannot construct prune command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
+            return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
 
     @property
     def port(self):
