@@ -193,8 +193,7 @@ class mc(object):
     def start(self):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-
-        if self.up:
+        elif self.up:
             raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.', self.ip_address, self.port)
         
         if self.port in [s.port for s in self.list_ports_up()]:
@@ -211,7 +210,9 @@ class mc(object):
         self._command_direct(self.command_start, self.env['cwd'])
 
     def kill(self):
-        if self.up:
+        if self.server_name not in self.list_servers():
+            raise RuntimeWarning('Ignoring command {kill}; no server by this name.')
+        elif self.up:
             from signal import SIGTERM
             self._logger.info('Executing command {kill}: %s', self.server_name)
             os.kill(self.java_pid, SIGTERM)
@@ -221,8 +222,7 @@ class mc(object):
     def archive(self):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-
-        if self.up:
+        elif self.up:
             self._logger.info('Executing command {archive}: %s', command)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
@@ -234,8 +234,7 @@ class mc(object):
     def backup(self):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-        
-        if self.up:
+        elif self.up:
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_backup, self.env['cwd'])
