@@ -364,12 +364,14 @@ class mc(object):
             'screen': find_executable('screen'),
             'java': find_executable('java'),
             'java_xmx': self.server_config['java':'java_xmx'],
-            'java_xms': self.server_config['java':'java_xms'] or
-                        self.server_config['java':'java_xmx'],
+            'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks'],
             'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.1.6.2.jar'),
             'jar_args': '-nogui'
             }
+
+        if self.server_config.has_option('java','java_xms') :
+            required_arguments['java_xms'] = self.server_config['java':'java_xms']
 
         if any(value is None for value in required_arguments.values()):
             self._logger.error('Cannot construct start command; missing value')
@@ -455,7 +457,21 @@ class mc(object):
 
     @property
     def memory(self):
-        return dict(self._list_procfs_entries(self.java_pid, 'status'))['VmRSS']
+        def sizeof_fmt(num):
+            ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
+                http://stackoverflow.com/a/1094933/1191579
+            '''
+            for x in ['bytes','KB','MB','GB','TB']:
+                if num < 1024.0:
+                    return "%3.2f %s" % (num, x)
+                num /= 1024.0
+                
+        try:
+            mem_str = dict(self._list_procfs_entries(self.java_pid, 'status'))['VmRSS']
+            mem = int(mem_str.split()[0]) * 1024
+            return sizeof_fmt(mem)
+        except IOError:
+            return '0'
 
     @property
     def proc_uptime(self):
