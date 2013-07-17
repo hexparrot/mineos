@@ -11,7 +11,7 @@ __email__ = "wdchromium@gmail.com"
 
 import os
 import logging
-from conf_parse import config_file
+from conf_reader import config_file
 from collections import namedtuple
 from binascii import b2a_qp
 from string import ascii_letters, digits
@@ -118,7 +118,7 @@ class mc(object):
                 defaults[k] = startup_values[k]
 
         for k,v in defaults.iteritems():
-            sp.set_attr(k,v)
+            sp[k] = v
 
         sp.commit()
 
@@ -155,7 +155,7 @@ class mc(object):
         for section in defaults:
             sc.add_section(section)
             for attribute in defaults[section]:
-                sc.set_attr(attribute, defaults[section][attribute], section)
+                sc[section:attribute] = defaults[section][attribute]
 
         sc.commit()
 
@@ -363,10 +363,10 @@ class mc(object):
             'screen_name': 'mc-%s' % self.server_name,
             'screen': find_executable('screen'),
             'java': find_executable('java'),
-            'java_xmx': self.server_config.get_attr('java_xmx', 'java'),
-            'java_xms': self.server_config.get_attr('java_xms', 'java') or
-                        self.server_config.get_attr('java_xmx', 'java'),
-            'java_tweaks': self.server_config.get_attr('java_tweaks', 'java'),
+            'java_xmx': self.server_config['java':'java_xmx'],
+            'java_xms': self.server_config['java':'java_xms'] or
+                        self.server_config['java':'java_xmx'],
+            'java_tweaks': self.server_config['java':'java_tweaks'],
             'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.1.6.2.jar'),
             'jar_args': '-nogui'
             }
@@ -439,7 +439,7 @@ class mc(object):
     def port(self):
         if not hasattr(self, '_port'):
             try:
-                self._port = int(self.server_properties.get_attr('server-port')) or 0
+                self._port = int(self.server_properties['server-port']) or 0
             except AttributeError:
                 self._port = None
         return self._port
@@ -448,7 +448,7 @@ class mc(object):
     def ip_address(self):
         if not hasattr(self, '_ip_address'):
             try:
-                self._ip_address = self.server_properties.get_attr('server-ip') or '0.0.0.0'
+                self._ip_address = self.server_properties['server-ip'] or '0.0.0.0'
             except AttributeError:
                 self._ip_address = None
         return self._ip_address
