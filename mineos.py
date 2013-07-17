@@ -319,7 +319,7 @@ class mc(object):
                      self._owner.pw_gid)
 
     def _create_logger(self):
-        self._make_directory(os.path.join(self._homepath, 'log'))
+        self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
 
         try:
             self._logger = logging.getLogger(self.server_name)

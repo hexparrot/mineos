@@ -53,7 +53,10 @@ class config_file(ConfigParser.SafeConfigParser):
                     return self.get(option.start, option.stop)
                 elif type(option.start) == str and option.stop is None:
                     return dict(self.items(str(option)))
+                elif type(option.start) == int and type(option.stop) == int:
+                    return {sec:dict(self.items(sec)) for sec in self.sections()}
             raise SyntaxError("config_file get syntax: "
+                              "var[:] or "
                               "var['section'] or "
                               "var['section':'option']")
         else:
