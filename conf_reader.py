@@ -33,19 +33,19 @@ class config_file(ConfigParser.SafeConfigParser):
     def __init__(self, filepath=None):
         ConfigParser.SafeConfigParser.__init__(self, allow_no_value=True)
         self.filepath = filepath
-        self.use_sections = True
+        self.use_sections(True)
 
         try:
             self.read(self.filepath)
         except ConfigParser.MissingSectionHeaderError:
-            self.use_sections = False
+            self.use_sections(False)
             with config_file_sectionless(self.filepath) as cf:
                 self.readfp(cf)
         except TypeError:
             pass #if filepath==None
 
     def __getitem__(self, option):
-        if self.use_sections:
+        if self._use_sections:
             if type(option) in (int,str):
                 return dict(self.items(str(option)))
             elif type(option) == slice:
@@ -67,7 +67,7 @@ class config_file(ConfigParser.SafeConfigParser):
                               "var['option']")
 
     def __setitem__(self, option, value):
-        if self.use_sections:
+        if self._use_sections:
             if type(option) == slice:
                 if type(option.start) == str and type(option.stop) == str:
                     self.set(option.start, option.stop, str(value))
@@ -82,7 +82,7 @@ class config_file(ConfigParser.SafeConfigParser):
                               "var['section'] = val")
 
     def __delitem__(self, option):
-        if self.use_sections:
+        if self._use_sections:
             if type(option) == slice:
                 if type(option.start) == str and type(option.stop) == str:
                     self.remove_option(option.start, option.stop)
@@ -97,10 +97,23 @@ class config_file(ConfigParser.SafeConfigParser):
                               "del var['option']")
 
     def commit(self):
-        if self.use_sections:
+        if self._use_sections:
             with open(self.filepath, 'wb') as configfile:
                 self.write(configfile)
         else:
             with open(self.filepath, "w") as configfile:
                 for k,v in self.items('sectionless'):
                     configfile.write("%s=%s\n" % (k.strip(), v.strip()))
+
+    def use_sections(self, value):
+        if value:
+            self.remove_section('sectionless')
+            self._use_sections = True
+        else:
+            try:
+                self.add_section('sectionless')
+            except ConfigParser.DuplicateSectionError:
+                pass
+            finally:
+                self._use_sections = False
+            

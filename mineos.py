@@ -21,6 +21,12 @@ class mc(object):
 
     PROCFS_PATHS = ['/proc',
                     '/usr/compat/linux/proc']
+    DEFAULT_PATHS = {
+        'servers': 'servers',
+        'backup': 'backup',
+        'archive': 'archive',
+        'log': 'log'
+        }
     
     def __init__(self, server_name=None, owner=None):
         self._server_name = server_name if self.valid_server_name(server_name) else None
@@ -44,6 +50,19 @@ class mc(object):
 
         self._owner = getpwnam(owner)
         self._homepath = self._owner.pw_dir
+        '''
+           _homepath will typically go to /home/user, but this can be further
+           organized by adding an additional subdirectory, such as:
+           self._homepath = os.path.join(self._owner.pwdir, 'minecraft')
+           Furthermore, this can be changed to something completely different:
+           self._homepath = '/var/games/minecraft'
+           Such a change, however, will likely encourage root:root ownership
+           to this directory and immediate subdirectories, as multiple users
+           will be all sharing the common directories:
+           /var/games/minecraft{servers,backup,archive}
+        '''
+        for p in self.DEFAULT_PATHS.values():
+            self._make_directory(os.path.join(self._homepath, p))
 
     def _set_environment(self):
         if not self.server_name:
@@ -54,9 +73,9 @@ class mc(object):
         
         self.env = {}
 
-        self.env['cwd'] = os.path.join(self._homepath, 'servers', self.server_name)
-        self.env['bwd'] = os.path.join(self._homepath, 'backup', self.server_name)
-        self.env['awd'] = os.path.join(self._homepath, 'archive', self.server_name)
+        self.env['cwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['servers'], self.server_name)
+        self.env['bwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['backup'], self.server_name)
+        self.env['awd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['archive'], self.server_name)
         self.env['sp'] = os.path.join(self.env['cwd'], 'server.properties')
         self.env['sc'] = os.path.join(self.env['cwd'], 'server.config')
         self.env['sp_backup'] = os.path.join(self.env['bwd'], 'server.properties')
@@ -110,7 +129,7 @@ class mc(object):
             }
 
         sp = config_file()
-        sp.use_sections = False
+        sp.use_sections(False)
         sp.filepath = self.env['sp']
 
         for k in defaults:
@@ -301,7 +320,7 @@ class mc(object):
         try:
             self._logger = logging.getLogger(self.server_name)
             self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
-                                                               'log',
+                                                               self.DEFAULT_PATHS['log'],
                                                                self.server_name))
         except (TypeError, AttributeError):
             self._logger = None
@@ -501,8 +520,8 @@ class mc(object):
     def list_servers(self):
         from itertools import chain
         return set(chain(
-            self._list_subdirs(os.path.join(self._homepath, 'servers')),
-            self._list_subdirs(os.path.join(self._homepath, 'backup'))
+            self._list_subdirs(os.path.join(self._homepath, self.DEFAULT_PATHS['servers'])),
+            self._list_subdirs(os.path.join(self._homepath, self.DEFAULT_PATHS['backup']))
             ))
 
     def list_servers_up(self):
