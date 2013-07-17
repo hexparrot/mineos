@@ -81,6 +81,21 @@ class config_file(ConfigParser.SafeConfigParser):
             raise SyntaxError("config_file set syntax: "
                               "var['section'] = val")
 
+    def __delitem__(self, option):
+        if self.use_sections:
+            if type(option) == slice:
+                if type(option.start) == str and type(option.stop) == str:
+                    self.remove_option(option.start, option.stop)
+                    return
+            raise SyntaxError("config_file del syntax: "
+                              "del var['section':'option']")
+        else:
+            if type(option) in (int,str):
+                self.remove_option('sectionless', str(option))
+                return
+            raise SyntaxError("config_file del syntax: "
+                              "del var['option']")
+
     def commit(self):
         if self.use_sections:
             with open(self.filepath, 'wb') as configfile:
