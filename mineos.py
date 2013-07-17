@@ -274,18 +274,11 @@ class mc(object):
                                                          working_directory,
                                                          command)
 
-        current_user = (os.getuid(), os.getgid())
-
-        if current_user == (self._owner.pw_uid, self._owner.pw_gid):
-            check_call(command,
-                       shell=True,
-                       cwd=working_directory)
-        else:
-            check_call(command,
-                       shell=True,
-                       cwd=working_directory,
-                       preexec_fn=demote(self._owner.pw_uid,
-                                         self._owner.pw_gid))
+        check_call(command,
+                   shell=True,
+                   cwd=working_directory,
+                   preexec_fn=demote(self._owner.pw_uid,
+                                     self._owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
         def demote(user_uid, user_gid):
@@ -307,16 +300,10 @@ class mc(object):
             self._logger.info('Executing as %s: %s', self._owner.pw_name,
                                                      command)
 
-            current_user = (os.getuid(), os.getgid())
-
-            if current_user == (self._owner.pw_uid, self._owner.pw_gid):
-                check_call(command,
-                           shell=True)
-            else:
-                check_call(command,
-                           shell=True,
-                           preexec_fn=demote(self._owner.pw_uid,
-                                             self._owner.pw_gid))
+            check_call(command,
+                       shell=True,
+                       preexec_fn=demote(self._owner.pw_uid,
+                                         self._owner.pw_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeWarning('Server must be running to send screen commands')
