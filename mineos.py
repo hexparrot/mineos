@@ -360,6 +360,13 @@ class mc(object):
         return self.server_name in self.list_servers_up()
 
     @property
+    def owned(self):
+        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
+        uid = status_page['Uid'].partition('\t')[0]
+        gid = status_page['Gid'].partition('\t')[0]
+        return (int(uid), int(gid)) == (self._owner.pw_uid, self._owner.pw_gid)
+
+    @property
     def java_pid(self):
         for server, java_pid, screen_pid in self._list_server_pids():
             if self.server_name == server:
@@ -579,7 +586,7 @@ class mc(object):
 
         """
         try:        
-            pids = frozenset([pid for pid in os.listdir(self.procfs) if pid.isdigit()])
+            pids = set([pid for pid in os.listdir(self.procfs) if pid.isdigit()])
         except TypeError:
             raise IOError('No suitable procfs filesystem found')
 
