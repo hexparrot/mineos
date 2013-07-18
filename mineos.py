@@ -264,13 +264,13 @@ class mc(object):
         self._rdiff_backup_steps = steps
         self._command_direct(self.command_prune, self.env['bwd'])
 
-    def _command_direct(self, command, working_directory):
-        def demote(user_uid, user_gid):
-            def set_ids():
-                os.setgid(user_gid)
-                os.setuid(user_uid)
-            return set_ids
+    def _demote(self, user_uid, user_gid):
+        def set_ids():
+            os.setgid(user_gid)
+            os.setuid(user_uid)
+        return set_ids
 
+    def _command_direct(self, command, working_directory):
         #FIXME: still must implement sanitization, incl "../'
         from subprocess import check_call
 
@@ -281,22 +281,10 @@ class mc(object):
         check_call(command,
                    shell=True,
                    cwd=working_directory,
-                   preexec_fn=demote(self._owner.pw_uid,
-                                     self._owner.pw_gid))
+                   preexec_fn=self._demote(self._owner.pw_uid,
+                                           self._owner.pw_gid))
 
-    def _command_stuff(self, stuff_text):
-        def demote(user_uid, user_gid):
-            '''
-            this is duplicated from _command_direct because it is not needed
-            anywhere else in the entire program but it seems fitting to be
-            placed somewhere where it is also isolated from other
-            methods and functionality
-            '''
-            def set_ids():
-                os.setgid(user_gid)
-                os.setuid(user_uid)
-            return set_ids
-        
+    def _command_stuff(self, stuff_text):       
         from subprocess import check_call
 
         if self.up:
@@ -306,8 +294,8 @@ class mc(object):
 
             check_call(command,
                        shell=True,
-                       preexec_fn=demote(self._owner.pw_uid,
-                                         self._owner.pw_gid))
+                       preexec_fn=self._demote(self._owner.pw_uid,
+                                               self._owner.pw_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeWarning('Server must be running to send screen commands')
