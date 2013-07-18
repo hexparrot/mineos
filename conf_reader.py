@@ -1,5 +1,6 @@
-"""A python script to manage minecraft servers
-   Designed for use with MineOS: http://minecraft.codeemo.com
+"""
+    Subclass of Configparser for sectionless configuration files.
+    Implements slicing as additional get/set methods.
 """
 
 __author__ = "William Dizon"

@@ -13,14 +13,11 @@ import os
 import logging
 from conf_reader import config_file
 from collections import namedtuple
-from binascii import b2a_qp
 from string import ascii_letters, digits
 from distutils.spawn import find_executable
 
 class mc(object):
 
-    PROCFS_PATHS = ['/proc',
-                    '/usr/compat/linux/proc']
     DEFAULT_PATHS = {
         'servers': 'servers',
         'backup': 'backup',
@@ -360,31 +357,6 @@ class mc(object):
         return self.server_name in self.list_servers_up()
 
     @property
-    def pid_owner(self):
-        try:
-            status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        except IOError:
-            raise IOError('No running process exists for unnamed server')
-        else:
-            return int(status_page['Uid'].partition('\t')[0])
-
-    @property
-    def is_pid_owner(self):
-        return self.pid_owner == self._owner.pw_uid
-
-    @property
-    def in_pid_group(self):
-        from grp import getgrgid
-        
-        try:
-            status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        except IOError:
-            raise IOError('No running process exists for unnamed server')
-        else:
-            gid = int(status_page['Gid'].partition('\t')[0])
-            return self._owner.pw_name in getgrgid(gid).gr_mem
-
-    @property
     def java_pid(self):
         for server, java_pid, screen_pid in self._list_server_pids():
             if self.server_name == server:
@@ -534,28 +506,7 @@ class mc(object):
         except IOError:
             return '0'
 
-    @property
-    def proc_uptime(self):
-        raw = self._list_procfs_entries('', 'uptime').next()[0]
-        return tuple(float(v) for v in raw.split())
 
-    @property
-    def proc_loadavg(self):
-        raw = self._list_procfs_entries('', 'loadavg').next()[0]
-        return tuple(float(v) for v in raw.split()[:3])
-
-    @property
-    def procfs(self):
-        if not hasattr(self, '_procfs'):
-            for procfs in self.PROCFS_PATHS:
-                try:
-                    with open(os.path.join(procfs, 'uptime'), 'rb') as procdump:
-                        self._procfs = procfs
-                        break
-                except IOError:
-                    continue
-
-        return self._procfs
 
     ''' generator expressions '''
 
@@ -592,34 +543,6 @@ class mc(object):
         except StopIteration:
             return []
 
-    def _list_procfs_entries(self, pid, page):
-        with open(os.path.join(self.procfs, str(pid), page)) as proc_status:
-            for line in proc_status:
-                split = b2a_qp(line).partition(':')
-                yield (split[0].strip(), split[2].strip())
-
-    def _list_pids(self):
-        """
-        Generator: all servers and corresponding processes' pids
-
-        """
-        try:        
-            pids = set([pid for pid in os.listdir(self.procfs) if pid.isdigit()])
-        except TypeError:
-            raise IOError('No suitable procfs filesystem found')
-
-        for pid in pids:
-            try:
-                fh = open(os.path.join(self.procfs, pid, 'cmdline'), 'rb')
-                cmdline = fh.read()
-            except IOError:
-                continue
-            else:
-                if cmdline:
-                    yield (b2a_qp(cmdline).replace('=00', ' ').replace('=\n', ''), pid)
-            finally:
-                fh.close()
-
     def _list_server_pids(self):
         """
         Generator: screen and java pid info for all running servers
@@ -653,4 +576,4 @@ class mc(object):
                 if java and screen:
                     break
             yield instance_pids(serv, java, screen)
-    
+
