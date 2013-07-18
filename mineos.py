@@ -27,6 +27,13 @@ class mc(object):
         'archive': 'archive',
         'log': 'log'
         }
+    BINARY_PATHS = {
+        'rdiff': find_executable('rdiff-backup'),
+        'screen': find_executable('screen'),
+        'java': find_executable('java'),
+        'nice': find_executable('nice'),
+        'tar': find_executable('tar'),
+        }
     
     def __init__(self, server_name=None, owner=None):
         self._server_name = server_name if self.valid_server_name(server_name) else None
@@ -376,8 +383,8 @@ class mc(object):
 
         required_arguments = {
             'screen_name': 'mc-%s' % self.server_name,
-            'screen': find_executable('screen'),
-            'java': find_executable('java'),
+            'screen': self.BINARY_PATHS['screen'],
+            'java': self.BINARY_PATHS['java'],
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks'],
@@ -401,8 +408,8 @@ class mc(object):
         from time import strftime
 
         required_arguments = {
-            'nice': find_executable('nice'),
-            'tar': find_executable('tar'),
+            'nice': self.BINARY_PATHS['nice'],
+            'tar': self.BINARY_PATHS['tar'],
             'nice_value': 10,
             'archive_filename': os.path.join(self.env['awd'],
                                              'server-%s_%s.tar.gz' % (self.server_name,
@@ -421,9 +428,9 @@ class mc(object):
     @property
     def command_backup(self):
         required_arguments = {
-            'nice': find_executable('nice'),
+            'nice': self.BINARY_PATHS['nice'],
             'nice_value': 10,
-            'rdiff': find_executable('rdiff-backup'),
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'cwd': self.env['cwd'],
             'bwd': self.env['bwd']
             }
@@ -438,7 +445,7 @@ class mc(object):
     @property
     def command_restore(self):
         required_arguments = {
-            'rdiff': find_executable('rdiff-backup'),
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
             'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else 'now',
             'bwd': self.env['bwd'],
@@ -455,7 +462,7 @@ class mc(object):
     @property
     def command_prune(self):
         required_arguments = {
-            'rdiff': find_executable('rdiff-backup'),
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else None,
             'bwd': self.env['bwd']
             }
