@@ -11,6 +11,7 @@ __email__ = "wdchromium@gmail.com"
 
 import os
 import logging
+import procfs_reader
 from conf_reader import config_file
 from collections import namedtuple
 from string import ascii_letters, digits
@@ -500,13 +501,11 @@ class mc(object):
                 num /= 1024.0
                 
         try:
-            mem_str = dict(self._list_procfs_entries(self.java_pid, 'status'))['VmRSS']
+            mem_str = dict(procfs_reader.entries(self.java_pid, 'status'))['VmRSS']
             mem = int(mem_str.split()[0]) * 1024
             return sizeof_fmt(mem)
         except IOError:
             return '0'
-
-
 
     ''' generator expressions '''
 
@@ -522,7 +521,7 @@ class mc(object):
         Generator: all servers which were started with "mc-SERVER" name.
 
         """
-        for instance in self._list_server_pids():
+        for instance in set(self._list_server_pids()):
             yield instance.server_name
 
     def list_ports_up(self):
@@ -552,11 +551,11 @@ class mc(object):
         import re
 
         instance_pids = namedtuple('instance_pids', 'server_name java_pid screen_pid')
-        pids = set(self._list_pids())
+        pids = set(procfs_reader.pid_cmdline())
         servers = []
         retval = {}
         
-        for cmdline, pid in pids:
+        for pid, cmdline in pids:
             if 'screen' in cmdline.lower():
                 serv = re.search(r'SCREEN.*?mc-([\w._]+)', cmdline, re.IGNORECASE)
                 try:
@@ -567,7 +566,7 @@ class mc(object):
         for serv in servers:
             java = None
             screen = None
-            for cmdline, pid in pids:
+            for pid, cmdline in pids:
                 if '-jar' in cmdline:
                     if 'screen ' in cmdline.lower() and 'mc-%s ' % serv in cmdline:
                         screen = int(pid)

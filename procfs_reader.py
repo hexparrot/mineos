@@ -31,8 +31,7 @@ def pids():
     """    
     return set([int(pid) for pid in os.listdir(_procfs) if pid.isdigit()])
 
-
-def cmdline_pids():
+def pid_cmdline():
     """
     Generator: all processes' pids
 
@@ -61,6 +60,16 @@ def pid_owner(pid):
         raise IOError('Process %s does not exist' % pid)
     else:
         return getpwuid(int(status_page['Uid'].partition('\t')[0]))
+
+def pid_group(pid):
+    from grp import getgrgid
+
+    try:
+        status_page = dict(entries(pid, 'status'))
+    except IOError:
+        raise IOError('Process %s does not exist' % pid)
+    else:
+        return getgrgid(int(status_page['Gid'].partition('\t')[0]))
 
 def proc_uptime():
     raw = entries('', 'uptime').next()[0]
