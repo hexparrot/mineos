@@ -201,13 +201,13 @@ class mc(object):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
-            raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.', self.ip_address, self.port)
+            raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
         
         if self.port in [s.port for s in self.list_ports_up()]:
             if (self.port, self.ip_address) in [(s.port, s.ip_address) for s in self.list_ports_up()]:
-                raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.', self.ip_address, self.port)
+                raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
             elif self.ip_address == '0.0.0.0':
-                raise RuntimeWarning('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.', self.port)
+                raise RuntimeWarning('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
             elif any(s for s in self.list_ports_up() if s.ip_address == '0.0.0.0'):
                 raise RuntimeWarning('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
@@ -224,7 +224,7 @@ class mc(object):
             self._logger.info('Executing command {kill}: %s', self.server_name)
             os.kill(self.java_pid, SIGTERM)
         else:
-            raise RuntimeWarning('Ignoring command {kill}: no live process for server %s', self.server_name)
+            raise RuntimeWarning('Ignoring command {kill}: no live process for server %s' % self.server_name)
 
     def archive(self):
         if self.server_name not in self.list_servers():
@@ -360,27 +360,29 @@ class mc(object):
         return self.server_name in self.list_servers_up()
 
     @property
-    def owned(self):
-        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        uid = int(status_page['Uid'].partition('\t')[0])
-        gid = int(status_page['Gid'].partition('\t')[0])
-        return (uid, gid) == (self._owner.pw_uid, self._owner.pw_gid)
-
-    @property
     def pid_owner(self):
-        from pwd import getpwuid
-        
-        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        uid = int(status_page['Uid'].partition('\t')[0])
-
-        return getpwuid(uid).pw_name
+        try:
+            status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
+        except IOError:
+            raise IOError('No running process exists for unnamed server')
+        else:
+            return int(status_page['Uid'].partition('\t')[0])
 
     @property
-    def pid_group(self):
-        from pwd import getpwuid
+    def is_pid_owner(self):
+        return self.pid_owner == self._owner.pw_uid
+
+    @property
+    def in_pid_group(self):
+        from grp import getgrgid
         
-        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        return int(status_page['Gid'].partition('\t')[0])
+        try:
+            status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
+        except IOError:
+            raise IOError('No running process exists for unnamed server')
+        else:
+            gid = int(status_page['Gid'].partition('\t')[0])
+            return self._owner.pw_name in getgrgid(gid).gr_mem
 
     @property
     def java_pid(self):
@@ -651,5 +653,4 @@ class mc(object):
                 if java and screen:
                     break
             yield instance_pids(serv, java, screen)
-
     
