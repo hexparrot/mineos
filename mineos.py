@@ -362,9 +362,25 @@ class mc(object):
     @property
     def owned(self):
         status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
-        uid = status_page['Uid'].partition('\t')[0]
-        gid = status_page['Gid'].partition('\t')[0]
-        return (int(uid), int(gid)) == (self._owner.pw_uid, self._owner.pw_gid)
+        uid = int(status_page['Uid'].partition('\t')[0])
+        gid = int(status_page['Gid'].partition('\t')[0])
+        return (uid, gid) == (self._owner.pw_uid, self._owner.pw_gid)
+
+    @property
+    def pid_owner(self):
+        from pwd import getpwuid
+        
+        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
+        uid = int(status_page['Uid'].partition('\t')[0])
+
+        return getpwuid(uid).pw_name
+
+    @property
+    def pid_group(self):
+        from pwd import getpwuid
+        
+        status_page = dict(self._list_procfs_entries(self.screen_pid, 'status'))
+        return int(status_page['Gid'].partition('\t')[0])
 
     @property
     def java_pid(self):
