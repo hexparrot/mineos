@@ -183,15 +183,11 @@ class mc(object):
         sp.use_sections(False)
         sp.filepath = self.env['sp']
 
-        for option in startup_values:
-            if option in defaults:
-                if option in sanitize_integers:
-                    try:
-                        defaults[option] = int(startup_values[option])
-                    except ValueError:
-                        continue
-                else:
-                    defaults[option] = startup_values[option]
+        for option in sanitize_integers:
+            try:
+                defaults[option] = int(startup_values[option])
+            except (KeyError, ValueError):
+                continue
 
         for key, value in defaults.iteritems():
             sp[key] = value
@@ -201,11 +197,9 @@ class mc(object):
     def _create_sc(self, startup_values={}):
         """
         Creates a server.config file for a server given a dict.
-
+        
         Expected startup_values should match format of "defaults".
-
-        FIXME: dictionary consolidation of startup_values not yet implemented.
-
+        
         """
         defaults = {
                 'crontabs': {
@@ -225,6 +219,16 @@ class mc(object):
         
         sc = config_file()
         sc.filepath = self.env['sc']
+
+        sanitize_integers = set([('java', 'java_xmx'),
+                                 ('java', 'java_xms'),
+                                 ])
+
+        for section, option in sanitize_integers:
+            try:
+                defaults[section][option] = int(startup_values[section][option])
+            except (KeyError, ValueError):
+                continue
 
         for section in defaults:
             sc.add_section(section)
