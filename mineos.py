@@ -46,7 +46,16 @@ class mc(object):
     def __exit__(self, type, value, traceback):
         pass
 
-    def _set_owner(self, owner):
+    def _set_owner(self,
+                   owner,
+                   base_directory='',
+                   container_directory=''):
+        """
+        Sets the instance to be executed by linux user 'owner'.
+        Sets self._homepath from linux-provided HOMEDIR,
+        effectively containing new directory creation.
+
+        """
         from pwd import getpwnam
 
         if owner is None:
@@ -54,22 +63,33 @@ class mc(object):
             owner = getuser()
 
         self._owner = getpwnam(owner)
-        self._homepath = self._owner.pw_dir
+        if base_directory:
+            self._homepath = os.path.join(base_directory, container_directory)
+        else:
+            self._homepath = os.path.join(self._owner.pw_dir, container_directory)
+            
         '''
-           _homepath will typically go to /home/user, but this can be further
-           organized by adding an additional subdirectory, such as:
-           self._homepath = os.path.join(self._owner.pwdir, 'minecraft')
-           Furthermore, this can be changed to something completely different:
-           self._homepath = '/var/games/minecraft'
-           Such a change, however, will likely encourage root:root ownership
-           to this directory and immediate subdirectories, as multiple users
-           will be all sharing the common directories:
-           /var/games/minecraft{servers,backup,archive}
+        self._homepath will typically go to /home/user,
+        but this can be modified by supplying base_directory, such as:
+        base_directory = '/var/games/minecraft'
+        container_directory = 'mineos'
+
+        resulting structure ==> /var/games/minecraft/mineos/{servers,backup,archive}
+
+        Supplying base_directory will likely require root/chown-ing base_directory.
+
+        FIXME: this functionality is not yet usable, as __init__ does not provide
+        base_directory or container_directory to this method.
         '''
         for p in self.DEFAULT_PATHS.values():
             self._make_directory(os.path.join(self._homepath, p))
 
     def _set_environment(self):
+        """
+        Sets the most common short-hand paths for the minecraft directories
+        and configuration files.
+
+        """
         if not self.server_name:
             return
 
@@ -87,6 +107,17 @@ class mc(object):
         self.env['sc_backup'] = os.path.join(self.env['bwd'], 'server.config')
 
     def _load_config(self, load_backup=False, generate_missing=False):
+        """
+        Loads server.properties and server.config for a given server.
+        With load_backup, /backup/ is referred to rather than /servers/.
+        generate_missing will create one and only one missing configuration
+        with hard-coded defaults. generate_missing currently should
+        only be utilized as a fallback when starting a server.
+
+        FUTURE: create a method that detects missing config files and
+        fills in user-approved values (even if default).        
+
+        """
         def load_sp():
             self.server_properties = config_file(self.env['sp_backup']) if load_backup else config_file(self.env['sp'])
 
@@ -119,6 +150,16 @@ class mc(object):
                     raise RuntimeError('No config files found: server.properties or server.config')               
 
     def _create_sp(self, startup_values={}):
+        """
+        Creates a server.properties file for the server given a dict.
+        startup_values is expected to have more options than
+        server.properties should have, so provided startup_values
+        are only used if they overwrite an option already
+        hardcoded in the defaults dict.
+
+        Expected startup_values should match format of "defaults".          
+
+        """
         defaults = {
             'server-port': 25565,
             'max-players': 20,
@@ -133,20 +174,39 @@ class mc(object):
             'server-ip': '0.0.0.0',
             }
 
+        sanitize_integers = set(['server-port',
+                                 'max-players',
+                                 'gamemode',
+                                 'difficulty'])
+
         sp = config_file()
         sp.use_sections(False)
         sp.filepath = self.env['sp']
 
-        for k in defaults:
-            if k in startup_values:
-                defaults[k] = startup_values[k]
+        for option in startup_values:
+            if option in defaults:
+                if option in sanitize_integers:
+                    try:
+                        defaults[option] = int(startup_values[option])
+                    except ValueError:
+                        continue
+                else:
+                    defaults[option] = startup_values[option]
 
-        for k,v in defaults.iteritems():
-            sp[k] = v
+        for key, value in defaults.iteritems():
+            sp[key] = value
 
         sp.commit()
 
     def _create_sc(self, startup_values={}):
+        """
+        Creates a server.config file for a server given a dict.
+
+        Expected startup_values should match format of "defaults".
+
+        FIXME: dictionary consolidation of startup_values not yet implemented.
+
+        """
         defaults = {
                 'crontabs': {
                     'archive': 'none',
@@ -157,29 +217,19 @@ class mc(object):
                     'start': False,
                     },
                 'java': {
-                    'java_tweaks': startup_values.get('java_tweaks', '-server'),
-                    'java_xmx': startup_values.get('java_xmx', 256),
-                    'java_xms': startup_values.get('java_xms', startup_values.get('java_xmx', 256)),
+                    'java_tweaks': '-server',
+                    'java_xmx': 256,
+                    'java_xms': 256,
                     }
             }
         
         sc = config_file()
         sc.filepath = self.env['sc']
 
-        sanitize_integers = set(['server-port', 'max-players', 'java_xmx', 'java_xms', 'gamemode', 'difficulty'])
-        for k,v in startup_values.iteritems():
-            if k in sanitize_integers:
-                try:
-                    startup_values[k] = int(v)
-                except ValueError:
-                    del startup_values[k]
-            else:
-                startup_values[k] = ''.join(c for c in startup_values[k] if c.isalnum)
-
         for section in defaults:
             sc.add_section(section)
-            for attribute in defaults[section]:
-                sc[section:attribute] = defaults[section][attribute]
+            for option in defaults[section]:
+                sc[section:option] = defaults[section][option]
 
         sc.commit()
 
