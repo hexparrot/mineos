@@ -120,32 +120,25 @@ class mc(object):
         """
         def load_sp():
             self.server_properties = config_file(self.env['sp_backup']) if load_backup else config_file(self.env['sp'])
+            return self.server_properties[:]
 
         def load_sc():
             self.server_config = config_file(self.env['sc_backup']) if load_backup else config_file(self.env['sc'])
+            return self.server_config[:]
 
         if hasattr(self, 'env'):
-            if not self.server_config:
-                try:
-                    load_sc()
-                except IOError:
-                    pass
-
-            if not self.server_properties:
-                try:
-                    load_sp()
-                except IOError:
-                    pass
+            load_sc()
+            load_sp()
 
             if generate_missing and not load_backup:
-                if self.server_properties and self.server_config:
+                if self.server_properties[:] and self.server_config[:]:
                     pass
-                elif self.server_properties and not self.server_config:
+                elif self.server_properties[:] and not self.server_config[:]:
                     self._create_sc()
-                    self._load_sc()
-                elif self.server_config and not self.server_properties:
+                    load_sc()
+                elif self.server_config[:] and not self.server_properties[:]:
                     self._create_sp()
-                    self._load_sp()
+                    load_sp()
                 else:
                     raise RuntimeError('No config files found: server.properties or server.config')               
 
