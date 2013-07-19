@@ -473,21 +473,21 @@ class mc(object):
 
     @property
     def port(self):
-        if not hasattr(self, '_port'):
-            try:
-                self._port = int(self.server_properties['server-port']) or 0
-            except AttributeError:
-                self._port = None
-        return self._port
+        try:
+            return int(self.server_properties['server-port'])
+        except (ValueError, KeyError):
+            ''' KeyError: server-port option does not exist
+                ValueError: value is not an integer
+                exception Note: when value is absent or not an int, vanilla
+                adds/replaces the value in server.properties to 25565'''
+            return 25565
 
     @property
     def ip_address(self):
-        if not hasattr(self, '_ip_address'):
-            try:
-                self._ip_address = self.server_properties['server-ip'] or '0.0.0.0'
-            except AttributeError:
-                self._ip_address = None
-        return self._ip_address
+        return self.server_properties['server-ip'::'0.0.0.0'] or '0.0.0.0'
+        ''' If server-ip is absent, vanilla starts at *,
+            which is effectively 0.0.0.0 and
+            also adds 'server-ip=' to server.properties.'''
 
     @property
     def memory(self):
