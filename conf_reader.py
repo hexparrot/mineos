@@ -106,43 +106,6 @@ class config_file(ConfigParser.SafeConfigParser):
                             else:
                                 return option.step
                 elif type(option.start) is int and type(option.stop) is int:
-            if type(option) in (int,str):
-                return dict(self.items(str(option)))
-            elif type(option) == slice:
-                if type(option.start) == str and type(option.stop) == str:
-                    try:
-                        return self.get(option.start, option.stop)
-                    except ConfigParser.NoSectionError:
-                        raise KeyError(str(option.start))
-                    except ConfigParser.NoOptionError:
-                        if option.step is None:
-                            raise KeyError(str(option.stop))
-                        else:
-                            return option.step
-                elif type(option.start) == str and option.stop is None:
-                    return dict(self.items(str(option.start)))
-                elif type(option.start) == int and type(option.stop) == int:
-                    return {sec:dict(self.items(sec)) for sec in self.sections()}
-            raise SyntaxError("config_file get syntax: "
-                              "var[:] or "
-                              "var['section'] or "
-                              "var['section':'option']")
-        else:
-            if type(option) in (int,str):
-                try:
-                    return self.get('sectionless', str(option))
-                except ConfigParser.NoOptionError:
-                    raise KeyError(str(option))
-            elif type(option) == slice:
-                if type(option.start) == str:
-                    try:
-                        return self.get('sectionless', str(option.start))
-                    except ConfigParser.NoOptionError:
-                        if option.step is None:
-                            raise KeyError(str(option.start))
-                        else:
-                            return option.step
-                elif type(option.start) == int and type(option.stop) == int:
                     return dict(self.items('sectionless'))
                 else:
                     raise TypeError('Inappropriate argument type: %s' % type(option))                        
