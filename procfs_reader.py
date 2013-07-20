@@ -24,12 +24,8 @@ for procfs in _PROCFS_PATHS:
     else:
         raise RuntimeError('No suitable procfs filesystem found')
 
-def pids():
-    """
-    Generator: all processes' pids
-
-    """    
-    return set([int(pid) for pid in os.listdir(_procfs) if pid.isdigit()])
+def pids():  
+    return set(int(pid) for pid in os.listdir(_procfs) if pid.isdigit())
 
 def pid_cmdline():
     """

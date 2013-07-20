@@ -46,7 +46,16 @@ class mc(object):
     def __exit__(self, type, value, traceback):
         pass
 
-    def _set_owner(self, owner):
+    def _set_owner(self,
+                   owner,
+                   base_directory='',
+                   container_directory=''):
+        """
+        Sets the instance to be executed by linux user 'owner'.
+        Sets self._homepath from linux-provided HOMEDIR,
+        effectively containing new directory creation.
+
+        """
         from pwd import getpwnam
 
         if owner is None:
@@ -54,22 +63,33 @@ class mc(object):
             owner = getuser()
 
         self._owner = getpwnam(owner)
-        self._homepath = self._owner.pw_dir
+        if base_directory:
+            self._homepath = os.path.join(base_directory, container_directory)
+        else:
+            self._homepath = os.path.join(self._owner.pw_dir, container_directory)
+            
         '''
-           _homepath will typically go to /home/user, but this can be further
-           organized by adding an additional subdirectory, such as:
-           self._homepath = os.path.join(self._owner.pwdir, 'minecraft')
-           Furthermore, this can be changed to something completely different:
-           self._homepath = '/var/games/minecraft'
-           Such a change, however, will likely encourage root:root ownership
-           to this directory and immediate subdirectories, as multiple users
-           will be all sharing the common directories:
-           /var/games/minecraft{servers,backup,archive}
+        self._homepath will typically go to /home/user,
+        but this can be modified by supplying base_directory, such as:
+        base_directory = '/var/games/minecraft'
+        container_directory = 'mineos'
+
+        resulting structure ==> /var/games/minecraft/mineos/{servers,backup,archive}
+
+        Supplying base_directory will likely require root/chown-ing base_directory.
+
+        FIXME: this functionality is not yet usable, as __init__ does not provide
+        base_directory or container_directory to this method.
         '''
         for p in self.DEFAULT_PATHS.values():
             self._make_directory(os.path.join(self._homepath, p))
 
     def _set_environment(self):
+        """
+        Sets the most common short-hand paths for the minecraft directories
+        and configuration files.
+
+        """
         if not self.server_name:
             return
 
@@ -87,38 +107,52 @@ class mc(object):
         self.env['sc_backup'] = os.path.join(self.env['bwd'], 'server.config')
 
     def _load_config(self, load_backup=False, generate_missing=False):
+        """
+        Loads server.properties and server.config for a given server.
+        With load_backup, /backup/ is referred to rather than /servers/.
+        generate_missing will create one and only one missing configuration
+        with hard-coded defaults. generate_missing currently should
+        only be utilized as a fallback when starting a server.
+
+        FUTURE: create a method that detects missing config files and
+        fills in user-approved values (even if default).        
+
+        """
         def load_sp():
             self.server_properties = config_file(self.env['sp_backup']) if load_backup else config_file(self.env['sp'])
+            return self.server_properties[:]
 
         def load_sc():
             self.server_config = config_file(self.env['sc_backup']) if load_backup else config_file(self.env['sc'])
+            return self.server_config[:]
 
         if hasattr(self, 'env'):
-            if not self.server_config:
-                try:
-                    load_sc()
-                except IOError:
-                    pass
-
-            if not self.server_properties:
-                try:
-                    load_sp()
-                except IOError:
-                    pass
+            load_sc()
+            load_sp()
 
             if generate_missing and not load_backup:
-                if self.server_properties and self.server_config:
+                if self.server_properties[:] and self.server_config[:]:
                     pass
-                elif self.server_properties and not self.server_config:
+                elif self.server_properties[:] and not self.server_config[:]:
                     self._create_sc()
-                    self._load_sc()
-                elif self.server_config and not self.server_properties:
+                    load_sc()
+                elif self.server_config[:] and not self.server_properties[:]:
                     self._create_sp()
-                    self._load_sp()
+                    load_sp()
                 else:
                     raise RuntimeError('No config files found: server.properties or server.config')               
 
     def _create_sp(self, startup_values={}):
+        """
+        Creates a server.properties file for the server given a dict.
+        startup_values is expected to have more options than
+        server.properties should have, so provided startup_values
+        are only used if they overwrite an option already
+        hardcoded in the defaults dict.
+
+        Expected startup_values should match format of "defaults".          
+
+        """
         defaults = {
             'server-port': 25565,
             'max-players': 20,
@@ -133,20 +167,33 @@ class mc(object):
             'server-ip': '0.0.0.0',
             }
 
+        sanitize_integers = set(['server-port',
+                                 'max-players',
+                                 'gamemode',
+                                 'difficulty'])
+
         sp = config_file()
         sp.use_sections(False)
         sp.filepath = self.env['sp']
 
-        for k in defaults:
-            if k in startup_values:
-                defaults[k] = startup_values[k]
+        for option in sanitize_integers:
+            try:
+                defaults[option] = int(startup_values[option])
+            except (KeyError, ValueError):
+                continue
 
-        for k,v in defaults.iteritems():
-            sp[k] = v
+        for key, value in defaults.iteritems():
+            sp[key] = value
 
         sp.commit()
 
     def _create_sc(self, startup_values={}):
+        """
+        Creates a server.config file for a server given a dict.
+        
+        Expected startup_values should match format of "defaults".
+        
+        """
         defaults = {
                 'crontabs': {
                     'archive': 'none',
@@ -157,45 +204,55 @@ class mc(object):
                     'start': False,
                     },
                 'java': {
-                    'java_tweaks': startup_values.get('java_tweaks', '-server'),
-                    'java_xmx': startup_values.get('java_xmx', 256),
-                    'java_xms': startup_values.get('java_xms', startup_values.get('java_xmx', 256)),
+                    'java_tweaks': '-server',
+                    'java_xmx': 256,
+                    'java_xms': 256,
                     }
             }
         
         sc = config_file()
         sc.filepath = self.env['sc']
 
-        sanitize_integers = set(['server-port', 'max-players', 'java_xmx', 'java_xms', 'gamemode', 'difficulty'])
-        for k,v in startup_values.iteritems():
-            if k in sanitize_integers:
-                try:
-                    startup_values[k] = int(v)
-                except ValueError:
-                    del startup_values[k]
-            else:
-                startup_values[k] = ''.join(c for c in startup_values[k] if c.isalnum)
+        sanitize_integers = set([('java', 'java_xmx'),
+                                 ('java', 'java_xms'),
+                                 ])
+
+        for section, option in sanitize_integers:
+            try:
+                defaults[section][option] = int(startup_values[section][option])
+            except (KeyError, ValueError):
+                continue
 
         for section in defaults:
             sc.add_section(section)
-            for attribute in defaults[section]:
-                sc[section:attribute] = defaults[section][attribute]
+            for option in defaults[section]:
+                sc[section:option] = defaults[section][option]
 
         sc.commit()
 
-    def create(self, properties={}):
+    def create(self, sc={}, sp={}):
+        """
+        Creates a server's directories and generates configurations.
+
+        """
         if self.server_name in self.list_servers():
             raise RuntimeWarning('Ignoring command {create}; server already exists.')
 
         for d in ('cwd', 'bwd', 'awd'):
             self._make_directory(self.env[d])
 
-        properties = properties if type(properties) is dict else {}
-        self._create_sc(properties)
-        self._create_sp(properties)
+        sc = sc if type(sc) is dict else {}
+        sp = sp if type(sp) is dict else {}
+        self._create_sc(sc)
+        self._create_sp(sp)
         self._load_config()
     
     def start(self):
+        """
+        Checks if a server is running on its bound IP:PORT
+        and if not, starts the screen+java instances.
+
+        """
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
@@ -215,6 +272,10 @@ class mc(object):
         self._command_direct(self.command_start, self.env['cwd'])
 
     def kill(self):
+        """
+        Kills a server instance by SIGTERM
+
+        """
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {kill}; no server by this name.')
         elif self.up:
@@ -225,6 +286,10 @@ class mc(object):
             raise RuntimeWarning('Ignoring command {kill}: no live process for server %s' % self.server_name)
 
     def archive(self):
+        """
+        Creates a timestamped, gzipped tarball of the server contents.
+
+        """
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
@@ -237,6 +302,10 @@ class mc(object):
             self._command_direct(self.command_archive, self.env['cwd'])
 
     def backup(self):
+        """
+        Creates an rdiff-backup of a server.
+
+        """
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
@@ -248,6 +317,10 @@ class mc(object):
             self._command_direct(self.command_backup, self.env['cwd'])
 
     def restore(self, steps='now', overwrite=False):
+        """
+        Overwrites the /servers/ version of a server with the /backup/.
+
+        """
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {restore}; no server by this name.')
         elif self.up:
@@ -266,17 +339,39 @@ class mc(object):
             raise RuntimeWarning('Ignoring command {restore}; Unable to locate backup')
 
     def prune(self, steps=None):
+        """
+        Removes old rdiff-backup data/metadata.
+
+        FIXME: Does not do any sanitization on steps.
+
+        """
         self._rdiff_backup_steps = steps
         self._command_direct(self.command_prune, self.env['bwd'])
 
     def _demote(self, user_uid, user_gid):
+        """
+        Closure for _command_direct and _command_stuff that changes
+        current user to that of self._owner.pd_{uid,gid}
+
+        Usually this will demote, when this script is running as root,
+        otherwise it will set its gid and uid to itself.
+
+        """
         def set_ids():
             os.setgid(user_gid)
             os.setuid(user_uid)
         return set_ids
 
     def _command_direct(self, command, working_directory):
-        #FIXME: still must implement sanitization, incl "../'
+        """
+        Opens a subprocess and executes a command as the user
+        specified in self._owner.
+
+        #FIXME: still must implement sanitization, including
+        uplevel traversal, i.e., "/../'
+
+        """
+        
         from subprocess import check_call
 
         self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
@@ -289,7 +384,12 @@ class mc(object):
                    preexec_fn=self._demote(self._owner.pw_uid,
                                            self._owner.pw_gid))
 
-    def _command_stuff(self, stuff_text):       
+    def _command_stuff(self, stuff_text):
+        """
+        Opens a subprocess and stuffs text to an open screen as the user
+        specified in self._owner.
+
+        """
         from subprocess import check_call
 
         if self.up:
@@ -306,6 +406,11 @@ class mc(object):
             raise RuntimeWarning('Server must be running to send screen commands')
 
     def _make_directory(self, path):
+        """
+        Creates a directory and chowns it to self._owner.
+        Fails silently.
+
+        """
         try:
             os.makedirs(path)
         except OSError:
@@ -316,6 +421,10 @@ class mc(object):
                      self._owner.pw_gid)
 
     def _create_logger(self):
+        """
+        Create a logger item.
+
+        """
         self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
 
         try:
@@ -333,10 +442,19 @@ class mc(object):
             self._logger.setLevel(logging.DEBUG)
 
     def _destroy_logger(self):
+        """
+        Closes the self._logger filehandler (is not implemented anywhere).
+
+        """
         if self._logger_fh:
             self._logger_fh.close()
 
     def valid_server_name(self, name):
+        """
+        Checks if a server name is only alphanumerics,
+        underscores or dots.
+
+        """
         valid_chars = set('%s%s_.' % (ascii_letters, digits))
 
         if name is None:
@@ -351,14 +469,26 @@ class mc(object):
 
     @property
     def server_name(self):
+        """
+        Returns the name of the server.
+
+        """
         return self._server_name
 
     @property
     def up(self):
+        """
+        Returns True if the server has a running process.
+
+        """
         return self.server_name in self.list_servers_up()
 
     @property
     def java_pid(self):
+        """
+        Returns the process id of the server's java instance.
+
+        """
         for server, java_pid, screen_pid in self._list_server_pids():
             if self.server_name == server:
                 return java_pid
@@ -367,6 +497,10 @@ class mc(object):
 
     @property
     def screen_pid(self):
+        """
+        Returns the process id of the server's screen instance.
+
+        """
         for server, java_pid, screen_pid in self._list_server_pids():
             if self.server_name == server:
                 return screen_pid
@@ -375,9 +509,19 @@ class mc(object):
 
     @property
     def command_start(self):
+        """
+        Returns the actual command used to start up a minecraft server.
+
+        FIXME: this does not currently implement profiles and depends
+        on the server jar being called 'minecraft_server.jar'.
+
+        This is a placeholder until it is decided whether profiles will
+        be using symlinks to /jars/[somefile.jar] or if they will
+        remain at the root.
+
+        """
         if not self.server_config:
             return None
-        #FIXME: this doesnt implement profiles--we want profiles!
 
         required_arguments = {
             'screen_name': 'mc-%s' % self.server_name,
@@ -386,7 +530,7 @@ class mc(object):
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks'],
-            'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.1.6.2.jar'),
+            'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.jar'),
             'jar_args': '-nogui'
             }
 
@@ -403,6 +547,11 @@ class mc(object):
 
     @property
     def command_archive(self):
+        """
+        Returns the actual command used to archive a minecraft server.
+        Note, this command should be run from the /servers/[servername] directory.
+
+        """
         from time import strftime
 
         required_arguments = {
@@ -412,7 +561,7 @@ class mc(object):
             'archive_filename': os.path.join(self.env['awd'],
                                              'server-%s_%s.tar.gz' % (self.server_name,
                                                                       strftime("%Y-%m-%d_%H:%M:%S"))),
-            'cwd': '.' #self.env['cwd']
+            'cwd': '.'
             }
 
 
@@ -425,6 +574,10 @@ class mc(object):
 
     @property
     def command_backup(self):
+        """
+        Returns the actual command used to rdiff-backup a minecraft server.
+
+        """
         required_arguments = {
             'nice': self.BINARY_PATHS['nice'],
             'nice_value': 10,
@@ -442,6 +595,10 @@ class mc(object):
 
     @property
     def command_restore(self):
+        """
+        Returns the actual command used to rdiff restore a minecraft server.
+
+        """
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
@@ -459,6 +616,10 @@ class mc(object):
 
     @property
     def command_prune(self):
+        """
+        Returns the actual command used to rdiff prune minecraft backups.
+
+        """
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else None,
@@ -473,24 +634,38 @@ class mc(object):
 
     @property
     def port(self):
-        if not hasattr(self, '_port'):
-            try:
-                self._port = int(self.server_properties['server-port']) or 0
-            except AttributeError:
-                self._port = None
-        return self._port
+        """
+        Returns the port value from server.properties at time of instance creation.
+
+        """
+        try:
+            return int(self.server_properties['server-port'])
+        except (ValueError, KeyError):
+            ''' KeyError: server-port option does not exist
+                ValueError: value is not an integer
+                exception Note: when value is absent or not an int, vanilla
+                adds/replaces the value in server.properties to 25565'''
+            return 25565
 
     @property
     def ip_address(self):
-        if not hasattr(self, '_ip_address'):
-            try:
-                self._ip_address = self.server_properties['server-ip'] or '0.0.0.0'
-            except AttributeError:
-                self._ip_address = None
-        return self._ip_address
+        """
+        Returns the ip address value from server.properties at time of instance creation.
+        This may return '0.0.0.0' even if that is not the value in the file,
+        because it is the effective value vanilla minecraft will run at.
+
+        """
+        return self.server_properties['server-ip'::'0.0.0.0'] or '0.0.0.0'
+        ''' If server-ip is absent, vanilla starts at *,
+            which is effectively 0.0.0.0 and
+            also adds 'server-ip=' to server.properties.'''
 
     @property
     def memory(self):
+        """
+        Returns the amount of memory the java instance is using (VmRSS)
+
+        """
         def sizeof_fmt(num):
             ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
                 http://stackoverflow.com/a/1094933/1191579
@@ -510,6 +685,11 @@ class mc(object):
     ''' generator expressions '''
 
     def list_servers(self):
+        """
+        Lists all directories in /servers/ and /backup/.
+        Note, not all listings may be servers.
+
+        """
         from itertools import chain
         return set(chain(
             self._list_subdirs(os.path.join(self._homepath, self.DEFAULT_PATHS['servers'])),
@@ -525,18 +705,30 @@ class mc(object):
             yield instance.server_name
 
     def list_ports_up(self):
+        """
+        Returns IP address and port used by all live, running instances of Minecraft.
+
+        """
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
         for server in self.list_servers_up():
             instance = mc(server)
             yield instance_connection(server, instance.port, instance.ip_address)
     
     def _list_subdirs(self, directory):
+        """
+        Returns a list of all subdirectories of a path.
+
+        """
         try:
             return os.walk(directory).next()[1]
         except StopIteration:
             return []
 
     def _list_files(self, directory):
+        """
+        Returns a list of all files in a path (no recursion).
+
+        """
         try:
             return os.walk(directory).next()[2]
         except StopIteration:
