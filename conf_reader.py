@@ -47,43 +47,99 @@ class config_file(ConfigParser.SafeConfigParser):
 
     def __getitem__(self, option):
         if self._use_sections:
-            if type(option) in (int,str):
-                return dict(self.items(str(option)))
-            elif type(option) == slice:
-                if type(option.start) == str and type(option.stop) == str:
-                    return self.get(option.start, option.stop)
-                elif type(option.start) == str and option.stop is None:
-                    return dict(self.items(str(option)))
-                elif type(option.start) == int and type(option.stop) == int:
-                    return {sec:dict(self.items(sec)) for sec in self.sections()}
-            raise SyntaxError("config_file get syntax: "
-                              "var[:] or "
-                              "var['section'] or "
-                              "var['section':'option']")
+            syntax_error = "config_file get syntax: " \
+                           "var[:] or " \
+                           "var['section'] or " \
+                           "var['section':'option']"
+            if type(option) is str:
+                return dict(self.items(option))
+            elif type(option) is slice:
+                if type(option.start) is str:
+                    if option.stop is None:
+                        try:
+                            return dict(self.items(option.start))
+                        except ConfigParser.NoSectionError:
+                            raise KeyError(option.start)
+                    elif type(option.stop) is str:
+                        try:
+                            return self.get(option.start, option.stop)
+                        except ConfigParser.NoSectionError:
+                            raise KeyError(option.start)
+                        except ConfigParser.NoOptionError:
+                            if option.step is None:
+                                raise KeyError(option.stop)
+                            else:
+                                return option.step
+                    else:
+                        raise TypeError('Inappropriate argument type: %s' % type(option.stop))
+                else:
+                    from sys import maxint
+                    if option.start is 0 and option.stop == maxint:
+                        return {sec:dict(self.items(sec)) for sec in self.sections()}
+                    else:
+                        raise TypeError('Inappropriate argument type: %s' % type(option.start))
+            else:
+                raise TypeError('Inappropriate argument type: %s' % type(option))
         else:
-            if type(option) in (int,str):
-                return self.get('sectionless', str(option))
-            elif type(option) == slice:
-                if type(option.start) == int and type(option.stop) == int:
+            syntax_error = "config_file get syntax: " \
+                           "var[:] or " \
+                           "var['option']"
+            if type(option) is str:
+                try:
+                    return self.get('sectionless', option)
+                except ConfigParser.NoOptionError:
+                    raise KeyError(option)
+            elif type(option) is slice:
+                if type(option.start) is str:
+                    if option.stop:
+                        raise SyntaxError(syntax_error)
+                    elif option.stop is None and option.step is None:
+                        raise SyntaxError(syntax_error)
+                    else:
+                        try:
+                            return self.get('sectionless', option.start)
+                        except ConfigParser.NoOptionError:
+                            #__getitem__ cannot return None as default argument
+                            #because it cannot distinguish between empty slice arg
+                            if option.step is None:
+                                raise KeyError(option.start)
+                            else:
+                                return option.step
+                elif type(option.start) is int and type(option.stop) is int:
                     return dict(self.items('sectionless'))
-            raise SyntaxError("config_file get syntax: "
-                              "var[:] or "
-                              "var['option']")
+                else:
+                    raise TypeError('Inappropriate argument type: %s' % type(option))                        
+            else:
+                raise TypeError('Inappropriate argument type: %s' % type(option))
 
     def __setitem__(self, option, value):
         if self._use_sections:
+            syntax_error = "config_file set syntax: " \
+                           "var['section':'option'] = val"
             if type(option) == slice:
-                if type(option.start) == str and type(option.stop) == str:
-                    self.set(option.start, option.stop, str(value))
-                    return
-            raise SyntaxError("config_file set syntax: "
-                              "var['section':'option'] = val")
+                if type(option.start) is not str:
+                    raise TypeError('Inappropriate argument type: %s' % type(option.start))
+                elif type(option.stop) is not str:
+                    raise TypeError('Inappropriate argument type: %s' % type(option.stop))
+                else:
+                    if type(value) in (str,int):
+                        try:
+                            self.set(option.start, option.stop, str(value))
+                        except ConfigParser.NoSectionError:
+                            raise KeyError(option.start)
+                    else:
+                        raise TypeError('Value may only be int or string')
+            else:
+                raise SyntaxError(syntax_error)
         else:
-            if type(option) in (int,str):
+            syntax_error = "config_file set syntax: " \
+                           "var['option'] = val"
+            if type(option) is str:
                 self.set('sectionless', str(option), str(value))
-                return
-            raise SyntaxError("config_file set syntax: "
-                              "var['section'] = val")
+            elif type(option) is slice:
+                raise SyntaxError(syntax_error)
+            else:
+                raise TypeError('Inappropriate argument type: %s' % type(option))
 
     def __delitem__(self, option):
         if self._use_sections:
