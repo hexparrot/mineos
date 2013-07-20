@@ -47,7 +47,6 @@ class config_file(ConfigParser.SafeConfigParser):
 
     def __getitem__(self, option):
         if self._use_sections:
-<<<<<<< HEAD
             syntax_error = "config_file get syntax: " \
                            "var[:] or " \
                            "var['section'] or " \
@@ -107,7 +106,6 @@ class config_file(ConfigParser.SafeConfigParser):
                             else:
                                 return option.step
                 elif type(option.start) is int and type(option.stop) is int:
-=======
             if type(option) in (int,str):
                 return dict(self.items(str(option)))
             elif type(option) == slice:
@@ -145,7 +143,6 @@ class config_file(ConfigParser.SafeConfigParser):
                         else:
                             return option.step
                 elif type(option.start) == int and type(option.stop) == int:
->>>>>>> 09c4860b9b9985919ae7dc832c061ada92a01ef4
                     return dict(self.items('sectionless'))
                 else:
                     raise TypeError('Inappropriate argument type: %s' % type(option))                        
