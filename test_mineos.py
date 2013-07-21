@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import time
 
 from mineos import mc
 from shutil import rmtree
@@ -68,19 +69,57 @@ class TestMineOS(unittest.TestCase):
         self.assertFalse(os.path.isfile(instance.env['sp']))
         self.assertFalse(os.path.isfile(instance.env['sc']))
         
-    def test_create_sp(self):
-        '''instance = mc('one')
+    def test_create(self):
+        instance = mc('one')
+        instance.create()
 
-        instance._create_sp()
-        self.assertTrue(os.path.isfile(instance.env['sp']))
-        self.assertFalse(instance.server_config[:])
+        for d in ('cwd','bwd','awd'):
+            self.assertTrue(os.path.exists(instance.env[d]))
 
-        self._load_config()
-        self.assertTrue(instance.server_config[:])'''
+        for f in ('sp', 'sc'):
+            self.assertTrue(os.path.isfile(instance.env[f]))
+
+        self.assertTrue(instance.server_properties[:])
+        self.assertTrue(instance.server_config[:])
+
+        self.assertTrue(instance.command_start)
+        self.assertTrue(instance.command_backup)
+        self.assertTrue(instance.command_archive)
+        self.assertTrue(instance.command_restore)
+        self.assertIsNone(instance.command_prune)
+
+    def test_change_config(self):
+        instance = mc('one')
+        instance.create()
+
+        with instance.server_properties as sp:
+            sp['server-ip'] = '127.0.0.1'
+
+        self.assertEqual(instance.server_properties['server-ip'], '127.0.0.1')
+        instance._load_config()
+        self.assertEqual(instance.server_properties['server-ip'], '127.0.0.1')
+
+        with instance.server_config as sc:
+            sc['java':'java_xmx'] = '1024'
+
+        self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
+        instance._load_config()
+        self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
+
+    def test_start(self):
         pass
-        
+        '''instance = mc('one')
+        instance.create()
 
+        self.assertEqual(instance.java_pid, 0)
+        self.assertEqual(instance.screen_pid, 0)
+        self.assertEqual(instance.memory, '0')
 
+        instance.start()
+        time.sleep(1)
+        expected to equal zero because no profile
+        self.assertEqual(instance.java_pid, 0)
+        self.assertEqual(instance.screen_pid, 0)'''
 
 
 if __name__ == "__main__":

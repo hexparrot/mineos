@@ -19,6 +19,7 @@ from distutils.spawn import find_executable
 
 class mc(object):
 
+    NICE_VALUE = 10
     DEFAULT_PATHS = {
         'servers': 'servers',
         'backup': 'backup',
@@ -26,7 +27,7 @@ class mc(object):
         'log': 'log'
         }
     BINARY_PATHS = {
-        'rdiff': find_executable('rdiff-backup'),
+        'rdiff-backup': find_executable('rdiff-backup'),
         'screen': find_executable('screen'),
         'java': find_executable('java'),
         'nice': find_executable('nice'),
@@ -177,20 +178,16 @@ class mc(object):
                                  'gamemode',
                                  'difficulty'])
 
-        sp = config_file()
-        sp.use_sections(False)
-        sp.filepath = self.env['sp']
-
         for option in sanitize_integers:
             try:
                 defaults[option] = int(startup_values[option])
             except (KeyError, ValueError):
                 continue
 
-        for key, value in defaults.iteritems():
-            sp[key] = value
-
-        sp.commit()
+        with config_file(self.env['sp']) as sp:
+            sp.use_sections(False)
+            for key, value in defaults.iteritems():
+                sp[key] = str(value)
 
     def _create_sc(self, startup_values={}):
         """
@@ -200,23 +197,20 @@ class mc(object):
         
         """
         defaults = {
-                'crontabs': {
-                    'archive': 'none',
-                    'backup': 'none',
-                    },
-                'onreboot': {
-                    'restore': False,
-                    'start': False,
-                    },
-                'java': {
-                    'java_tweaks': '-server',
-                    'java_xmx': 256,
-                    'java_xms': 256,
-                    }
+            'crontabs': {
+                'archive': 'none',
+                'backup': 'none',
+                },
+            'onreboot': {
+                'restore': False,
+                'start': False,
+                },
+            'java': {
+                'java_tweaks': '-server',
+                'java_xmx': 256,
+                'java_xms': 256,
+                }
             }
-        
-        sc = config_file()
-        sc.filepath = self.env['sc']
 
         sanitize_integers = set([('java', 'java_xmx'),
                                  ('java', 'java_xms'),
@@ -227,13 +221,12 @@ class mc(object):
                 defaults[section][option] = int(startup_values[section][option])
             except (KeyError, ValueError):
                 continue
-
-        for section in defaults:
-            sc.add_section(section)
-            for option in defaults[section]:
-                sc[section:option] = defaults[section][option]
-
-        sc.commit()
+                
+        with config_file(self.env['sc']) as sc:
+            for section in defaults:
+                sc.add_section(section)
+                for option in defaults[section]:
+                    sc[section:option] = str(defaults[section][option])
 
     def create(self, sc={}, sp={}):
         """
@@ -565,7 +558,7 @@ class mc(object):
         required_arguments = {
             'nice': self.BINARY_PATHS['nice'],
             'tar': self.BINARY_PATHS['tar'],
-            'nice_value': 10,
+            'nice_value': self.NICE_VALUE,
             'archive_filename': os.path.join(self.env['awd'],
                                              'server-%s_%s.tar.gz' % (self.server_name,
                                                                       strftime("%Y-%m-%d_%H:%M:%S"))),
@@ -588,7 +581,7 @@ class mc(object):
         """
         required_arguments = {
             'nice': self.BINARY_PATHS['nice'],
-            'nice_value': 10,
+            'nice_value': self.NICE_VALUE,
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
             'cwd': self.env['cwd'],
             'bwd': self.env['bwd']
@@ -630,9 +623,14 @@ class mc(object):
         """
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else None,
+            'steps': None,
             'bwd': self.env['bwd']
             }
+
+        try:
+            required_arguments['steps'] = self._rdiff_backup_steps
+        except AttributeError:
+            pass
 
         if None in required_arguments.values():
             self._logger.error('Cannot construct prune command; missing value')
