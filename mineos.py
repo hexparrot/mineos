@@ -34,7 +34,12 @@ class mc(object):
         }
     
     def __init__(self, server_name=None, owner=None):
-        self._server_name = server_name if self.valid_server_name(server_name) else None
+        if self.valid_server_name(server_name):
+            self._server_name = server_name
+        elif server_name is None:
+            self._server_name = server_name
+        else:
+            raise ValueError('Server contains invalid characters')
         self._set_owner(owner)
         self._create_logger()
         self._set_environment()
@@ -427,6 +432,9 @@ class mc(object):
         """
         self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
 
+        if not self.server_name:
+            return
+        
         try:
             self._logger = logging.getLogger(self.server_name)
             self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
@@ -457,7 +465,7 @@ class mc(object):
         """
         valid_chars = set('%s%s_.' % (ascii_letters, digits))
 
-        if name is None:
+        if not name:
             return False
         if any(c for c in name if c not in valid_chars):
             return False

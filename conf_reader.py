@@ -45,6 +45,12 @@ class config_file(ConfigParser.SafeConfigParser):
         except TypeError:
             pass #if filepath==None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.commit()
+
     def __getitem__(self, option):
         if self._use_sections:
             syntax_error = "config_file get syntax: " \

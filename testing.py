@@ -103,6 +103,9 @@ class TestMineOS(unittest.TestCase):
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
 
+        with config_file(fn) as conf:
+            pass
+
     def test_config_file_create_sections(self):
         directory = os.path.join(self._path, 'log')
         fn = os.path.join(directory,'server.config')
@@ -170,8 +173,11 @@ class TestMineOS(unittest.TestCase):
 
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
+
+        with config_file(fn) as conf:
+            pass
   
-    '''def test_bare_environment(self):
+    def test_bare_environment(self):
         for s in (None, '', False):
             instance = mc()
             self.assertIsNone(instance.server_name)
@@ -193,7 +199,7 @@ class TestMineOS(unittest.TestCase):
 
         for server_name in ok_names:
             instance = mc(server_name)
-            self.assertIsNotNone(instance.server_name)'''
+            self.assertIsNotNone(instance.server_name)
 
 if __name__ == "__main__":
     unittest.main()  
