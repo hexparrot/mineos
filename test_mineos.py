@@ -10,7 +10,8 @@ class TestMineOS(unittest.TestCase):
     def setUp(self):
         from pwd import getpwnam
         from getpass import getuser
-        self._path = getpwnam(getuser()).pw_dir
+        self._owner = getpwnam(getuser())
+        self._path = self._owner.pw_dir
 
     def tearDown(self):
         for d in ('servers', 'backup', 'archive', 'log'):
@@ -48,7 +49,40 @@ class TestMineOS(unittest.TestCase):
         for server_name in ok_names:
             instance = mc(server_name)
             self.assertIsNotNone(instance.server_name)
-            
+
+    def test_set_owner(self):
+        instance = mc('one')
+        
+        self.assertTrue(self._owner, instance._owner)
+
+    def test_load_config(self):
+        from conf_reader import config_file
+        
+        instance = mc('one')
+
+        self.assertIsInstance(instance.server_properties, config_file)
+        self.assertIsInstance(instance.server_properties[:], dict)
+        self.assertIsInstance(instance.server_config, config_file)
+        self.assertIsInstance(instance.server_config[:], dict)
+
+        self.assertFalse(os.path.isfile(instance.env['sp']))
+        self.assertFalse(os.path.isfile(instance.env['sc']))
+        
+    def test_create_sp(self):
+        '''instance = mc('one')
+
+        instance._create_sp()
+        self.assertTrue(os.path.isfile(instance.env['sp']))
+        self.assertFalse(instance.server_config[:])
+
+        self._load_config()
+        self.assertTrue(instance.server_config[:])'''
+        pass
+        
+
+
+
 
 if __name__ == "__main__":
     unittest.main()  
+
