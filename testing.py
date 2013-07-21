@@ -206,6 +206,12 @@ class TestMineOS(unittest.TestCase):
             with self.assertRaises(AttributeError):
                 instance.env
 
+    def test_binary_paths(self):
+        instance = mc()
+        for k,v in instance.BINARY_PATHS.iteritems():
+            self.assertIsInstance(v, str)
+            self.assertTrue(v)
+
     def test_valid_server_name(self):
         bad_names = ['this!', 'another,server', '"hello"',
                      '.minecraft', 'top^sirloin', 'me@you',
@@ -222,6 +228,7 @@ class TestMineOS(unittest.TestCase):
         for server_name in ok_names:
             instance = mc(server_name)
             self.assertIsNotNone(instance.server_name)
+            
 
 if __name__ == "__main__":
     unittest.main()  
