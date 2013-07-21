@@ -126,7 +126,7 @@ class config_file(ConfigParser.SafeConfigParser):
                         try:
                             self.set(option.start, option.stop, str(value))
                         except ConfigParser.NoSectionError:
-                            raise KeyError(option.start)
+                            raise KeyError('No section called %s' % option.start)
                     else:
                         raise TypeError('Value may only be int or string')
             else:
@@ -143,18 +143,29 @@ class config_file(ConfigParser.SafeConfigParser):
 
     def __delitem__(self, option):
         if self._use_sections:
-            if type(option) == slice:
-                if type(option.start) == str and type(option.stop) == str:
-                    self.remove_option(option.start, option.stop)
-                    return
-            raise SyntaxError("config_file del syntax: "
-                              "del var['section':'option']")
+            syntax_error = "config_file del syntax: " \
+                           "del var['section':'option']"
+            if type(option) is slice:
+                if type(option.start) is str and type(option.stop) is str:
+                    try:
+                        self.remove_option(option.start, option.stop)
+                    except ConfigParser.NoSectionError:
+                        raise KeyError(option.start)
+                elif type(option.start) is not str:
+                    raise TypeError('Inappropriate argument type: %s' % type(option.start))
+                else:
+                    raise SyntaxError(syntax_error)
+            else:
+                raise SyntaxError(syntax_error)
         else:
-            if type(option) in (int,str):
+            syntax_error = "config_file del syntax: " \
+                           "del var['option']"
+            if type(option) is str:
                 self.remove_option('sectionless', str(option))
-                return
-            raise SyntaxError("config_file del syntax: "
-                              "del var['option']")
+            elif type(option) is slice:
+                raise SyntaxError(syntax_error)
+            else:
+                raise TypeError('Inappropriate argument type: %s' % type(option))
 
     def commit(self):
         if self._use_sections:

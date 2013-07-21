@@ -85,6 +85,21 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(conf['aaa'::5], 5)
         self.assertEqual(conf['hello'::5], 5)
 
+        conf['throwaway'] = 'me'
+
+        with self.assertRaises(SyntaxError):
+            del conf['throwaway':]
+
+        with self.assertRaises(TypeError):
+            del conf[5]
+
+        with self.assertRaises(SyntaxError):
+            del conf['throwaway':'me']
+
+        del conf['throwaway']
+        del conf['111']
+        del conf['makebelieve']
+
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
 
@@ -135,6 +150,23 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.assertEquals(conf[5:15:20], 20)
 
+        with self.assertRaises(KeyError):
+            conf['s':'o'] = 'var'
+
+        conf.add_section('s')
+        conf['s':'o'] = 'var'
+
+        with self.assertRaises(SyntaxError):
+            del conf[5]
+
+        with self.assertRaises(SyntaxError):
+            del conf['aaaaa']
+
+        with self.assertRaises(SyntaxError):
+            del conf['s':]
+
+        del conf['s':'zzz']
+        del conf['s':'o']
 
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
