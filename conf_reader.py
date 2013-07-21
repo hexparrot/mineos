@@ -89,7 +89,8 @@ class config_file(ConfigParser.SafeConfigParser):
         else:
             syntax_error = "config_file get syntax: " \
                            "var[:] or " \
-                           "var['option']"
+                           "var['option'] or " \
+                           "var['option'::'defaultval']"
             if type(option) is str:
                 try:
                     return self.get('sectionless', option)
@@ -99,22 +100,21 @@ class config_file(ConfigParser.SafeConfigParser):
                 if type(option.start) is str:
                     if option.stop:
                         raise SyntaxError(syntax_error)
-                    elif option.stop is None and option.step is None:
-                        raise SyntaxError(syntax_error)
-                    else:
+                    elif option.stop is None and type(option.step) in (str,int):
                         try:
                             return self.get('sectionless', option.start)
                         except ConfigParser.NoOptionError:
                             #__getitem__ cannot return None as default argument
                             #because it cannot distinguish between empty slice arg
-                            if option.step is None:
-                                raise KeyError(option.start)
-                            else:
-                                return option.step
-                elif type(option.start) is int and type(option.stop) is int:
-                    return dict(self.items('sectionless'))
+                            return option.step
+                    else:
+                        raise SyntaxError(syntax_error)
                 else:
-                    raise TypeError('Inappropriate argument type: %s' % type(option))                        
+                    from sys import maxint
+                    if option.start is 0 and option.stop == maxint and option.step is None:
+                        return dict(self.items('sectionless'))
+                    else:
+                        raise SyntaxError(syntax_error)                     
             else:
                 raise TypeError('Inappropriate argument type: %s' % type(option))
 
@@ -123,18 +123,25 @@ class config_file(ConfigParser.SafeConfigParser):
             syntax_error = "config_file set syntax: " \
                            "var['section':'option'] = val"
             if type(option) == slice:
-                if type(option.start) is not str:
-                    raise TypeError('Inappropriate argument type: %s' % type(option.start))
-                elif type(option.stop) is not str:
-                    raise TypeError('Inappropriate argument type: %s' % type(option.stop))
-                else:
-                    if type(value) in (str,int):
+                if option.start is None or option.stop is None or option.step:
+                    raise SyntaxError(syntax_error)
+                elif type(option.start) is str and type(option.stop) is str:
+                    if type(value) in (int,str):
                         try:
                             self.set(option.start, option.stop, str(value))
                         except ConfigParser.NoSectionError:
                             raise KeyError('No section called %s' % option.start)
                     else:
-                        raise TypeError('Value may only be int or string')
+                        raise ValueError('Value may only be int or string') 
+                else:
+                    from sys import maxint
+                    if option.start is 0 and option.stop == maxint and option.step is None:
+                        raise SyntaxError(syntax_error)
+                    else:
+                        if type(option.start) is not str:
+                            raise TypeError('Inappropriate argument type: %s' % type(option.start))
+                        else:
+                            raise TypeError('Inappropriate argument type: %s' % type(option.stop))
             else:
                 raise SyntaxError(syntax_error)
         else:
@@ -152,7 +159,11 @@ class config_file(ConfigParser.SafeConfigParser):
             syntax_error = "config_file del syntax: " \
                            "del var['section':'option']"
             if type(option) is slice:
-                if type(option.start) is str and type(option.stop) is str:
+                if option.step is not None:
+                    raise SyntaxError(syntax_error)
+                elif option.stop is None:
+                    raise SyntaxError(syntax_error)
+                elif type(option.start) is str and type(option.stop) is str:
                     try:
                         self.remove_option(option.start, option.stop)
                     except ConfigParser.NoSectionError:
@@ -160,7 +171,8 @@ class config_file(ConfigParser.SafeConfigParser):
                 elif type(option.start) is not str:
                     raise TypeError('Inappropriate argument type: %s' % type(option.start))
                 else:
-                    raise SyntaxError(syntax_error)
+                    raise TypeError('Inappropriate argument type: %s' % type(option.stop))
+
             else:
                 raise SyntaxError(syntax_error)
         else:

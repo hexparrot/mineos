@@ -32,73 +32,70 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(TypeError):
             conf.commit()
 
-    def test_config_file_create_sectionless(self):
+    def test_config_file_sectionless_delitem(self):
         directory = os.path.join(self._path, 'log')
         fn = os.path.join(directory,'server.properties')
         os.makedirs(directory)
 
         conf = config_file(fn)
-        self.assertTrue(conf._use_sections)
         conf.use_sections(False)
         self.assertFalse(conf._use_sections)
-        
+
+        del conf['doesnotexist']
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':]
+        with self.assertRaises(SyntaxError): del conf['doesnotexist'::]
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':'stilldoesnt']
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':'stilldoesnt':]
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':'stilldoesnt':'default']
+
+        with self.assertRaises(TypeError): del conf[5]
+        with self.assertRaises(SyntaxError): del conf[5:]
+        with self.assertRaises(SyntaxError): del conf[5::]
+        with self.assertRaises(SyntaxError): del conf[5:5]
+        with self.assertRaises(SyntaxError): del conf[5:5:]
+        with self.assertRaises(SyntaxError): del conf[5:5:5]
+
+    def test_config_file_sectionless_getandset(self):
+        directory = os.path.join(self._path, 'log')
+        fn = os.path.join(directory,'server.properties')
+        os.makedirs(directory)
+
+        conf = config_file(fn)
+        conf.use_sections(False)
+        self.assertFalse(conf._use_sections)
+
         conf['first'] = 'hello'
+        conf['second'] = 150
+        conf['third'] = True
+
         self.assertEqual(conf['first'], 'hello')
-        self.assertEqual(conf[:], {'first':'hello'})
+        self.assertEqual(conf['second'], '150')
+        self.assertEqual(conf['third'], 'True')
 
-        with self.assertRaises(SyntaxError):
-            self.assertEqual(conf['first':], 'hello')
+        with self.assertRaises(SyntaxError): conf['first':]
+        with self.assertRaises(SyntaxError): conf['first'::]
+        with self.assertRaises(SyntaxError): conf[::]
+        with self.assertRaises(SyntaxError): conf['first':'second']
+        with self.assertRaises(SyntaxError): conf['first':'second':]
+        with self.assertRaises(SyntaxError): conf['first':'second']
+        with self.assertRaises(SyntaxError): conf['first':'second':]
+        with self.assertRaises(SyntaxError): conf['first':'second':'third']
 
-        conf['first'] = 'goodbye'
-        self.assertEqual(conf['first'], 'goodbye')
-        self.assertEqual(conf[:], {'first':'goodbye'})
+        self.assertEqual(conf['doesnotexist'::5], 5)
+        self.assertEqual(conf['doesnotexist'::'default'], 'default')
 
-        with self.assertRaises(SyntaxError):
-            self.assertEqual(conf['first':], 'goodbye')
-
-        conf['second'] = 'yes'
+        self.assertIsInstance(conf[:], dict)
         self.assertEqual(conf[:], {
-            'first':'goodbye',
-            'second':'yes'})
+            'first': 'hello',
+            'second': '150',
+            'third': 'True'
+            })
 
-        with self.assertRaises(TypeError):
-            conf[5] = 12
-
-        conf['5'] = 12
-        self.assertEqual(conf['5'], '12')        
-
-        with self.assertRaises(TypeError):
-            self.assertEqual(conf[5], '12')
-
-        with self.assertRaises(KeyError):
-            conf['third']
-
-        with self.assertRaises(SyntaxError):
-            conf['section':'option']
-
-        with self.assertRaises(SyntaxError):
-            conf['option':] = 5
-
-        with self.assertRaises(SyntaxError):
-            conf['option':] = 5
-
-        self.assertEqual(conf['aaa'::5], 5)
-        self.assertEqual(conf['hello'::5], 5)
-
-        conf['throwaway'] = 'me'
-
-        with self.assertRaises(SyntaxError):
-            del conf['throwaway':]
-
-        with self.assertRaises(TypeError):
-            del conf[5]
-
-        with self.assertRaises(SyntaxError):
-            del conf['throwaway':'me']
-
-        del conf['throwaway']
-        del conf['111']
-        del conf['makebelieve']
+        with self.assertRaises(TypeError): conf[5] = 12
+        with self.assertRaises(TypeError): conf[None] = 12
+        with self.assertRaises(TypeError): conf[{}] = 12
+        with self.assertRaises(TypeError): conf[()] = 12
+        with self.assertRaises(KeyError): conf['doesnotexist']
 
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
@@ -106,7 +103,7 @@ class TestMineOS(unittest.TestCase):
         with config_file(fn) as conf:
             pass
 
-    def test_config_file_create_sections(self):
+    def test_config_file_sections_delitem(self):
         directory = os.path.join(self._path, 'log')
         fn = os.path.join(directory,'server.config')
         os.makedirs(directory)
@@ -114,62 +111,87 @@ class TestMineOS(unittest.TestCase):
         conf = config_file(fn)
         self.assertTrue(conf._use_sections)
 
-        with self.assertRaises(KeyError):
-            conf['java':'java_xmx'] = '256'
+        with self.assertRaises(SyntaxError): del conf['doesnotexist']
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':]
+        with self.assertRaises(SyntaxError): del conf['doesnotexist'::]
+        with self.assertRaises(KeyError): del conf['doesnotexist':'stilldoesnt']
+        with self.assertRaises(KeyError): del conf['doesnotexist':'stilldoesnt':]
+        with self.assertRaises(SyntaxError): del conf['doesnotexist':'stilldoesnt':'default']
 
-        with self.assertRaises(KeyError):
-            conf['java':'java_xmx']
+        with self.assertRaises(SyntaxError): del conf[5]
+        with self.assertRaises(TypeError): del conf[5:]
+        with self.assertRaises(SyntaxError): del conf[5::]
+        with self.assertRaises(TypeError): del conf[5:5]
+        with self.assertRaises(TypeError): del conf[5:5:]
+        with self.assertRaises(SyntaxError): del conf[5:5:5]
+
+    def test_config_file_sections_getandset(self):
+        directory = os.path.join(self._path, 'log')
+        fn = os.path.join(directory,'server.config')
+        os.makedirs(directory)
+
+        conf = config_file(fn)
+        self.assertTrue(conf._use_sections)
+
+        with self.assertRaises(SyntaxError): conf['section'] = 'hello'
+        with self.assertRaises(SyntaxError): conf['section':] = 'hello'
+        with self.assertRaises(SyntaxError): conf['section'::] = 'hello'
+        with self.assertRaises(KeyError): conf['section':'option'] = 'hello'
+        with self.assertRaises(KeyError): conf['section':'option':] = 'hello'
+        with self.assertRaises(SyntaxError): conf[:] = 'hello'
+        with self.assertRaises(SyntaxError): conf[::] = 'hello'
+
+        with self.assertRaises(TypeError): conf[5:] = 'hello'
+        with self.assertRaises(TypeError): conf[5:5] = 'hello'
+        with self.assertRaises(SyntaxError): conf[5:5:5] = 'hello'
+        with self.assertRaises(TypeError): conf['5':5] = 'hello'
+        with self.assertRaises(TypeError): conf[5:'5'] = 'hello'
+        with self.assertRaises(SyntaxError): conf[5:'5':5] = 'hello'
+
+        self.assertIsInstance(conf[:], dict)
 
         conf.add_section('java')
-        conf['java':'java_xmx'] = '256'
-        self.assertEquals(conf['java':'java_xmx'], '256')
-        self.assertEquals(conf['java':], {'java_xmx':'256'})
-        self.assertEquals(conf[:], {
+        conf['java':'java_xmx'] = 512
+        conf['java':'java_xms'] = '256'
+        conf['java':'thirdcolon':] = 'present'
+
+        self.assertIsInstance(conf[:], dict)
+        self.assertEqual(conf[:], {
             'java': {
-                'java_xmx': '256',
+                'java_xmx': '512',
+                'java_xms': '256',
+                'thirdcolon': 'present'
                 }
             })
 
-        conf['java':'java_xmx'] = '512'
-        self.assertEquals(conf['java':'java_xmx'], '512')
-        self.assertEquals(conf['java':'java_path':'/usr/bin/java'], '/usr/bin/java')
-        self.assertEquals(conf['java':'java_xms': 512], 512)
+        self.assertIsInstance(conf['java'], dict)
+        self.assertEqual(conf['java'], {
+                'java_xmx': '512',
+                'java_xms': '256',
+                'thirdcolon': 'present'
+                })
 
-        conf.add_section('5')
-        conf['5':'word'] = 'bird'
+        self.assertEqual(conf['java':], {
+                'java_xmx': '512',
+                'java_xms': '256',
+                'thirdcolon': 'present'
+                })
 
-        with self.assertRaises(TypeError):
-            self.assertEquals(conf[5:'word'], 'bird')
+        self.assertEqual(conf['java':'java_xmx'], '512')
+        self.assertEqual(conf['java':'java_xms'], '256')
 
-        with self.assertRaises(TypeError):
-            conf['5':10] = 'amiss'
-            
-        with self.assertRaises(TypeError):
-            conf[5:10]
+        self.assertEqual(conf['java':'madeup':768], 768)
+        self.assertEqual(conf['java':'fake':'attr'], 'attr')
 
-        with self.assertRaises(TypeError):
-            conf['5':10]
+        with self.assertRaises(SyntaxError): conf['java':] = 'hello'
+        with self.assertRaises(SyntaxError): conf['java'::] = 'hello'
+        with self.assertRaises(SyntaxError): conf[::] = 'hello'
+        with self.assertRaises(SyntaxError): conf['java':'second':'third'] = 'hello'
 
-        with self.assertRaises(TypeError):
-            self.assertEquals(conf[5:15:20], 20)
-
-        with self.assertRaises(KeyError):
-            conf['s':'o'] = 'var'
-
-        conf.add_section('s')
-        conf['s':'o'] = 'var'
-
-        with self.assertRaises(SyntaxError):
-            del conf[5]
-
-        with self.assertRaises(SyntaxError):
-            del conf['aaaaa']
-
-        with self.assertRaises(SyntaxError):
-            del conf['s':]
-
-        del conf['s':'zzz']
-        del conf['s':'o']
+        with self.assertRaises(SyntaxError): conf[5] = 12
+        with self.assertRaises(SyntaxError): conf[None] = 12
+        with self.assertRaises(SyntaxError): conf[{}] = 12
+        with self.assertRaises(SyntaxError): conf[()] = 12
 
         conf.commit()
         self.assertTrue(os.path.isfile(fn))
