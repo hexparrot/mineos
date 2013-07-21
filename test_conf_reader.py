@@ -65,9 +65,11 @@ class TestConfigFile(unittest.TestCase):
         self.assertEqual(conf['second'], '150')
         self.assertEqual(conf['third'], 'True')
 
-        with self.assertRaises(SyntaxError): conf['first':]
-        with self.assertRaises(SyntaxError): conf['first'::]
-        with self.assertRaises(SyntaxError): conf[::]
+        self.assertEqual(conf['first':], 'hello')
+        self.assertEqual(conf['first'::], 'hello')
+
+        with self.assertRaises(TypeError): conf[::]
+        with self.assertRaises(KeyError): conf['doesnotexist']
         with self.assertRaises(SyntaxError): conf['first':'second']
         with self.assertRaises(SyntaxError): conf['first':'second':]
         with self.assertRaises(SyntaxError): conf['first':'second']
@@ -88,8 +90,7 @@ class TestConfigFile(unittest.TestCase):
         with self.assertRaises(TypeError): conf[None] = 12
         with self.assertRaises(TypeError): conf[{}] = 12
         with self.assertRaises(TypeError): conf[()] = 12
-        with self.assertRaises(KeyError): conf['doesnotexist']
-
+        
         conf.commit()
         self.assertTrue(os.path.isfile(self.CONFIG_FILES['sectionless']))
 
@@ -179,8 +180,8 @@ class TestConfigFile(unittest.TestCase):
         with self.assertRaises(TypeError): conf[::] = 'hello'
         with self.assertRaises(SyntaxError): conf['java':'second':'third'] = 'hello'
 
-        self.assertIsNone(conf['java':'madeup'])
-        self.assertIsNone(conf['java':'madeup':])
+        with self.assertRaises(KeyError): conf['java':'madeup']
+        with self.assertRaises(KeyError): conf['java':'madeup':]
 
         with self.assertRaises(SyntaxError): conf[5] = 12
         with self.assertRaises(SyntaxError): conf[None] = 12

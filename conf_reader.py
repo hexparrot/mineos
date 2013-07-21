@@ -70,7 +70,12 @@ class config_file(ConfigParser.SafeConfigParser):
                     except ConfigParser.NoSectionError:
                         raise KeyError(option.start)
                     except ConfigParser.NoOptionError:
-                        return option.step
+                        #__getitem__ cannot return None as default argument
+                        #because it cannot distinguish between empty slice arg
+                        if option.step is not None:
+                            return option.step
+                        else:
+                            raise KeyError(option.start)
                 elif type(option.start) is str and \
                      option.stop is None and \
                      option.step is None:
@@ -99,26 +104,28 @@ class config_file(ConfigParser.SafeConfigParser):
                 except ConfigParser.NoOptionError:
                     raise KeyError(option)
             elif type(option) is slice:
-                if type(option.start) is str:
-                    if option.stop:
-                        raise SyntaxError(syntax_error)
-                    elif option.stop is None and type(option.step) in (str,int):
-                        try:
-                            return self.get('sectionless', option.start)
-                        except ConfigParser.NoOptionError:
-                            #__getitem__ cannot return None as default argument
-                            #because it cannot distinguish between empty slice arg
+                if type(option.start) is str and option.stop is None:
+                    try:
+                        return self.get('sectionless', option.start)
+                    except ConfigParser.NoOptionError:
+                        #__getitem__ cannot return None as default argument
+                        #because it cannot distinguish between empty slice arg
+                        if option.step is not None:
                             return option.step
+                        else:
+                            raise KeyError(option.start)
                     else:
                         raise SyntaxError(syntax_error)
                 else:
                     from sys import maxint
                     if option.start is 0 and option.stop == maxint and option.step is None:
                         return dict(self.items('sectionless'))
+                    elif option.stop is not None:
+                        raise SyntaxError(syntax_error)
                     else:
-                        raise SyntaxError(syntax_error)                     
+                        raise TypeError(syntax_error)                     
             else:
-                raise TypeError('Inappropriate argument type: %s' % type(option))
+                raise TypeError(syntax_error)
 
     def __setitem__(self, option, value):
         if self._use_sections:
