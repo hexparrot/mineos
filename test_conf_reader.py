@@ -119,12 +119,12 @@ class TestConfigFile(unittest.TestCase):
         self.assertTrue(conf._use_sections)
 
         with self.assertRaises(SyntaxError): conf['section'] = 'hello'
-        with self.assertRaises(SyntaxError): conf['section':] = 'hello'
-        with self.assertRaises(SyntaxError): conf['section'::] = 'hello'
+        with self.assertRaises(TypeError): conf['section':] = 'hello'
+        with self.assertRaises(TypeError): conf['section'::] = 'hello'
         with self.assertRaises(KeyError): conf['section':'option'] = 'hello'
         with self.assertRaises(KeyError): conf['section':'option':] = 'hello'
-        with self.assertRaises(SyntaxError): conf[:] = 'hello'
-        with self.assertRaises(SyntaxError): conf[::] = 'hello'
+        with self.assertRaises(TypeError): conf[:] = 'hello'
+        with self.assertRaises(TypeError): conf[::] = 'hello'
 
         with self.assertRaises(TypeError): conf[5:] = 'hello'
         with self.assertRaises(TypeError): conf[5:5] = 'hello'
@@ -132,6 +132,12 @@ class TestConfigFile(unittest.TestCase):
         with self.assertRaises(TypeError): conf['5':5] = 'hello'
         with self.assertRaises(TypeError): conf[5:'5'] = 'hello'
         with self.assertRaises(SyntaxError): conf[5:'5':5] = 'hello'
+
+        with self.assertRaises(KeyError): conf['fakesection']
+        with self.assertRaises(KeyError): conf['fakesection':]
+        with self.assertRaises(KeyError): conf['fakesection'::]
+        with self.assertRaises(KeyError): conf['fakesection':'fake']
+        with self.assertRaises(KeyError): conf['fakesection':'fake':]
 
         self.assertIsInstance(conf[:], dict)
 
@@ -168,10 +174,13 @@ class TestConfigFile(unittest.TestCase):
         self.assertEqual(conf['java':'madeup':768], 768)
         self.assertEqual(conf['java':'fake':'attr'], 'attr')
 
-        with self.assertRaises(SyntaxError): conf['java':] = 'hello'
-        with self.assertRaises(SyntaxError): conf['java'::] = 'hello'
-        with self.assertRaises(SyntaxError): conf[::] = 'hello'
+        with self.assertRaises(TypeError): conf['java':] = 'hello'
+        with self.assertRaises(TypeError): conf['java'::] = 'hello'
+        with self.assertRaises(TypeError): conf[::] = 'hello'
         with self.assertRaises(SyntaxError): conf['java':'second':'third'] = 'hello'
+
+        self.assertIsNone(conf['java':'madeup'])
+        self.assertIsNone(conf['java':'madeup':])
 
         with self.assertRaises(SyntaxError): conf[5] = 12
         with self.assertRaises(SyntaxError): conf[None] = 12

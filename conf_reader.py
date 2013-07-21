@@ -56,36 +56,38 @@ class config_file(ConfigParser.SafeConfigParser):
             syntax_error = "config_file get syntax: " \
                            "var[:] or " \
                            "var['section'] or " \
-                           "var['section':'option']"
+                           "var['section':'option'] or " \
+                           "var['section':'option':'defaultval']"
             if type(option) is str:
-                return dict(self.items(option))
+                try:
+                    return dict(self.items(option))
+                except ConfigParser.NoSectionError:
+                    raise KeyError("No section: '%s'" % option)
             elif type(option) is slice:
-                if type(option.start) is str:
-                    if option.stop is None:
-                        try:
-                            return dict(self.items(option.start))
-                        except ConfigParser.NoSectionError:
-                            raise KeyError(option.start)
-                    elif type(option.stop) is str:
-                        try:
-                            return self.get(option.start, option.stop)
-                        except ConfigParser.NoSectionError:
-                            raise KeyError(option.start)
-                        except ConfigParser.NoOptionError:
-                            if option.step is None:
-                                raise KeyError(option.stop)
-                            else:
-                                return option.step
-                    else:
-                        raise TypeError('Inappropriate argument type: %s' % type(option.stop))
+                if type(option.start) is str and type(option.stop) is str:
+                    try:
+                        return self.get(option.start, option.stop)
+                    except ConfigParser.NoSectionError:
+                        raise KeyError(option.start)
+                    except ConfigParser.NoOptionError:
+                        return option.step
+                elif type(option.start) is str and \
+                     option.stop is None and \
+                     option.step is None:
+                    try:
+                        return dict(self.items(option.start))
+                    except ConfigParser.NoSectionError:
+                        raise KeyError("No section: '%s'" % option.start)
                 else:
                     from sys import maxint
                     if option.start is 0 and option.stop == maxint:
                         return {sec:dict(self.items(sec)) for sec in self.sections()}
+                    elif type(option.start) is not str:
+                        raise TypeError('First argument must be string not %s' % type(option.start))
                     else:
-                        raise TypeError('Inappropriate argument type: %s' % type(option.start))
+                        raise TypeError('Second argument must be string not %s' % type(option.stop))
             else:
-                raise TypeError('Inappropriate argument type: %s' % type(option))
+                raise TypeError(syntax_error)
         else:
             syntax_error = "config_file get syntax: " \
                            "var[:] or " \
@@ -122,26 +124,25 @@ class config_file(ConfigParser.SafeConfigParser):
         if self._use_sections:
             syntax_error = "config_file set syntax: " \
                            "var['section':'option'] = val"
-            if type(option) == slice:
-                if option.start is None or option.stop is None or option.step:
+            if type(option) is slice:
+                if option.step is not None:
                     raise SyntaxError(syntax_error)
                 elif type(option.start) is str and type(option.stop) is str:
-                    if type(value) in (int,str):
-                        try:
-                            self.set(option.start, option.stop, str(value))
-                        except ConfigParser.NoSectionError:
-                            raise KeyError('No section called %s' % option.start)
-                    else:
-                        raise ValueError('Value may only be int or string') 
-                else:
-                    from sys import maxint
-                    if option.start is 0 and option.stop == maxint and option.step is None:
+                    if option.step:
                         raise SyntaxError(syntax_error)
                     else:
-                        if type(option.start) is not str:
-                            raise TypeError('Inappropriate argument type: %s' % type(option.start))
+                        if type(value) in (int,str):
+                            try:
+                                self.set(option.start, option.stop, str(value))
+                            except ConfigParser.NoSectionError:
+                                raise KeyError('No section called %s' % option.start)
                         else:
-                            raise TypeError('Inappropriate argument type: %s' % type(option.stop))
+                            raise ValueError('Value may only be int or string')
+                else:
+                    if type(option.start) is not str:
+                        raise TypeError('First argument must be string not %s' % type(option.start))
+                    else:
+                        raise TypeError('Second argument must be string not %s' % type(option.stop))
             else:
                 raise SyntaxError(syntax_error)
         else:
