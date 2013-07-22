@@ -25,10 +25,12 @@ class mc(object):
         'servers': 'servers',
         'backup': 'backup',
         'archive': 'archive',
-        'log': 'log'
+        'log': 'log',
+        'profiles': 'profiles'
         }
     BINARY_PATHS = {
         'rdiff-backup': find_executable('rdiff-backup'),
+        'rsync': find_executable('rsync'),
         'screen': find_executable('screen'),
         'java': find_executable('java'),
         'nice': find_executable('nice'),
@@ -109,6 +111,8 @@ class mc(object):
         self.env['bwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['backup'], self.server_name)
         self.env['awd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['archive'], self.server_name)
         self.env['lwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['log'], self.server_name)
+        self.env['pwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['profiles'])
+        self.env['pc'] = os.path.join(self._homepath, self.DEFAULT_PATHS['profiles'], 'profile.config')
         self.env['sp'] = os.path.join(self.env['cwd'], 'server.properties')
         self.env['sc'] = os.path.join(self.env['cwd'], 'server.config')
         self.env['sp_backup'] = os.path.join(self.env['bwd'], 'server.properties')
@@ -134,9 +138,14 @@ class mc(object):
             self.server_config = config_file(self.env['sc_backup']) if load_backup else config_file(self.env['sc'])
             return self.server_config[:]
 
+        def load_profiles():
+            self.profile_config = config_file(self.env['pc'])
+            return self.profile_config[:]
+
         if hasattr(self, 'env'):
             load_sc()
             load_sp()
+            load_profiles()
 
             if generate_missing and not load_backup:
                 if self.server_properties[:] and self.server_config[:]:
@@ -199,6 +208,9 @@ class mc(object):
         
         """
         defaults = {
+            'minecraft': {
+                'profile': '',
+                },
             'crontabs': {
                 'archive': 'none',
                 'backup': 'none',
@@ -353,6 +365,39 @@ class mc(object):
         """
         self._rdiff_backup_steps = steps
         self._command_direct(self.command_prune, self.env['bwd'])
+
+    def update_profile(self, profile_dict, do_download=True):
+
+        with self.profile_config as profs:
+            from ConfigParser import DuplicateSectionError
+            
+            try:
+                profs.add_section(profile_dict['name'])
+            except DuplicateSectionError:
+                pass
+            
+            for option, value in profile_dict.iteritems():
+                if option != 'name':
+                    profs[profile_dict['name']:option] = value
+
+        self._make_directory(os.path.join(self.env['pwd'],
+                                          profile_dict['name']))
+
+        if profile_dict['type'] == 'standard_jar':
+            from shutil import move
+
+            if profile_dict['action'] == 'download' and do_download:
+                self._update_file(profile_dict['url'],
+                                  self.env['pwd'],
+                                  profile_dict['save_as'])
+            
+                move(os.path.join(self.env['pwd'],
+                                  profs[profile_dict['name']:'save_as']),
+                     os.path.join(self.env['pwd'],
+                                  profile_dict['name'],
+                                  profs[profile_dict['name']:'run_as']))
+        else:
+            raise NotImplementedError
 
     def _demote(self, user_uid, user_gid):
         """
@@ -658,6 +703,55 @@ class mc(object):
         else:
             self._previous_arguments = required_arguments
             return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
+
+    @property
+    def command_apply_profile(self):
+        """
+        Returns the command to copy profile files
+        into the live working directory.
+
+        """       
+        required_arguments = {
+            'rsync': self.BINARY_PATHS['rsync'],
+            'profile_dir': os.path.join(self.env['pwd'], self.profile),
+            'exclude': None,
+            'cwd': '.'
+            }
+
+        files_to_exclude_str = self.profile_config[self.profile:'ignore':'']
+        if ',' in files_to_exclude_str:
+            files = [f.strip() for f in files_to_exclude_str.split(',')]
+        else:
+            files = [f.strip() for f in files_to_exclude_str.split()]
+        required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in apply_profile command; %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rsync)s -a %(exclude)s %(profile_dir)s/ %(cwd)s' % required_arguments
+
+    @property
+    def profile(self):
+        """
+        Returns the profile the server is set to
+
+        """
+        return self.server_config['minecraft':'profile'] or None
+
+    @profile.setter
+    def profile(self, value):
+        with self.server_config as sc:
+            from ConfigParser import DuplicateSectionError
+            
+            try:
+                sc.add_section('minecraft')
+            except DuplicateSectionError:
+                pass
+            
+            sc['minecraft':'profile'] = str(value).strip()
+            
+        self._command_direct(self.command_apply_profile, self.env['cwd'])  
 
     @property
     def port(self):
