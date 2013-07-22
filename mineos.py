@@ -258,11 +258,11 @@ class mc(object):
         
         if self.port in [s.port for s in self.list_ports_up()]:
             if (self.port, self.ip_address) in [(s.port, s.ip_address) for s in self.list_ports_up()]:
-                raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
+                raise RuntimeError('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
             elif self.ip_address == '0.0.0.0':
-                raise RuntimeWarning('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
+                raise RuntimeError('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
             elif any(s for s in self.list_ports_up() if s.ip_address == '0.0.0.0'):
-                raise RuntimeWarning('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
+                raise RuntimeError('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
         self._logger.info('Executing command {start}; %s@%s:%s', self.server_name, self.ip_address, self.port)
@@ -324,7 +324,7 @@ class mc(object):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {restore}; no server by this name.')
         elif self.up:
-            raise RuntimeWarning('Ignoring command {restore}; server %s currently up' % self.server_name)
+            raise RuntimeError('Ignoring command {restore}; server %s currently up' % self.server_name)
         
         self._load_config(load_backup=True)
 
@@ -340,7 +340,7 @@ class mc(object):
 
             self._load_config(generate_missing=True)
         else:
-            raise RuntimeWarning('Ignoring command {restore}; Unable to locate backup')
+            raise RuntimeError('Ignoring command {restore}; Unable to locate backup')
 
     def prune(self, steps=None):
         """
@@ -408,7 +408,7 @@ class mc(object):
                                                self._owner.pw_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
-            raise RuntimeWarning('Server must be running to send screen commands')
+            raise RuntimeError('Server must be running to send screen commands')
 
     def _make_directory(self, path):
         """
@@ -553,8 +553,7 @@ class mc(object):
             required_arguments['java_xms'] = self.server_config['java':'java_xms']
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct start command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in start command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(screen)s -dmS %(screen_name)s ' \
@@ -582,8 +581,7 @@ class mc(object):
 
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct archive command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in archive command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
@@ -604,8 +602,7 @@ class mc(object):
             }
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct backup command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in backup command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
@@ -626,8 +623,7 @@ class mc(object):
             }
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct restore command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
@@ -651,8 +647,7 @@ class mc(object):
             pass
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct prune command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in prune command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
@@ -669,8 +664,7 @@ class mc(object):
             }
 
         if None in required_arguments.values():
-            self._logger.error('Cannot construct prune command; missing value')
-            self._logger.error(str(required_arguments))
+            raise RuntimeError('Missing value in list_increments command; %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
             return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
