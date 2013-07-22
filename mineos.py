@@ -319,6 +319,8 @@ class mc(object):
         Overwrites the /servers/ version of a server with the /backup/.
 
         """
+        from subprocess import CalledProcessError
+        
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {restore}; no server by this name.')
         elif self.up:
@@ -330,7 +332,11 @@ class mc(object):
             self._rdiff_backup_steps = steps
             self._rdiff_backup_force = '--force' if overwrite else ''
 
-            self._command_direct(self.command_restore, self.env['cwd'])
+            self._make_directory(self.env['cwd'])
+            try:
+                self._command_direct(self.command_restore, self.env['cwd'])
+            except CalledProcessError as e:
+                raise RuntimeError(e.message)
 
             self._load_config(generate_missing=True)
         else:

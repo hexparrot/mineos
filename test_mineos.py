@@ -88,6 +88,20 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(instance.command_restore)
         self.assertIsNone(instance.command_prune)
 
+        instance = mc('two')
+        instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
+
+        self.assertEqual(instance.server_properties['server-port'], '27000')
+        self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
+
+        instance = mc('three')
+        instance.create({'java':{'java_bogus': 'wow!'}}, {'bogus-value':'abcd'})
+
+        with self.assertRaises(KeyError):
+            instance.server_properties['bogus-value']
+        with self.assertRaises(KeyError):
+            instance.server_config['java':'java_bogus']
+
     def test_change_config(self):
         instance = mc('one')
         instance.create()
@@ -132,6 +146,21 @@ class TestMineOS(unittest.TestCase):
         instance.backup()
         self.assertTrue(os.path.exists(os.path.join(instance.env['bwd'], 'rdiff-backup-data')))
 
+    def test_restore(self):
+        instance = mc('one')
+        instance.create()
+
+        with self.assertRaises(RuntimeError): instance.restore()
+        instance.backup()
+
+        rmtree(instance.env['cwd'])
+        self.assertFalse(os.path.exists(instance.env['cwd']))
+        instance.restore()
+        self.assertTrue(os.path.exists(instance.env['cwd']))
+
+        time.sleep(1)
+        instance.restore(overwrite=True)
+
     def test_list_increments(self):
         instance = mc('one')
         instance.create()
@@ -147,12 +176,12 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(len(instance.list_increments().increments), 0)
         self.assertTrue(instance.list_increments().current_mirror)
 
-        with instance.server_properties as sp:
-            sp['newoption'] = 5
+        os.remove(instance.env['sp'])
 
         time.sleep(1)
         instance.backup()            
         self.assertEqual(len(instance.list_increments().increments), 1)
+
 
 
 if __name__ == "__main__":
