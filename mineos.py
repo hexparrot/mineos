@@ -12,6 +12,7 @@ __email__ = "wdchromium@gmail.com"
 import os
 import logging
 import procfs_reader
+import urllib2
 from conf_reader import config_file
 from collections import namedtuple
 from string import ascii_letters, digits
@@ -409,21 +410,6 @@ class mc(object):
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeError('Server must be running to send screen commands')
-
-    def _make_directory(self, path):
-        """
-        Creates a directory and chowns it to self._owner.
-        Fails silently.
-
-        """
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
-        else:
-            os.chown(path,
-                     self._owner.pw_uid,
-                     self._owner.pw_gid)
 
     def _create_logger(self):
         """
@@ -834,4 +820,135 @@ class mc(object):
                     break
             yield instance_pids(serv, java, screen)
 
-            
+# chowning functions
+
+    def _make_directory(self, path, do_raise=False):
+        """
+        Creates a directory and chowns it to self._owner.
+        Fails silently.
+
+        """
+        try:
+            os.makedirs(path)
+        except OSError:
+            if do_raise:
+                raise
+        else:
+            os.chown(path,
+                     self._owner.pw_uid,
+                     self._owner.pw_gid)
+
+    def _update_file(self, url, root_path, dest_filename):
+        """
+        Downloads a file and checks md5sum hash versus any existing file.
+        Keyword arguments:
+        url -- url of resource
+        root_path -- base directory where file should be saved
+        dest_filename -- ultimate filename of downloaded resource
+        
+        Returns:
+        True: if download is successful and retained
+        False: if download is successful and discarded
+        
+        Raises:
+        IOError: internet non-connectivity or overwrite failure
+        
+        """
+        from urllib import FancyURLopener
+        
+        def md5sum(filepath):
+            from hashlib import md5
+            with open(filepath, 'rb') as infile:
+                m = md5()
+                m.update(infile.read())
+                return m.hexdigest()
+
+        self._make_directory(root_path)
+        old_path = os.path.join(root_path, dest_filename)
+        try:
+            old_md5 = md5sum(old_path)
+        except IOError:
+            old_md5 = None #dest_file does not exist to md5
+
+        new_path = os.path.join(root_path, '%s.new' % dest_filename)
+
+        try:
+            FancyURLopener().retrieve(url, new_path)
+        except IOError:
+            raise IOError('Invalid download URL or no internet connection, aborting download...')
+        else:
+            new_md5 = md5sum(new_path)
+
+        if new_md5 != old_md5:
+            from shutil import move
+            try:
+                os.chown(new_path,
+                         self._owner.pw_uid,
+                         self._owner.pw_gid)
+                move(new_path, old_path)
+            except IOError:
+                raise IOError('move() activity failed')
+            else:
+                #Existing file overwritten with new copy
+                return True
+        else:
+            try:
+                os.unlink(new_path)
+            except IOError:
+                raise IOError('unlink() activity failed')
+            else:
+                return False
+
+    def copytree(self, src, dst, ignore=None):
+        """
+        Recursively copies a directory and its contents.
+        Keyword Arguments:
+        src -- source directory
+        dst -- destination directory
+        ignore -- shutil.ignore_patterns object
+        Modified version of http://docs.python.org/library/shutil.html
+        
+        """
+        from shutil import copystat, copy2, Error
+        import errno
+
+        def mkdir_p(path):
+            try:
+                self._make_directory(path, do_raise=True)
+            except OSError as exc:
+                if exc.errno == errno.EEXIST:
+                    pass
+                else:
+                    raise
+        
+        names = os.listdir(src)
+        mkdir_p(dst)
+        
+        errors = []
+        if ignore is not None:
+            ignored_names = ignore(src, names)
+        else:
+            ignored_names = set()
+
+        for name in names:
+            if name in ignored_names:
+                continue
+            srcname = os.path.join(src, name)
+            dstname = os.path.join(dst, name)
+            try:
+                if os.path.isdir(srcname):
+                    copytree(srcname, dstname, ignore)
+                else:
+                    copy2(srcname, dstname)
+                    os.chown(path,
+                             self._owner.pw_uid,
+                             self._owner.pw_gid)
+            except (IOError, os.error) as why:
+                errors.append((srcname, dstname, str(why)))
+            except Error as err:
+                errors.extend(err.args[0])
+        try:
+            copystat(src, dst)
+        except OSError as why:
+            errors.extend((src, dst, str(why)))
+

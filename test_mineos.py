@@ -183,6 +183,48 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
+    def test_update_file(self):
+        from os import stat
+        from pwd import getpwuid
+
+        def find_owner(fn):
+            return getpwuid(stat(fn).st_uid).pw_name
+        
+        instance = mc('one')
+        instance.create()
+
+        url1 = 'http://minecraft.codeemo.com/crux/mineos-scripts/update.sh'
+        url2 = 'http://minecraft.codeemo.com/crux/rsync/usr/games/minecraft/mineos.config'
+        self.assertTrue(instance._update_file(url1,
+                                              instance.env['cwd'],
+                                              'update.sh'))
+        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
+                                                    'update.sh')))
+        self.assertEqual(find_owner(os.path.join(instance.env['cwd'],
+                                                'update.sh')), instance._owner.pw_name)
+            
+        self.assertFalse(instance._update_file(url1,
+                                               instance.env['cwd'],
+                                               'update.sh'))
+        self.assertTrue(instance._update_file(url2,
+                                              instance.env['cwd'],
+                                              'update.sh'))
+        with self.assertRaises(IOError):
+            instance._update_file('file',
+                                  instance.env['cwd'],
+                                  'update.sh')
+
+        with self.assertRaises(IOError):
+            instance._update_file('http://fakefilesuffix',
+                                  instance.env['cwd'],
+                                  'update.sh')
+
+        from getpass import getuser
+        if getuser() != 'root':
+            with self.assertRaises(IOError):
+                instance._update_file(url1,
+                                      '/root',
+                                      'update.sh')
 
 if __name__ == "__main__":
     unittest.main()  
