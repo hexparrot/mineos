@@ -183,13 +183,7 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-    def test_update_file(self):
-        from os import stat
-        from pwd import getpwuid
-
-        def find_owner(fn):
-            return getpwuid(stat(fn).st_uid).pw_name
-        
+    def test_update_file(self):       
         instance = mc('one')
         instance.create()
 
@@ -200,8 +194,8 @@ class TestMineOS(unittest.TestCase):
                                               'update.sh'))
         self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
                                                     'update.sh')))
-        self.assertEqual(find_owner(os.path.join(instance.env['cwd'],
-                                                'update.sh')), instance._owner.pw_name)
+        self.assertEqual(self.find_owner(os.path.join(instance.env['cwd'],
+                                                      'update.sh')), instance._owner.pw_name)
             
         self.assertFalse(instance._update_file(url1,
                                                instance.env['cwd'],
@@ -225,6 +219,35 @@ class TestMineOS(unittest.TestCase):
                 instance._update_file(url1,
                                       '/root',
                                       'update.sh')
+
+    def test_copytree(self):
+        instance = mc('one')
+        instance.create()
+
+        second_dir = os.path.join(instance._homepath,
+                                  instance.DEFAULT_PATHS['servers'],
+                                  'two')
+        
+        instance.copytree(instance.env['cwd'], second_dir)
+
+        for (directory, _, files) in os.walk(instance.env['cwd']):
+            for f in files:
+                path = os.path.join(second_dir, f)
+                self.assertTrue(os.path.exists(path))
+
+        for (directory, _, files) in os.walk(second_dir):
+            for f in files:
+                path = os.path.join(directory, f)
+                self.assertEqual(self.find_owner(path), instance._owner.pw_name)
+
+        self.assertEqual(instance._list_files(instance.env['cwd']),
+                         instance._list_files(second_dir))
+
+    def find_owner(self, fn):
+        from os import stat
+        from pwd import getpwuid
+
+        return getpwuid(stat(fn).st_uid).pw_name
 
 if __name__ == "__main__":
     unittest.main()  

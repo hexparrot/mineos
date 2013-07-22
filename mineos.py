@@ -108,6 +108,7 @@ class mc(object):
         self.env['cwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['servers'], self.server_name)
         self.env['bwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['backup'], self.server_name)
         self.env['awd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['archive'], self.server_name)
+        self.env['lwd'] = os.path.join(self._homepath, self.DEFAULT_PATHS['log'], self.server_name)
         self.env['sp'] = os.path.join(self.env['cwd'], 'server.properties')
         self.env['sc'] = os.path.join(self.env['cwd'], 'server.config')
         self.env['sp_backup'] = os.path.join(self.env['bwd'], 'server.properties')
@@ -910,21 +911,12 @@ class mc(object):
         
         """
         from shutil import copystat, copy2, Error
-        import errno
-
-        def mkdir_p(path):
-            try:
-                self._make_directory(path, do_raise=True)
-            except OSError as exc:
-                if exc.errno == errno.EEXIST:
-                    pass
-                else:
-                    raise
         
         names = os.listdir(src)
-        mkdir_p(dst)
+        self._make_directory(dst)
         
         errors = []
+        
         if ignore is not None:
             ignored_names = ignore(src, names)
         else:
@@ -937,10 +929,10 @@ class mc(object):
             dstname = os.path.join(dst, name)
             try:
                 if os.path.isdir(srcname):
-                    copytree(srcname, dstname, ignore)
+                    self.copytree(srcname, dstname, ignore)
                 else:
                     copy2(srcname, dstname)
-                    os.chown(path,
+                    os.chown(dstname,
                              self._owner.pw_uid,
                              self._owner.pw_gid)
             except (IOError, os.error) as why:
