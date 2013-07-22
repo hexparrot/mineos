@@ -107,8 +107,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
 
     def test_start(self):
-        pass
-        '''instance = mc('one')
+        instance = mc('one')
         instance.create()
 
         self.assertEqual(instance.java_pid, 0)
@@ -117,9 +116,43 @@ class TestMineOS(unittest.TestCase):
 
         instance.start()
         time.sleep(1)
-        expected to equal zero because no profile
+        #expected to be zero because no profile/jar
         self.assertEqual(instance.java_pid, 0)
-        self.assertEqual(instance.screen_pid, 0)'''
+        self.assertEqual(instance.screen_pid, 0)
+
+    def test_archive(self):
+        instance = mc('one')
+        instance.create()
+        instance.archive()
+        self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
+
+    def test_backup(self):
+        instance = mc('one')
+        instance.create()
+        instance.backup()
+        self.assertTrue(os.path.exists(os.path.join(instance.env['bwd'], 'rdiff-backup-data')))
+
+    def test_list_increments(self):
+        instance = mc('one')
+        instance.create()
+        self.assertEqual(instance.list_increments().current_mirror, '')
+        self.assertEqual(instance.list_increments().increments, [])
+
+        instance.backup()            
+        self.assertEqual(len(instance.list_increments().increments), 0)
+        self.assertTrue(instance.list_increments().current_mirror)
+
+        time.sleep(1)
+        instance.backup()            
+        self.assertEqual(len(instance.list_increments().increments), 0)
+        self.assertTrue(instance.list_increments().current_mirror)
+
+        with instance.server_properties as sp:
+            sp['newoption'] = 5
+
+        time.sleep(1)
+        instance.backup()            
+        self.assertEqual(len(instance.list_increments().increments), 1)
 
 
 if __name__ == "__main__":

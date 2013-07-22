@@ -370,17 +370,18 @@ class mc(object):
 
         """
         
-        from subprocess import check_call
+        from subprocess import check_output, STDOUT
 
         self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
                                                          working_directory,
                                                          command)
 
-        check_call(command,
-                   shell=True,
-                   cwd=working_directory,
-                   preexec_fn=self._demote(self._owner.pw_uid,
-                                           self._owner.pw_gid))
+        return check_output(command,
+                            shell=True,
+                            cwd=working_directory,
+                            stderr=STDOUT,
+                            preexec_fn=self._demote(self._owner.pw_uid,
+                                                    self._owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
         """
@@ -509,6 +510,13 @@ class mc(object):
             return 0
 
     @property
+    def previous_arguments(self):
+        try:
+            return self._previous_arguments
+        except AttributeError:
+            return None
+    
+    @property
     def command_start(self):
         """
         Returns the actual command used to start up a minecraft server.
@@ -542,6 +550,7 @@ class mc(object):
             self._logger.error('Cannot construct start command; missing value')
             self._logger.error(str(required_arguments))
         else:
+            self._previous_arguments = required_arguments
             return '%(screen)s -dmS %(screen_name)s ' \
                    '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
                    '-jar %(jar_file)s %(jar_args)s' % required_arguments
@@ -570,6 +579,7 @@ class mc(object):
             self._logger.error('Cannot construct archive command; missing value')
             self._logger.error(str(required_arguments))
         else:
+            self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
                    '%(tar)s czf %(archive_filename)s %(cwd)s' % required_arguments
 
@@ -591,6 +601,7 @@ class mc(object):
             self._logger.error('Cannot construct backup command; missing value')
             self._logger.error(str(required_arguments))
         else:
+            self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
                    '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
 
@@ -612,6 +623,7 @@ class mc(object):
             self._logger.error('Cannot construct restore command; missing value')
             self._logger.error(str(required_arguments))
         else:
+            self._previous_arguments = required_arguments
             return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
                    '%(bwd)s %(cwd)s' % required_arguments
 
@@ -636,7 +648,26 @@ class mc(object):
             self._logger.error('Cannot construct prune command; missing value')
             self._logger.error(str(required_arguments))
         else:
+            self._previous_arguments = required_arguments
             return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
+
+    @property
+    def command_list_increments(self):
+        """
+        Returns the number of increments found at the backup dir
+
+        """
+        required_arguments = {
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'bwd': self.env['bwd']
+            }
+
+        if None in required_arguments.values():
+            self._logger.error('Cannot construct prune command; missing value')
+            self._logger.error(str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
     @property
     def port(self):
@@ -712,14 +743,40 @@ class mc(object):
 
     def list_ports_up(self):
         """
-        Returns IP address and port used by all live, running instances of Minecraft.
+        Returns IP address and port used by all live,
+        running instances of Minecraft.
 
         """
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
         for server in self.list_servers_up():
             instance = mc(server)
             yield instance_connection(server, instance.port, instance.ip_address)
-    
+
+    def list_increments(self):
+        """
+        Returns a tuple of the timestamp of the most current mirror
+        and a list of all the increment files found.
+
+        """
+        from subprocess import CalledProcessError
+
+        incs = namedtuple('increments', 'current_mirror increments')
+        
+        try:
+            output = self._command_direct(self.command_list_increments, self.env['bwd'])
+        except CalledProcessError:
+            return incs('', [])
+            
+        output_list = output.split('\n')
+        increment_string = output_list.pop(0)
+        output_list.pop() #empty newline throwaway
+        current_string = output_list.pop()
+
+        '''num_increments = iter(int(p) for p in increment_string.split() if p.isdigit()).next()'''
+        timestamp = current_string.partition(':')[-1].strip()
+        
+        return incs(timestamp, [d.strip() for d in output_list])
+            
     def _list_subdirs(self, directory):
         """
         Returns a list of all subdirectories of a path.
@@ -774,3 +831,4 @@ class mc(object):
                     break
             yield instance_pids(serv, java, screen)
 
+            
