@@ -86,7 +86,8 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(instance.command_backup)
         self.assertTrue(instance.command_archive)
         self.assertTrue(instance.command_restore)
-        self.assertIsNone(instance.command_prune)
+        with self.assertRaises(RuntimeError):
+            self.assertIsNone(instance.command_prune)
 
         instance = mc('two')
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
@@ -161,27 +162,26 @@ class TestMineOS(unittest.TestCase):
         time.sleep(1)
         instance.restore(overwrite=True)
 
-    def test_list_increments(self):
+    def test_prune(self):
         instance = mc('one')
         instance.create()
-        self.assertEqual(instance.list_increments().current_mirror, '')
-        self.assertEqual(instance.list_increments().increments, [])
-
-        instance.backup()            
-        self.assertEqual(len(instance.list_increments().increments), 0)
-        self.assertTrue(instance.list_increments().current_mirror)
-
-        time.sleep(1)
-        instance.backup()            
-        self.assertEqual(len(instance.list_increments().increments), 0)
-        self.assertTrue(instance.list_increments().current_mirror)
+        instance.backup() #0 incr
 
         os.remove(instance.env['sp'])
 
         time.sleep(1)
-        instance.backup()            
+        instance.backup() #1 incr
+
+        instance._load_config(generate_missing=True)
+        time.sleep(1)
+        instance.backup() #2 incr
+
+        self.assertEqual(len(instance.list_increments().increments), 2)
+        instance.prune(1)
         self.assertEqual(len(instance.list_increments().increments), 1)
 
+        instance.prune('now')
+        self.assertEqual(len(instance.list_increments().increments), 0)
 
 
 if __name__ == "__main__":

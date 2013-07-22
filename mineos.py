@@ -645,6 +645,9 @@ class mc(object):
             required_arguments['steps'] = self._rdiff_backup_steps
         except AttributeError:
             pass
+        else:
+            if type(required_arguments['steps']) is int:
+                required_arguments['steps'] = '%sB' % required_arguments['steps']
 
         if None in required_arguments.values():
             raise RuntimeError('Missing value in prune command: %s' % str(required_arguments))
