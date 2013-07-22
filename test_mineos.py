@@ -11,8 +11,15 @@ class TestMineOS(unittest.TestCase):
     def setUp(self):
         from pwd import getpwnam
         from getpass import getuser
-        self._owner = getpwnam(getuser())
-        self._path = self._owner.pw_dir
+
+        if getuser() == 'root':
+            self._user = 'mc'
+            self._owner = getpwnam(self._user)
+            self._path = self._owner.pw_dir
+        else:
+            self._user = getuser()
+            self._owner = getpwnam(self._user)
+            self._path = self._owner.pw_dir
 
     def tearDown(self):
         for d in ('servers', 'backup', 'archive', 'log'):
@@ -45,21 +52,21 @@ class TestMineOS(unittest.TestCase):
 
         for server_name in bad_names:
             with self.assertRaises(ValueError):
-                instance = mc(server_name)
+                instance = mc(server_name, self._user)
 
         for server_name in ok_names:
-            instance = mc(server_name)
+            instance = mc(server_name, self._user)
             self.assertIsNotNone(instance.server_name)
 
     def test_set_owner(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         
         self.assertTrue(self._owner, instance._owner)
 
     def test_load_config(self):
         from conf_reader import config_file
         
-        instance = mc('one')
+        instance = mc('one', self._user)
 
         self.assertIsInstance(instance.server_properties, config_file)
         self.assertIsInstance(instance.server_properties[:], dict)
@@ -70,7 +77,7 @@ class TestMineOS(unittest.TestCase):
         self.assertFalse(os.path.isfile(instance.env['sc']))
         
     def test_create(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -89,13 +96,13 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertIsNone(instance.command_prune)
 
-        instance = mc('two')
+        instance = mc('two', self._user)
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
 
         self.assertEqual(instance.server_properties['server-port'], '27000')
         self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
 
-        instance = mc('three')
+        instance = mc('three', self._user)
         instance.create({'java':{'java_bogus': 'wow!'}}, {'bogus-value':'abcd'})
 
         with self.assertRaises(KeyError):
@@ -104,7 +111,7 @@ class TestMineOS(unittest.TestCase):
             instance.server_config['java':'java_bogus']
 
     def test_change_config(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         with instance.server_properties as sp:
@@ -122,7 +129,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
 
     def test_start(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         self.assertEqual(instance.java_pid, 0)
@@ -136,19 +143,19 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.screen_pid, 0)
 
     def test_archive(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
         instance.archive()
         self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
 
     def test_backup(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
         instance.backup()
         self.assertTrue(os.path.exists(os.path.join(instance.env['bwd'], 'rdiff-backup-data')))
 
     def test_restore(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         with self.assertRaises(RuntimeError): instance.restore()
@@ -163,7 +170,7 @@ class TestMineOS(unittest.TestCase):
         instance.restore(overwrite=True)
 
     def test_prune(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
         instance.backup() #0 incr
 
@@ -184,7 +191,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(len(instance.list_increments().increments), 0)
 
     def test_update_file(self):       
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         url1 = 'http://minecraft.codeemo.com/crux/mineos-scripts/update.sh'
@@ -213,15 +220,19 @@ class TestMineOS(unittest.TestCase):
                                   instance.env['cwd'],
                                   'update.sh')
 
-        from getpass import getuser
-        if getuser() != 'root':
+        '''
+        the web-ui service run as root will have privileges
+        to _update_file to root-owned places.  _update_file
+        thus should never ever be executed with unsanitized
+        input!
+        if self._user != 'root':
             with self.assertRaises(IOError):
                 instance._update_file(url1,
                                       '/root',
-                                      'update.sh')
+                                      'update.sh')'''
 
     def test_copytree(self):
-        instance = mc('one')
+        instance = mc('one', self._user)
         instance.create()
 
         second_dir = os.path.join(instance._homepath,
