@@ -291,7 +291,6 @@ class TestMineOS(unittest.TestCase):
                                                     profile['name'],
                                                     profile['run_as'])))
 
-        
         instance.profile = profile['name']
         self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
                                                     profile['run_as'])))      
