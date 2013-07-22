@@ -368,20 +368,20 @@ class mc(object):
 
     def update_profile(self, profile_dict, do_download=True):
 
-        with self.profile_config as profs:
+        self._make_directory(os.path.join(self.env['pwd'],
+                                          profile_dict['name']))
+
+        with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
             
             try:
-                profs.add_section(profile_dict['name'])
+                pc.add_section(profile_dict['name'])
             except DuplicateSectionError:
                 pass
             
             for option, value in profile_dict.iteritems():
                 if option != 'name':
-                    profs[profile_dict['name']:option] = value
-
-        self._make_directory(os.path.join(self.env['pwd'],
-                                          profile_dict['name']))
+                    pc[profile_dict['name']:option] = value
 
         if profile_dict['type'] == 'standard_jar':
             from shutil import move
@@ -392,10 +392,10 @@ class mc(object):
                                   profile_dict['save_as'])
             
                 move(os.path.join(self.env['pwd'],
-                                  profs[profile_dict['name']:'save_as']),
+                                  pc[profile_dict['name']:'save_as']),
                      os.path.join(self.env['pwd'],
                                   profile_dict['name'],
-                                  profs[profile_dict['name']:'run_as']))
+                                  pc[profile_dict['name']:'run_as']))
         else:
             raise NotImplementedError
 
@@ -712,24 +712,29 @@ class mc(object):
 
         """       
         required_arguments = {
+            'profile': self.profile,
             'rsync': self.BINARY_PATHS['rsync'],
-            'profile_dir': os.path.join(self.env['pwd'], self.profile),
-            'exclude': None,
+            'pwd': os.path.join(self.env['pwd']),
+            'exclude': '',
             'cwd': '.'
             }
 
-        files_to_exclude_str = self.profile_config[self.profile:'ignore':'']
-        if ',' in files_to_exclude_str:
-            files = [f.strip() for f in files_to_exclude_str.split(',')]
+        try:
+            files_to_exclude_str = self.profile_config[self.profile:'ignore']
+        except (TypeError,KeyError):
+            raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
         else:
-            files = [f.strip() for f in files_to_exclude_str.split()]
-        required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
+            if ',' in files_to_exclude_str:
+                files = [f.strip() for f in files_to_exclude_str.split(',')]
+            else:
+                files = [f.strip() for f in files_to_exclude_str.split()]
+            required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
 
         if None in required_arguments.values():
-            raise RuntimeError('Missing value in apply_profile command; %s' % str(required_arguments))
+            raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
         else:
             self._previous_arguments = required_arguments
-            return '%(rsync)s -a %(exclude)s %(profile_dir)s/ %(cwd)s' % required_arguments
+            return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
     @property
     def profile(self):
@@ -737,21 +742,29 @@ class mc(object):
         Returns the profile the server is set to
 
         """
-        return self.server_config['minecraft':'profile'] or None
+        try:
+            return self.server_config['minecraft':'profile'] or None
+        except KeyError:
+            return None
 
     @profile.setter
     def profile(self, value):
-        with self.server_config as sc:
-            from ConfigParser import DuplicateSectionError
+        try:
+            self.profile_config[value:]
+        except KeyError:
+            raise KeyError('There is no defined profile by this name in profile.config')
+        else:
+            with self.server_config as sc:
+                from ConfigParser import DuplicateSectionError
+                
+                try:
+                    sc.add_section('minecraft')
+                except DuplicateSectionError:
+                    pass
+                finally:
+                    sc['minecraft':'profile'] = str(value).strip()
             
-            try:
-                sc.add_section('minecraft')
-            except DuplicateSectionError:
-                pass
-            
-            sc['minecraft':'profile'] = str(value).strip()
-            
-        self._command_direct(self.command_apply_profile, self.env['cwd'])  
+            self._command_direct(self.command_apply_profile, self.env['cwd'])  
 
     @property
     def port(self):

@@ -276,6 +276,9 @@ class TestMineOS(unittest.TestCase):
             'ignore': '',
             }
 
+        self.assertIsNone(instance.profile)
+        with self.assertRaises(KeyError): instance.profile = 'vanilla'
+
         instance.update_profile(profile)
         
         self.assertTrue(os.path.exists(os.path.join(instance.env['pwd'],
@@ -287,9 +290,9 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(instance.env['pwd'],
                                                     profile['name'],
                                                     profile['run_as'])))
+
         
         instance.profile = profile['name']
-
         self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
                                                     profile['run_as'])))      
 
