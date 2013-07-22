@@ -22,7 +22,7 @@ class TestMineOS(unittest.TestCase):
             self._path = self._owner.pw_dir
 
     def tearDown(self):
-        for d in ('servers', 'backup', 'archive', 'log'):
+        for d in mc.DEFAULT_PATHS.values():
             try:
                 rmtree(os.path.join(self._path, d))
             except OSError:
@@ -259,6 +259,46 @@ class TestMineOS(unittest.TestCase):
         from pwd import getpwuid
 
         return getpwuid(stat(fn).st_uid).pw_name
+
+    def test_profiles(self):
+        from collections import namedtuple
+        
+        instance = mc('one', self._user)
+        instance.create()
+
+        profile = {
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'action': 'download',
+            'ignore': '',
+            }
+
+        instance.update_profile(profile)
+        
+        self.assertTrue(os.path.exists(os.path.join(instance.env['pwd'],
+                                                    profile['name'])))
+        
+        self.assertFalse(os.path.isfile(os.path.join(instance.env['pwd'],
+                                                     profile['save_as'])))
+
+        self.assertTrue(os.path.isfile(os.path.join(instance.env['pwd'],
+                                                    profile['name'],
+                                                    profile['run_as'])))
+        
+        instance.profile = profile['name']
+
+        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
+                                                    profile['run_as'])))      
+
+        profile['run_as'] = 'minecraft_server.1.6.2.jar'
+        
+        instance.update_profile(profile, do_download=False)
+        
+        self.assertEqual(instance.profile_config['vanilla':'run_as'],
+                         'minecraft_server.1.6.2.jar')
 
 if __name__ == "__main__":
     unittest.main()  
