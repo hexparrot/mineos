@@ -35,16 +35,26 @@ class mc(object):
         'java': find_executable('java'),
         'nice': find_executable('nice'),
         'tar': find_executable('tar'),
+        'kill': find_executable('kill')
         }
     
-    def __init__(self, server_name=None, owner=None, group=None):
+    def __init__(self,
+                 server_name=None,
+                 owner=None,
+                 group=None,
+                 base_directory='',
+                 container_directory=''):
+        
         if self.valid_server_name(server_name):
             self._server_name = server_name
         elif server_name is None:
             self._server_name = server_name
         else:
             raise ValueError('Server contains invalid characters')
-        self._set_owner(owner, group)
+        self._set_owner(owner,
+                        group,
+                        base_directory,
+                        container_directory)
         self._create_logger()
         self._set_environment()
         self._load_config()
@@ -60,15 +70,24 @@ class mc(object):
                    group,
                    base_directory='',
                    container_directory=''):
+        
         """
         Sets the instance to be executed by linux user 'owner'.
         Sets self._homepath from linux-provided HOMEDIR,
         effectively containing new directory creation.
 
+        self._homepath will typically go to /home/user,
+        but this can be modified by supplying base_directory, such as:
+        base_directory = '/var/games/minecraft'
+        container_directory = 'mineos'
+
+        resulting structure ==> /var/games/minecraft/mineos/{servers,backup,archive}
+
+        Supplying base_directory will likely require root/chown-ing base_directory.
+
         """
         from pwd import getpwnam
         from grp import getgrnam, getgrgid
-
 
         if owner is None:
             from getpass import getuser
@@ -93,25 +112,13 @@ class mc(object):
             self._owner = getpwnam(owner)
         else:
             raise OSError('%s is not part of group %s' % (owner, group))
-            
+
         if base_directory:
             self._homepath = os.path.join(base_directory, container_directory)
         else:
             self._homepath = os.path.join(self._owner.pw_dir, container_directory)
             
-        '''
-        self._homepath will typically go to /home/user,
-        but this can be modified by supplying base_directory, such as:
-        base_directory = '/var/games/minecraft'
-        container_directory = 'mineos'
-
-        resulting structure ==> /var/games/minecraft/mineos/{servers,backup,archive}
-
-        Supplying base_directory will likely require root/chown-ing base_directory.
-
-        FIXME: this functionality is not yet usable, as __init__ does not provide
-        base_directory or container_directory to this method.
-        '''
+        #self._make_directory(self._homepath)
         for p in self.DEFAULT_PATHS.values():
             self._make_directory(os.path.join(self._homepath, p))
 
@@ -217,6 +224,7 @@ class mc(object):
             except (KeyError, ValueError):
                 continue
 
+        self._command_direct('touch %s' % self.env['sp'], self.env['cwd'])
         with config_file(self.env['sp']) as sp:
             sp.use_sections(False)
             for key, value in defaults.iteritems():
@@ -257,7 +265,8 @@ class mc(object):
                 defaults[section][option] = int(startup_values[section][option])
             except (KeyError, ValueError):
                 continue
-                
+
+        self._command_direct('touch %s' % self.env['sc'], self.env['cwd'])
         with config_file(self.env['sc']) as sc:
             for section in defaults:
                 sc.add_section(section)
@@ -488,7 +497,7 @@ class mc(object):
 
         if not self.server_name:
             return
-        
+
         try:
             self._logger = logging.getLogger(self.server_name)
             self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
@@ -661,6 +670,23 @@ class mc(object):
             self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
                    '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
+
+    @property
+    def command_kill(self):
+        """
+        Returns the command to kill a pid
+
+        """
+        required_arguments = {
+            'kill': self.BINARY_PATHS['kill'],
+            'pid': self.screen_pid
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(kill)s %(pid)s' % required_arguments
 
     @property
     def command_restore(self):
@@ -966,7 +992,7 @@ class mc(object):
         else:
             os.chown(path,
                      self._owner.pw_uid,
-                     self._owner.pw_gid)
+                     self._group.gr_gid)
 
     def _update_file(self, url, root_path, dest_filename):
         """
@@ -1014,7 +1040,7 @@ class mc(object):
             try:
                 os.chown(new_path,
                          self._owner.pw_uid,
-                         self._owner.pw_gid)
+                         self._group.gr_gid)
                 move(new_path, old_path)
             except IOError:
                 raise IOError('move() activity failed')
@@ -1063,7 +1089,7 @@ class mc(object):
                     copy2(srcname, dstname)
                     os.chown(dstname,
                              self._owner.pw_uid,
-                             self._owner.pw_gid)
+                             self._group.gr_gid)
             except (IOError, os.error) as why:
                 errors.append((srcname, dstname, str(why)))
             except Error as err:

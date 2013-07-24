@@ -23,14 +23,9 @@ class TestMineOS(unittest.TestCase):
         from pwd import getpwnam
         from getpass import getuser
 
-        if getuser() == 'root':
-            self._user = 'mc'
-            self._owner = getpwnam(self._user)
-            self._path = self._owner.pw_dir
-        else:
-            self._user = getuser()
-            self._owner = getpwnam(self._user)
-            self._path = self._owner.pw_dir
+        self._user = getuser()
+        self._owner = getpwnam(self._user)
+        self._path = self._owner.pw_dir
 
     def tearDown(self):
         for d in mc.DEFAULT_PATHS.values():
@@ -39,11 +34,8 @@ class TestMineOS(unittest.TestCase):
             except OSError:
                 continue
   
+
     def test_bare_environment(self):
-        ''' this test is expected to fail if the user
-            running this test suite is root, but not
-            part of the root group'''
-        
         for s in (None, '', False):
             instance = mc()
             self.assertIsNone(instance.server_name)
@@ -51,10 +43,6 @@ class TestMineOS(unittest.TestCase):
                 instance.env
 
     def test_binary_paths(self):
-        ''' this test is expected to fail if the user
-            running this test suite is root, but not
-            part of the root group'''
-
         instance = mc()
         for k,v in instance.BINARY_PATHS.iteritems():
             self.assertIsInstance(v, str)
@@ -91,10 +79,16 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(KeyError): instance = mc('h', 'fake')
         with self.assertRaises(KeyError): instance = mc('i', 'fake', 'www-data')
 
-        combinations = [
-            ('x', 'mc', None),
-            ('y', 'mc', 'users'),
-            ]
+        if self._user == 'root':
+            combinations = [
+                ('x', self._user, None),
+                ('y', self._user, 'root'),
+                ]
+        else:
+            combinations = [
+                ('x', self._user, None),
+                ('y', self._user, 'users'),
+                ]
 
         for server_name, user, group in combinations:
             instance = mc(server_name, user, group)
@@ -348,7 +342,7 @@ class TestMineOS(unittest.TestCase):
                          'minecraft_server.1.6.2.jar')
 
     @online_test
-    def test_start_a_server(self):
+    def test_start_a_home_server(self):
         instance = mc('one', self._user)
         instance.create()
 
@@ -365,7 +359,7 @@ class TestMineOS(unittest.TestCase):
         instance.update_profile(profile)
         instance.profile = profile['name']
         instance.start()
-        time.sleep(25)
+        time.sleep(20)
         instance._command_stuff('stop')
         time.sleep(5)
         try:
@@ -374,6 +368,56 @@ class TestMineOS(unittest.TestCase):
             pass #just want to suppress, not anticipate
         else:
             time.sleep(3)
+
+    #@online_test
+    def test_astart_a_var_games_server(self):
+        #create first server
+        aaaa = mc(server_name='one',
+                  owner='mc',
+                  group='mcserver',
+                  base_directory='/var/games/',
+                  container_directory='mcserver')
+        aaaa.create()
+
+        profile = {
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'action': 'download',
+            'ignore': '',
+            }
+
+        aaaa.update_profile(profile)
+        aaaa.profile = profile['name']
+        aaaa.start()
+        time.sleep(20)
+
+        #create second server
+        bbbb = mc(server_name='two',
+                  owner='mc',
+                  group='mcserver',
+                  base_directory='/var/games/',
+                  container_directory='mcserver')
+        bbbb.create(sp={'server-port':25570})
+        bbbb.profile = profile['name']
+        bbbb.start()
+        time.sleep(20)
+
+        #kill servers
+        aaaa.kill()
+        bbbb.kill()
+        time.sleep(10)
+        
+        with self.assertRaises(RuntimeWarning):
+            aaaa.kill()
+
+        with self.assertRaises(RuntimeWarning):
+            bbbb.kill()
+
+        rmtree('/var/games/mcserver')
+
     
 if __name__ == "__main__":
     import sys
