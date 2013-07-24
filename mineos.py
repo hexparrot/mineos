@@ -431,8 +431,8 @@ class mc(object):
 
         """
         def set_ids():
-            os.setuid(user_uid)
             os.setgid(user_gid)
+            os.setuid(user_uid)
         return set_ids
 
     def _command_direct(self, command, working_directory):
