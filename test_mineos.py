@@ -9,6 +9,15 @@ from shutil import rmtree
 
 ONLINE_TESTS = False
 
+def online_test(original_function):
+    global ONLINE_TESTS
+    if not ONLINE_TESTS:
+        def f(*args, **kwargs):
+            pass
+        return f
+    else:
+        return original_function
+
 class TestMineOS(unittest.TestCase):
     def setUp(self):
         from pwd import getpwnam
@@ -218,11 +227,8 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
+    @online_test
     def test_update_file(self):
-        global ONLINE_TESTS
-        if not ONLINE_TESTS:
-            return
-        
         instance = mc('one', self._user)
         instance.create()
 
@@ -292,11 +298,8 @@ class TestMineOS(unittest.TestCase):
 
         return getpwuid(stat(fn).st_uid).pw_name
 
-    def test_profiles(self):
-        global ONLINE_TESTS
-        if not ONLINE_TESTS:
-            return
-        
+    @online_test
+    def test_profiles(self):        
         from collections import namedtuple
         
         instance = mc('one', self._user)
