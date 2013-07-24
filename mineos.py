@@ -37,14 +37,14 @@ class mc(object):
         'tar': find_executable('tar'),
         }
     
-    def __init__(self, server_name=None, owner=None):
+    def __init__(self, server_name=None, owner=None, group=None):
         if self.valid_server_name(server_name):
             self._server_name = server_name
         elif server_name is None:
             self._server_name = server_name
         else:
             raise ValueError('Server contains invalid characters')
-        self._set_owner(owner)
+        self._set_owner(owner, group)
         self._create_logger()
         self._set_environment()
         self._load_config()
@@ -57,6 +57,7 @@ class mc(object):
 
     def _set_owner(self,
                    owner,
+                   group,
                    base_directory='',
                    container_directory=''):
         """
@@ -66,12 +67,33 @@ class mc(object):
 
         """
         from pwd import getpwnam
+        from grp import getgrnam, getgrgid
+
 
         if owner is None:
             from getpass import getuser
             owner = getuser()
+        elif type(owner) is not str:
+            raise TypeError('Supplied argument "owner" must be string')
+        else:
+            getpwnam(owner)
 
-        self._owner = getpwnam(owner)
+        if group is None:
+            try:
+                group = getgrgid(getpwnam(owner).pw_gid).gr_name
+            except KeyError:
+                raise KeyError('Supplied owner does not exist %s' % owner)
+        elif type(group) is not str:
+            raise TypeError('Supplied argument "group" must be string')
+        else:
+            getgrnam(group)
+
+        if owner in getgrnam(group).gr_mem:
+            self._group = getgrnam(group)
+            self._owner = getpwnam(owner)
+        else:
+            raise OSError('%s is not part of group %s' % (owner, group))
+            
         if base_directory:
             self._homepath = os.path.join(base_directory, container_directory)
         else:
@@ -409,8 +431,8 @@ class mc(object):
 
         """
         def set_ids():
-            os.setgid(user_gid)
             os.setuid(user_uid)
+            os.setgid(user_gid)
         return set_ids
 
     def _command_direct(self, command, working_directory):
@@ -434,7 +456,7 @@ class mc(object):
                             cwd=working_directory,
                             stderr=STDOUT,
                             preexec_fn=self._demote(self._owner.pw_uid,
-                                                    self._owner.pw_gid))
+                                                    self._group.gr_gid))
 
     def _command_stuff(self, stuff_text):
         """
@@ -452,7 +474,7 @@ class mc(object):
             check_call(command,
                        shell=True,
                        preexec_fn=self._demote(self._owner.pw_uid,
-                                               self._owner.pw_gid))
+                                               self._group.gr_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeError('Server must be running to send screen commands')

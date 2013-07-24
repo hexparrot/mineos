@@ -7,6 +7,8 @@ import time
 from mineos import mc
 from shutil import rmtree
 
+ONLINE_TESTS = False
+
 class TestMineOS(unittest.TestCase):
     def setUp(self):
         from pwd import getpwnam
@@ -59,9 +61,35 @@ class TestMineOS(unittest.TestCase):
             self.assertIsNotNone(instance.server_name)
 
     def test_set_owner(self):
-        instance = mc('one', self._user)
+        from grp import struct_group, getgrnam, getgrgid
+        from pwd import struct_passwd, getpwnam
         
-        self.assertTrue(self._owner, instance._owner)
+        with self.assertRaises(KeyError): instance = mc('a', 'fake')
+        with self.assertRaises(TypeError): instance = mc('b', 123)
+        with self.assertRaises(TypeError): instance = mc('c', {})
+        with self.assertRaises(KeyError): instance = mc('d', 'mc', 'fake')
+        with self.assertRaises(OSError): instance = mc('e', 'mc', 'www-data')
+        with self.assertRaises(KeyError): instance = mc('f', 'will', 'fake')
+        with self.assertRaises(OSError): instance = mc('g', 'will', 'www-data')
+        with self.assertRaises(KeyError): instance = mc('h', 'fake')
+        with self.assertRaises(KeyError): instance = mc('i', 'fake', 'www-data')
+
+        combinations = [
+            ('x', 'mc', None),
+            ('y', 'mc', 'users'),
+            ]
+
+        for server_name, user, group in combinations:
+            instance = mc(server_name, user, group)
+            expected_owner = getpwnam(user)
+            expected_group = getgrgid(expected_owner.pw_gid)
+
+            self.assertIsInstance(instance._owner, struct_passwd)
+            self.assertIsInstance(instance._group, struct_group)
+            
+            self.assertEqual(instance._owner, expected_owner)
+            self.assertEqual(instance._group, expected_group)
+            self.assertTrue(user in expected_group.gr_mem)
 
     def test_load_config(self):
         from conf_reader import config_file
@@ -190,7 +218,11 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-    def test_update_file(self):       
+    def test_update_file(self):
+        global ONLINE_TESTS
+        if not ONLINE_TESTS:
+            return
+        
         instance = mc('one', self._user)
         instance.create()
 
@@ -261,6 +293,10 @@ class TestMineOS(unittest.TestCase):
         return getpwuid(stat(fn).st_uid).pw_name
 
     def test_profiles(self):
+        global ONLINE_TESTS
+        if not ONLINE_TESTS:
+            return
+        
         from collections import namedtuple
         
         instance = mc('one', self._user)
@@ -303,5 +339,10 @@ class TestMineOS(unittest.TestCase):
                          'minecraft_server.1.6.2.jar')
 
 if __name__ == "__main__":
+    import sys
+
+    if 'online' in sys.argv or 'full' in sys.argv:
+        ONLINE_TESTS = True
+ 
     unittest.main()  
 
