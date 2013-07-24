@@ -195,7 +195,7 @@ class TestMineOS(unittest.TestCase):
         instance.create()
 
         url1 = 'http://minecraft.codeemo.com/crux/mineos-scripts/update.sh'
-        url2 = 'http://minecraft.codeemo.com/crux/rsync/usr/games/minecraft/mineos.config'
+        url2 = 'http://minecraft.codeemo.com/crux/rsync/stable/usr/games/minecraft/mineos.config'
         self.assertTrue(instance._update_file(url1,
                                               instance.env['cwd'],
                                               'update.sh'))
