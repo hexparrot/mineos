@@ -40,6 +40,10 @@ class TestMineOS(unittest.TestCase):
                 continue
   
     def test_bare_environment(self):
+        ''' this test is expected to fail if the user
+            running this test suite is root, but not
+            part of the root group'''
+        
         for s in (None, '', False):
             instance = mc()
             self.assertIsNone(instance.server_name)
@@ -47,6 +51,10 @@ class TestMineOS(unittest.TestCase):
                 instance.env
 
     def test_binary_paths(self):
+        ''' this test is expected to fail if the user
+            running this test suite is root, but not
+            part of the root group'''
+
         instance = mc()
         for k,v in instance.BINARY_PATHS.iteritems():
             self.assertIsInstance(v, str)
@@ -300,8 +308,6 @@ class TestMineOS(unittest.TestCase):
 
     @online_test
     def test_profiles(self):        
-        from collections import namedtuple
-        
         instance = mc('one', self._user)
         instance.create()
 
@@ -341,6 +347,34 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.profile_config['vanilla':'run_as'],
                          'minecraft_server.1.6.2.jar')
 
+    @online_test
+    def test_start_a_server(self):
+        instance = mc('one', self._user)
+        instance.create()
+
+        profile = {
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'action': 'download',
+            'ignore': '',
+            }
+
+        instance.update_profile(profile)
+        instance.profile = profile['name']
+        instance.start()
+        time.sleep(25)
+        instance._command_stuff('stop')
+        time.sleep(5)
+        try:
+            instance.kill()
+        except RuntimeWarning:
+            pass #just want to suppress, not anticipate
+        else:
+            time.sleep(3)
+    
 if __name__ == "__main__":
     import sys
 
