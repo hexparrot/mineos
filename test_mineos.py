@@ -7,19 +7,25 @@ import time
 from mineos import mc
 from shutil import rmtree
 
+ONLINE_TESTS = True
+
+def online_test(original_function):
+    global ONLINE_TESTS
+    if not ONLINE_TESTS:
+        def f(*args, **kwargs):
+            pass
+        return f
+    else:
+        return original_function
+
 class TestMineOS(unittest.TestCase):
     def setUp(self):
         from pwd import getpwnam
         from getpass import getuser
 
-        if getuser() == 'root':
-            self._user = 'mc'
-            self._owner = getpwnam(self._user)
-            self._path = self._owner.pw_dir
-        else:
-            self._user = getuser()
-            self._owner = getpwnam(self._user)
-            self._path = self._owner.pw_dir
+        self._user = getuser()
+        self._owner = getpwnam(self._user)
+        self._path = self._owner.pw_dir
 
     def tearDown(self):
         for d in mc.DEFAULT_PATHS.values():
@@ -27,7 +33,7 @@ class TestMineOS(unittest.TestCase):
                 rmtree(os.path.join(self._path, d))
             except OSError:
                 continue
-  
+
     def test_bare_environment(self):
         for s in (None, '', False):
             instance = mc()
@@ -59,9 +65,41 @@ class TestMineOS(unittest.TestCase):
             self.assertIsNotNone(instance.server_name)
 
     def test_set_owner(self):
-        instance = mc('one', self._user)
+        from grp import struct_group, getgrnam, getgrgid
+        from pwd import struct_passwd, getpwnam
         
-        self.assertTrue(self._owner, instance._owner)
+        with self.assertRaises(KeyError): instance = mc('a', 'fake')
+        with self.assertRaises(TypeError): instance = mc('b', 123)
+        with self.assertRaises(TypeError): instance = mc('c', {})
+        with self.assertRaises(KeyError): instance = mc('d', 'mc', 'fake')
+        with self.assertRaises(OSError): instance = mc('e', 'mc', 'www-data')
+        with self.assertRaises(KeyError): instance = mc('f', 'will', 'fake')
+        with self.assertRaises(OSError): instance = mc('g', 'will', 'www-data')
+        with self.assertRaises(KeyError): instance = mc('h', 'fake')
+        with self.assertRaises(KeyError): instance = mc('i', 'fake', 'www-data')
+
+        if self._user == 'root':
+            combinations = [
+                ('x', self._user, None),
+                ('y', self._user, 'root'),
+                ]
+        else:
+            combinations = [
+                ('x', self._user, None),
+                ('y', self._user, 'users'),
+                ]
+
+        for server_name, user, group in combinations:
+            instance = mc(server_name, user, group)
+            expected_owner = getpwnam(user)
+            expected_group = getgrgid(expected_owner.pw_gid)
+
+            self.assertIsInstance(instance._owner, struct_passwd)
+            self.assertIsInstance(instance._group, struct_group)
+            
+            self.assertEqual(instance._owner, expected_owner)
+            self.assertEqual(instance._group, expected_group)
+            self.assertTrue(user in expected_group.gr_mem)
 
     def test_load_config(self):
         from conf_reader import config_file
@@ -75,7 +113,23 @@ class TestMineOS(unittest.TestCase):
 
         self.assertFalse(os.path.isfile(instance.env['sp']))
         self.assertFalse(os.path.isfile(instance.env['sc']))
-        
+
+    def test_sp_defaults(self):
+        from conf_reader import config_file
+        instance = mc('one', self._user)
+        instance.create(sp={'server-ip':'127.0.0.1'})
+        conf = config_file(instance.env['sp'])
+        self.assertFalse(conf._use_sections)
+        self.assertEqual(conf['server-ip'],'127.0.0.1')
+
+    def test_sc_defaults(self):
+        from conf_reader import config_file
+        instance = mc('one', self._user)
+        instance.create(sc={'java':{'java-bin':'isworking'}})
+        conf = config_file(instance.env['sc'])
+        self.assertTrue(conf._use_sections)
+        self.assertEqual(conf['java':'java-bin'], 'isworking')
+
     def test_create(self):
         instance = mc('one', self._user)
         instance.create()
@@ -103,12 +157,10 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
 
         instance = mc('three', self._user)
-        instance.create({'java':{'java_bogus': 'wow!'}}, {'bogus-value':'abcd'})
+        instance.create(sc={'java':{'java_bogus': 'wow!'}}, sp={'bogus-value':'abcd'})
 
-        with self.assertRaises(KeyError):
-            instance.server_properties['bogus-value']
-        with self.assertRaises(KeyError):
-            instance.server_config['java':'java_bogus']
+        self.assertEqual(instance.server_properties['bogus-value'], 'abcd')
+        self.assertEqual(instance.server_config['java':'java_bogus'], 'wow!')
 
     def test_change_config(self):
         instance = mc('one', self._user)
@@ -190,7 +242,8 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-    def test_update_file(self):       
+    @online_test
+    def test_update_file(self):
         instance = mc('one', self._user)
         instance.create()
 
@@ -260,9 +313,8 @@ class TestMineOS(unittest.TestCase):
 
         return getpwuid(stat(fn).st_uid).pw_name
 
-    def test_profiles(self):
-        from collections import namedtuple
-        
+    @online_test
+    def test_profiles(self):        
         instance = mc('one', self._user)
         instance.create()
 
@@ -302,6 +354,84 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.profile_config['vanilla':'run_as'],
                          'minecraft_server.1.6.2.jar')
 
+    @online_test
+    def test_start_a_home_server(self):
+        instance = mc('one', self._user)
+        instance.create()
+
+        profile = {
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'action': 'download',
+            'ignore': '',
+            }
+
+        instance.update_profile(profile)
+        instance.profile = profile['name']
+        instance.start()
+        time.sleep(20)
+        instance._command_stuff('stop')
+        time.sleep(5)
+        try:
+            instance.kill()
+        except RuntimeWarning:
+            pass #just want to suppress, not anticipate
+        else:
+            time.sleep(3)
+
+    @online_test
+    def test_zstart_a_var_games_server(self):
+        #create first server
+        aaaa = mc(server_name='one',
+                  owner='mc',
+                  group='mcserver',
+                  base_directory='/var/games/',
+                  container_directory='mcserver')
+        aaaa.create()
+
+        profile = {
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'action': 'download',
+            'ignore': '',
+            }
+
+        aaaa.update_profile(profile)
+        aaaa.profile = profile['name']
+        aaaa.start()
+        time.sleep(20)
+
+        #create second server
+        bbbb = mc(server_name='two',
+                  owner='mc',
+                  group='mcserver',
+                  base_directory='/var/games/',
+                  container_directory='mcserver')
+        bbbb.create(sp={'server-port':25570})
+        bbbb.profile = profile['name']
+        bbbb.start()
+        time.sleep(20)
+
+        #kill servers
+        aaaa.kill()
+        bbbb.kill()
+        time.sleep(10)
+        
+        with self.assertRaises(RuntimeWarning):
+            aaaa.kill()
+
+        with self.assertRaises(RuntimeWarning):
+            bbbb.kill()
+
+        rmtree('/var/games/mcserver')
+
+    
 if __name__ == "__main__":
     unittest.main()  
 

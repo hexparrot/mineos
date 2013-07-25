@@ -35,16 +35,26 @@ class mc(object):
         'java': find_executable('java'),
         'nice': find_executable('nice'),
         'tar': find_executable('tar'),
+        'kill': find_executable('kill')
         }
     
-    def __init__(self, server_name=None, owner=None):
+    def __init__(self,
+                 server_name=None,
+                 owner=None,
+                 group=None,
+                 base_directory='',
+                 container_directory=''):
+        
         if self.valid_server_name(server_name):
             self._server_name = server_name
         elif server_name is None:
             self._server_name = server_name
         else:
             raise ValueError('Server contains invalid characters')
-        self._set_owner(owner)
+        self._set_owner(owner,
+                        group,
+                        base_directory,
+                        container_directory)
         self._create_logger()
         self._set_environment()
         self._load_config()
@@ -57,27 +67,15 @@ class mc(object):
 
     def _set_owner(self,
                    owner,
+                   group,
                    base_directory='',
                    container_directory=''):
+        
         """
         Sets the instance to be executed by linux user 'owner'.
         Sets self._homepath from linux-provided HOMEDIR,
         effectively containing new directory creation.
 
-        """
-        from pwd import getpwnam
-
-        if owner is None:
-            from getpass import getuser
-            owner = getuser()
-
-        self._owner = getpwnam(owner)
-        if base_directory:
-            self._homepath = os.path.join(base_directory, container_directory)
-        else:
-            self._homepath = os.path.join(self._owner.pw_dir, container_directory)
-            
-        '''
         self._homepath will typically go to /home/user,
         but this can be modified by supplying base_directory, such as:
         base_directory = '/var/games/minecraft'
@@ -87,9 +85,40 @@ class mc(object):
 
         Supplying base_directory will likely require root/chown-ing base_directory.
 
-        FIXME: this functionality is not yet usable, as __init__ does not provide
-        base_directory or container_directory to this method.
-        '''
+        """
+        from pwd import getpwnam
+        from grp import getgrnam, getgrgid
+
+        if owner is None:
+            from getpass import getuser
+            owner = getuser()
+        elif type(owner) is not str:
+            raise TypeError('Supplied argument "owner" must be string')
+        else:
+            getpwnam(owner)
+
+        if group is None:
+            try:
+                group = getgrgid(getpwnam(owner).pw_gid).gr_name
+            except KeyError:
+                raise KeyError('Supplied owner does not exist %s' % owner)
+        elif type(group) is not str:
+            raise TypeError('Supplied argument "group" must be string')
+        else:
+            getgrnam(group)
+
+        if owner in getgrnam(group).gr_mem:
+            self._group = getgrnam(group)
+            self._owner = getpwnam(owner)
+        else:
+            raise OSError('%s is not part of group %s' % (owner, group))
+
+        if base_directory:
+            self._homepath = os.path.join(base_directory, container_directory)
+        else:
+            self._homepath = os.path.join(self._owner.pw_dir, container_directory)
+            
+        #self._make_directory(self._homepath)
         for p in self.DEFAULT_PATHS.values():
             self._make_directory(os.path.join(self._homepath, p))
 
@@ -195,6 +224,11 @@ class mc(object):
             except (KeyError, ValueError):
                 continue
 
+        for option, value in startup_values.iteritems():
+            if option not in sanitize_integers:
+                defaults[option] = value
+
+        self._command_direct('touch %s' % self.env['sp'], self.env['cwd'])
         with config_file(self.env['sp']) as sp:
             sp.use_sections(False)
             for key, value in defaults.iteritems():
@@ -230,17 +264,21 @@ class mc(object):
                                  ('java', 'java_xms'),
                                  ])
 
+        d = defaults.copy()
+        d.update(startup_values)
+
         for section, option in sanitize_integers:
             try:
-                defaults[section][option] = int(startup_values[section][option])
+                d[section][option] = int(startup_values[section][option])
             except (KeyError, ValueError):
-                continue
-                
+                d[section][option] = defaults[section][option]
+
+        self._command_direct('touch %s' % self.env['sc'], self.env['cwd'])
         with config_file(self.env['sc']) as sc:
-            for section in defaults:
+            for section in d:
                 sc.add_section(section)
-                for option in defaults[section]:
-                    sc[section:option] = str(defaults[section][option])
+                for option in d[section]:
+                    sc[section:option] = str(d[section][option])
 
     def create(self, sc={}, sp={}):
         """
@@ -305,7 +343,7 @@ class mc(object):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
-            self._logger.info('Executing command {archive}: %s', command)
+            self._logger.info('Executing command {archive}: %s', self.command_archive)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_archive, self.env['cwd'])
@@ -434,7 +472,7 @@ class mc(object):
                             cwd=working_directory,
                             stderr=STDOUT,
                             preexec_fn=self._demote(self._owner.pw_uid,
-                                                    self._owner.pw_gid))
+                                                    self._group.gr_gid))
 
     def _command_stuff(self, stuff_text):
         """
@@ -452,7 +490,7 @@ class mc(object):
             check_call(command,
                        shell=True,
                        preexec_fn=self._demote(self._owner.pw_uid,
-                                               self._owner.pw_gid))
+                                               self._group.gr_gid))
         else:
             self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
             raise RuntimeError('Server must be running to send screen commands')
@@ -466,7 +504,7 @@ class mc(object):
 
         if not self.server_name:
             return
-        
+
         try:
             self._logger = logging.getLogger(self.server_name)
             self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
@@ -639,6 +677,23 @@ class mc(object):
             self._previous_arguments = required_arguments
             return '%(nice)s -n %(nice_value)s ' \
                    '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
+
+    @property
+    def command_kill(self):
+        """
+        Returns the command to kill a pid
+
+        """
+        required_arguments = {
+            'kill': self.BINARY_PATHS['kill'],
+            'pid': self.screen_pid
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(kill)s %(pid)s' % required_arguments
 
     @property
     def command_restore(self):
@@ -944,7 +999,7 @@ class mc(object):
         else:
             os.chown(path,
                      self._owner.pw_uid,
-                     self._owner.pw_gid)
+                     self._group.gr_gid)
 
     def _update_file(self, url, root_path, dest_filename):
         """
@@ -992,7 +1047,7 @@ class mc(object):
             try:
                 os.chown(new_path,
                          self._owner.pw_uid,
-                         self._owner.pw_gid)
+                         self._group.gr_gid)
                 move(new_path, old_path)
             except IOError:
                 raise IOError('move() activity failed')
@@ -1041,7 +1096,7 @@ class mc(object):
                     copy2(srcname, dstname)
                     os.chown(dstname,
                              self._owner.pw_uid,
-                             self._owner.pw_gid)
+                             self._group.gr_gid)
             except (IOError, os.error) as why:
                 errors.append((srcname, dstname, str(why)))
             except Error as err:
