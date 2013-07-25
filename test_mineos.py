@@ -7,7 +7,7 @@ import time
 from mineos import mc
 from shutil import rmtree
 
-ONLINE_TESTS = False
+ONLINE_TESTS = True
 
 def online_test(original_function):
     global ONLINE_TESTS
@@ -33,7 +33,6 @@ class TestMineOS(unittest.TestCase):
                 rmtree(os.path.join(self._path, d))
             except OSError:
                 continue
-  
 
     def test_bare_environment(self):
         for s in (None, '', False):
@@ -114,7 +113,23 @@ class TestMineOS(unittest.TestCase):
 
         self.assertFalse(os.path.isfile(instance.env['sp']))
         self.assertFalse(os.path.isfile(instance.env['sc']))
-        
+
+    def test_sp_defaults(self):
+        from conf_reader import config_file
+        instance = mc('one', self._user)
+        instance.create(sp={'server-ip':'127.0.0.1'})
+        conf = config_file(instance.env['sp'])
+        self.assertFalse(conf._use_sections)
+        self.assertEqual(conf['server-ip'],'127.0.0.1')
+
+    def test_sc_defaults(self):
+        from conf_reader import config_file
+        instance = mc('one', self._user)
+        instance.create(sc={'java':{'java-bin':'isworking'}})
+        conf = config_file(instance.env['sc'])
+        self.assertTrue(conf._use_sections)
+        self.assertEqual(conf['java':'java-bin'], 'isworking')
+
     def test_create(self):
         instance = mc('one', self._user)
         instance.create()
@@ -142,12 +157,10 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
 
         instance = mc('three', self._user)
-        instance.create({'java':{'java_bogus': 'wow!'}}, {'bogus-value':'abcd'})
+        instance.create(sc={'java':{'java_bogus': 'wow!'}}, sp={'bogus-value':'abcd'})
 
-        with self.assertRaises(KeyError):
-            instance.server_properties['bogus-value']
-        with self.assertRaises(KeyError):
-            instance.server_config['java':'java_bogus']
+        self.assertEqual(instance.server_properties['bogus-value'], 'abcd')
+        self.assertEqual(instance.server_config['java':'java_bogus'], 'wow!')
 
     def test_change_config(self):
         instance = mc('one', self._user)
@@ -369,8 +382,8 @@ class TestMineOS(unittest.TestCase):
         else:
             time.sleep(3)
 
-    #@online_test
-    def test_astart_a_var_games_server(self):
+    @online_test
+    def test_zstart_a_var_games_server(self):
         #create first server
         aaaa = mc(server_name='one',
                   owner='mc',
@@ -420,10 +433,5 @@ class TestMineOS(unittest.TestCase):
 
     
 if __name__ == "__main__":
-    import sys
-
-    if 'online' in sys.argv or 'full' in sys.argv:
-        ONLINE_TESTS = True
- 
     unittest.main()  
 

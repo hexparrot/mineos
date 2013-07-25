@@ -224,6 +224,10 @@ class mc(object):
             except (KeyError, ValueError):
                 continue
 
+        for option, value in startup_values.iteritems():
+            if option not in sanitize_integers:
+                defaults[option] = value
+
         self._command_direct('touch %s' % self.env['sp'], self.env['cwd'])
         with config_file(self.env['sp']) as sp:
             sp.use_sections(False)
@@ -260,18 +264,21 @@ class mc(object):
                                  ('java', 'java_xms'),
                                  ])
 
+        d = defaults.copy()
+        d.update(startup_values)
+
         for section, option in sanitize_integers:
             try:
-                defaults[section][option] = int(startup_values[section][option])
+                d[section][option] = int(startup_values[section][option])
             except (KeyError, ValueError):
-                continue
+                d[section][option] = defaults[section][option]
 
         self._command_direct('touch %s' % self.env['sc'], self.env['cwd'])
         with config_file(self.env['sc']) as sc:
-            for section in defaults:
+            for section in d:
                 sc.add_section(section)
-                for option in defaults[section]:
-                    sc[section:option] = str(defaults[section][option])
+                for option in d[section]:
+                    sc[section:option] = str(d[section][option])
 
     def create(self, sc={}, sp={}):
         """
@@ -336,7 +343,7 @@ class mc(object):
         if self.server_name not in self.list_servers():
             raise RuntimeWarning('Ignoring command {start}; no server by this name.')
         elif self.up:
-            self._logger.info('Executing command {archive}: %s', command)
+            self._logger.info('Executing command {archive}: %s', self.command_archive)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_archive, self.env['cwd'])
