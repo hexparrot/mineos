@@ -420,7 +420,7 @@ class TestMineOS(unittest.TestCase):
         time.sleep(5)
         try:
             instance.kill()
-        except RuntimeWarning:
+        except RuntimeError:
             pass #just want to suppress, not anticipate
         else:
             time.sleep(3)

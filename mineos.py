@@ -17,6 +17,32 @@ from conf_reader import config_file
 from collections import namedtuple
 from string import ascii_letters, digits
 from distutils.spawn import find_executable
+from functools import wraps
+
+# decorators
+
+def server_exists(state):
+    def dec(fn):
+        @wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            if (self.server_name in self.list_servers()) == state:
+                fn(self, *args, **kwargs)
+            else:
+                raise RuntimeWarning('Ignoring {%s}: no server named %s' % (fn.__name__,self.server_name))
+        return wrapper
+    return dec
+
+def server_up(up):
+    def dec(fn):
+        @wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            if self.up == up:
+                fn(self, *args, **kwargs)
+            else:
+                raise RuntimeError('Ignoring {%s}: server.up must be %s' % (fn.__name__,up))
+        return wrapper
+    return dec
+
 
 class mc(object):
 
@@ -187,6 +213,7 @@ class mc(object):
                 else:
                     raise RuntimeError('No config files found: server.properties or server.config')               
 
+    @server_exists(True)
     def _create_sp(self, startup_values={}):
         """
         Creates a server.properties file for the server given a dict.
@@ -233,6 +260,7 @@ class mc(object):
             for key, value in defaults.iteritems():
                 sp[key] = str(value)
 
+    @server_exists(True)
     def _create_sc(self, startup_values={}):
         """
         Creates a server.config file for a server given a dict.
@@ -279,14 +307,12 @@ class mc(object):
                 for option in d[section]:
                     sc[section:option] = str(d[section][option])
 
+    @server_exists(False)
     def create(self, sc={}, sp={}):
         """
         Creates a server's directories and generates configurations.
 
         """
-        if self.server_name in self.list_servers():
-            raise RuntimeWarning('Ignoring command {create}; server already exists.')
-
         for d in ('cwd', 'bwd', 'awd'):
             self._make_directory(self.env[d])
 
@@ -295,18 +321,15 @@ class mc(object):
         self._create_sc(sc)
         self._create_sp(sp)
         self._load_config()
-    
+
+    @server_up(False)
+    @server_exists(True)
     def start(self):
         """
         Checks if a server is running on its bound IP:PORT
         and if not, starts the screen+java instances.
 
         """
-        if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-        elif self.up:
-            raise RuntimeWarning('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
-        
         if self.port in [s.port for s in self.list_ports_up()]:
             if (self.port, self.ip_address) in [(s.port, s.ip_address) for s in self.list_ports_up()]:
                 raise RuntimeError('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
@@ -320,28 +343,24 @@ class mc(object):
 
         self._command_direct(self.command_start, self.env['cwd'])
 
+    @server_up(True)
+    @server_exists(True)
     def kill(self):
         """
         Kills a server instance by SIGTERM
 
         """
-        if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {kill}; no server by this name.')
-        elif self.up:
-            from signal import SIGTERM
-            self._logger.info('Executing command {kill}: %s', self.server_name)
-            os.kill(self.java_pid, SIGTERM)
-        else:
-            raise RuntimeWarning('Ignoring command {kill}: no live process for server %s' % self.server_name)
+        from signal import SIGTERM
+        self._logger.info('Executing command {kill}: %s', self.server_name)
+        os.kill(self.java_pid, SIGTERM)
 
+    @server_exists(True)
     def archive(self):
         """
         Creates a timestamped, gzipped tarball of the server contents.
 
         """
-        if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-        elif self.up:
+        if self.up:
             self._logger.info('Executing command {archive}: %s', self.command_archive)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
@@ -350,14 +369,13 @@ class mc(object):
         else:
             self._command_direct(self.command_archive, self.env['cwd'])
 
+    @server_exists(True)
     def backup(self):
         """
         Creates an rdiff-backup of a server.
 
         """
-        if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {start}; no server by this name.')
-        elif self.up:
+        if self.up:
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_backup, self.env['cwd'])
@@ -365,17 +383,14 @@ class mc(object):
         else:
             self._command_direct(self.command_backup, self.env['cwd'])
 
+    @server_up(False)
+    @server_exists(True)
     def restore(self, steps='now', overwrite=False):
         """
         Overwrites the /servers/ version of a server with the /backup/.
 
         """
         from subprocess import CalledProcessError
-        
-        if self.server_name not in self.list_servers():
-            raise RuntimeWarning('Ignoring command {restore}; no server by this name.')
-        elif self.up:
-            raise RuntimeError('Ignoring command {restore}; server %s currently up' % self.server_name)
         
         self._load_config(load_backup=True)
 
