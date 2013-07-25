@@ -6,24 +6,43 @@ import time
 
 from mineos import mc
 from shutil import rmtree
+from getpass import getuser
 
+from pwd import getpwnam
+from grp import getgrgid
+
+USER = getuser()
+GROUP = getgrgid(getpwnam(USER).pw_gid).gr_name
 ONLINE_TESTS = True
+
+def dummy(*args, **kwargs):
+    pass
 
 def online_test(original_function):
     global ONLINE_TESTS
-    if not ONLINE_TESTS:
-        def f(*args, **kwargs):
-            pass
-        return f
-    else:
+    if ONLINE_TESTS:
         return original_function
+    else:
+        return dummy
+
+def root_required(original_function):
+    global USER
+    if USER == 'root':
+        return original_function
+    else:
+        return dummy
+
+def root_prohibited(original_function):
+    global USER
+    if USER != 'root':
+        return original_function
+    else:
+        return dummy
 
 class TestMineOS(unittest.TestCase):
     def setUp(self):
-        from pwd import getpwnam
-        from getpass import getuser
-
-        self._user = getuser()
+        global USER
+        self._user = USER
         self._owner = getpwnam(self._user)
         self._path = self._owner.pw_dir
 
@@ -65,9 +84,6 @@ class TestMineOS(unittest.TestCase):
             self.assertIsNotNone(instance.server_name)
 
     def test_set_owner(self):
-        from grp import struct_group, getgrnam, getgrgid
-        from pwd import struct_passwd, getpwnam
-        
         with self.assertRaises(KeyError): instance = mc('a', 'fake')
         with self.assertRaises(TypeError): instance = mc('b', 123)
         with self.assertRaises(TypeError): instance = mc('c', {})
@@ -78,16 +94,43 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(KeyError): instance = mc('h', 'fake')
         with self.assertRaises(KeyError): instance = mc('i', 'fake', 'www-data')
 
-        if self._user == 'root':
-            combinations = [
-                ('x', self._user, None),
-                ('y', self._user, 'root'),
-                ]
-        else:
-            combinations = [
-                ('x', self._user, None),
-                ('y', self._user, 'users'),
-                ]
+    @root_required
+    def test_set_owner_two(self):
+        #assumes root is part of group GROUP
+        from grp import struct_group
+        from pwd import struct_passwd
+
+        global GROUP
+        
+        combinations = [
+            ('x', self._user, None),
+            ('y', self._user, GROUP),
+            ]
+
+        for server_name, user, group in combinations:
+            instance = mc(server_name, user, group)
+            expected_owner = getpwnam(user)
+            expected_group = getgrgid(expected_owner.pw_gid)
+
+            self.assertIsInstance(instance._owner, struct_passwd)
+            self.assertIsInstance(instance._group, struct_group)
+            
+            self.assertEqual(instance._owner, expected_owner)
+            self.assertEqual(instance._group, expected_group)
+            self.assertTrue(user in expected_group.gr_mem)
+
+    @root_prohibited
+    def test_set_owner_three(self):
+        #assumes current user is part of group 'group_to_test'
+        from grp import struct_group, getgrnam, getgrgid
+        from pwd import struct_passwd, getpwnam
+
+        global GROUP
+        
+        combinations = [
+            ('x', self._user, None),
+            ('y', self._user, GROUP),
+            ]
 
         for server_name, user, group in combinations:
             instance = mc(server_name, user, group)
@@ -382,14 +425,20 @@ class TestMineOS(unittest.TestCase):
         else:
             time.sleep(3)
 
+    @root_required
     @online_test
     def test_zstart_a_var_games_server(self):
+
+        user_to_use = 'mc'
+        group_to_use = 'mcserver'
+        base_dir = '/var/games/'
+        
         #create first server
         aaaa = mc(server_name='one',
-                  owner='mc',
-                  group='mcserver',
-                  base_directory='/var/games/',
-                  container_directory='mcserver')
+                  owner=user_to_use,
+                  group=group_to_use,
+                  base_directory=base_dir,
+                  container_directory=group_to_use)
         aaaa.create()
 
         profile = {
@@ -409,10 +458,10 @@ class TestMineOS(unittest.TestCase):
 
         #create second server
         bbbb = mc(server_name='two',
-                  owner='mc',
-                  group='mcserver',
-                  base_directory='/var/games/',
-                  container_directory='mcserver')
+                  owner=user_to_use,
+                  group=group_to_use,
+                  base_directory=base_dir,
+                  container_directory=group_to_use)
         bbbb.create(sp={'server-port':25570})
         bbbb.profile = profile['name']
         bbbb.start()
@@ -429,7 +478,7 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(RuntimeWarning):
             bbbb.kill()
 
-        rmtree('/var/games/mcserver')
+        rmtree(os.path.join(base_dir, group_to_use))
 
     
 if __name__ == "__main__":
