@@ -62,7 +62,7 @@ class config_file(ConfigParser.SafeConfigParser):
                 try:
                     return dict(self.items(option))
                 except ConfigParser.NoSectionError:
-                    raise KeyError("No section: '%s'" % option)
+                    raise KeyError("No section: %s" % option)
             elif type(option) is slice:
                 if type(option.start) is str and type(option.stop) is str:
                     try:
@@ -82,7 +82,7 @@ class config_file(ConfigParser.SafeConfigParser):
                     try:
                         return dict(self.items(option.start))
                     except ConfigParser.NoSectionError:
-                        raise KeyError("No section: '%s'" % option.start)
+                        raise KeyError("No section: %s" % option.start)
                 else:
                     from sys import maxint
                     if option.start is 0 and option.stop == maxint:

@@ -51,10 +51,11 @@ class mc(object):
             self._server_name = server_name
         else:
             raise ValueError('Server contains invalid characters')
-        self._set_owner(owner,
-                        group,
-                        base_directory,
-                        container_directory)
+
+        self._base_directory = base_directory
+        self._container_directory = container_directory
+        
+        self._set_owner(owner, group)
         self._create_logger()
         self._set_environment()
         self._load_config()
@@ -65,11 +66,7 @@ class mc(object):
     def __exit__(self, type, value, traceback):
         pass
 
-    def _set_owner(self,
-                   owner,
-                   group,
-                   base_directory='',
-                   container_directory=''):
+    def _set_owner(self, owner, group):
         
         """
         Sets the instance to be executed by linux user 'owner'.
@@ -113,10 +110,12 @@ class mc(object):
         else:
             raise OSError('%s is not part of group %s' % (owner, group))
 
-        if base_directory:
-            self._homepath = os.path.join(base_directory, container_directory)
+        if self._base_directory:
+            self._homepath = os.path.join(self._base_directory,
+                                          self._container_directory)
         else:
-            self._homepath = os.path.join(self._owner.pw_dir, container_directory)
+            self._homepath = os.path.join(self._owner.pw_dir,
+                                          self._container_directory)
             
         #self._make_directory(self._homepath)
         for p in self.DEFAULT_PATHS.values():
@@ -901,7 +900,9 @@ class mc(object):
         """
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
         for server in self.list_servers_up():
-            instance = mc(server)
+            instance = mc(server,
+                          base_directory=self._base_directory,
+                          container_directory=self._container_directory)
             yield instance_connection(server, instance.port, instance.ip_address)
 
     def list_increments(self):

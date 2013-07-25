@@ -113,7 +113,7 @@ class TestMineOS(unittest.TestCase):
 
         self.assertFalse(os.path.isfile(instance.env['sp']))
         self.assertFalse(os.path.isfile(instance.env['sc']))
-
+        
     def test_sp_defaults(self):
         from conf_reader import config_file
         instance = mc('one', self._user)
@@ -405,7 +405,7 @@ class TestMineOS(unittest.TestCase):
         aaaa.update_profile(profile)
         aaaa.profile = profile['name']
         aaaa.start()
-        time.sleep(20)
+        time.sleep(25)
 
         #create second server
         bbbb = mc(server_name='two',
@@ -416,7 +416,7 @@ class TestMineOS(unittest.TestCase):
         bbbb.create(sp={'server-port':25570})
         bbbb.profile = profile['name']
         bbbb.start()
-        time.sleep(20)
+        time.sleep(25)
 
         #kill servers
         aaaa.kill()

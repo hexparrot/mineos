@@ -195,21 +195,23 @@ class TestConfigFile(unittest.TestCase):
             pass
 
     def test_reload_config(self):
-        with config_file(self.CONFIG_FILES['sections']) as conf:
+        with config_file(self.CONFIG_FILES['sectionless']) as conf:
             conf.use_sections(False)
             conf['server-ip'] = '0.0.0.0'
 
-        conf = config_file(self.CONFIG_FILES['sections'])
+        conf = config_file(self.CONFIG_FILES['sectionless'])
         self.assertFalse(conf._use_sections)
         self.assertEqual(conf['server-ip'], '0.0.0.0')
+        self.assertEqual(conf['server-ip'::'0.0.0.0'], '0.0.0.0')
 
-        with config_file(self.CONFIG_FILES['sections']) as conf:
+        with config_file(self.CONFIG_FILES['sectionless']) as conf:
             self.assertFalse(conf._use_sections)
             conf['server-ip'] = '127.0.0.1'
 
-        conf = config_file(self.CONFIG_FILES['sections'])
+        conf = config_file(self.CONFIG_FILES['sectionless'])
         self.assertFalse(conf._use_sections)
         self.assertEqual(conf['server-ip'], '127.0.0.1')
+        self.assertEqual(conf['server-ip'::'0.0.0.0'], '127.0.0.1')
 
 if __name__ == "__main__":
     unittest.main()  
