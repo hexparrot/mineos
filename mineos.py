@@ -46,6 +46,8 @@ def server_up(up):
 
 class mc(object):
 
+    LOGGING_DIR = '/var/log/mineos'
+    LOGGING_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
     NICE_VALUE = 10
     DEFAULT_PATHS = {
         'servers': 'servers',
@@ -339,8 +341,6 @@ class mc(object):
                 raise RuntimeError('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        self._logger.info('Executing command {start}; %s@%s:%s', self.server_name, self.ip_address, self.port)
-
         self._command_direct(self.command_start, self.env['cwd'])
 
     @server_up(True)
@@ -351,7 +351,6 @@ class mc(object):
 
         """
         from signal import SIGTERM
-        self._logger.info('Executing command {kill}: %s', self.server_name)
         os.kill(self.java_pid, SIGTERM)
 
     @server_exists(True)
@@ -361,7 +360,6 @@ class mc(object):
 
         """
         if self.up:
-            self._logger.info('Executing command {archive}: %s', self.command_archive)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_archive, self.env['cwd'])
@@ -474,13 +472,9 @@ class mc(object):
         uplevel traversal, i.e., "/../'
 
         """
-        
         from subprocess import check_output, STDOUT
 
-        self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
-                                                         working_directory,
-                                                         command)
-
+        self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
         return check_output(command,
                             shell=True,
                             cwd=working_directory,
@@ -488,6 +482,9 @@ class mc(object):
                             preexec_fn=self._demote(self._owner.pw_uid,
                                                     self._group.gr_gid))
 
+
+    @server_up(True)
+    @server_exists(True)
     def _command_stuff(self, stuff_text):
         """
         Opens a subprocess and stuffs text to an open screen as the user
@@ -496,39 +493,42 @@ class mc(object):
         """
         from subprocess import check_call
 
-        if self.up:
-            command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
-            self._logger.info('Executing as %s: %s', self._owner.pw_name,
-                                                     command)
-
-            check_call(command,
-                       shell=True,
-                       preexec_fn=self._demote(self._owner.pw_uid,
-                                               self._group.gr_gid))
-        else:
-            self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
-            raise RuntimeError('Server must be running to send screen commands')
+        command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
+        self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
+        check_call(command,
+                   shell=True,
+                   preexec_fn=self._demote(self._owner.pw_uid,
+                                           self._group.gr_gid))
 
     def _create_logger(self):
         """
         Create a logger item.
 
         """
-        self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
-
-        if not self.server_name:
-            return
 
         try:
-            self._logger = logging.getLogger(self.server_name)
-            self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
-                                                               self.DEFAULT_PATHS['log'],
-                                                               self.server_name))
-        except (TypeError, AttributeError):
-            self._logger = None
-            self._logger_fh = None
+            logfile = os.path.join(self.LOGGING_DIR, self.server_name)
+            self._make_directory(os.path.join(self.LOGGING_DIR))
+            open(logfile, 'a').close()  
+        except OSError as ex:
+            '''
+            #IOError: [Errno 13] Permission denied:
+            #IOError: [Errno 2] No such file or directory
+            '''
+            if ex[0] in (2,13):
+                self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
+                logfile = os.path.join(self._homepath, self.DEFAULT_PATHS['log'], self.server_name)
+            
+                self._logger = logging.getLogger(self.server_name)
+                self._logger_fh = logging.FileHandler(logfile)
+            else:
+                raise
+        except AttributeError:
+            pass # instance started with no server_name; no logging
         else:
-            formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s: %(message)s')
+            self._logger = logging.getLogger(self.server_name)
+            self._logger_fh = logging.FileHandler(logfile)
+            formatter = logging.Formatter(self.LOGGING_FORMAT)
             self._logger_fh.setFormatter(formatter)
             self._logger.addHandler(self._logger_fh)
             self._logger.setLevel(logging.DEBUG)
@@ -932,9 +932,10 @@ class mc(object):
         
         try:
             output = self._command_direct(self.command_list_increments, self.env['bwd'])
-        except CalledProcessError:
+            assert output is not None
+        except (CalledProcessError, AssertionError):
             return incs('', [])
-            
+        
         output_list = output.split('\n')
         increment_string = output_list.pop(0)
         output_list.pop() #empty newline throwaway
