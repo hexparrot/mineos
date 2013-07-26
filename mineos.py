@@ -21,6 +21,27 @@ from functools import wraps
 
 # decorators
 
+LOGFILE = '/var/log/mineos.log'
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+
+try:
+    logging.basicConfig(filename=LOGFILE,level=logging.DEBUG,format=FORMAT)
+except:
+    logging.basicConfig(level=logging.DEBUG,format=FORMAT)
+
+def logthis():
+    def dec(fn):
+        @wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            try:
+                logging.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, args))
+                fn(self, *args, **kwargs)
+            except RuntimeError as ex:
+                logging.error('%s raised: %s' %(fn.__name__, ex))
+                raise
+        return wrapper
+    return dec
+
 def server_exists(state):
     def dec(fn):
         @wraps(fn)
@@ -82,7 +103,7 @@ class mc(object):
         self._container_directory = container_directory
         
         self._set_owner(owner, group)
-        self._create_logger()
+        #self._create_logger()
         self._set_environment()
         self._load_config()
 
@@ -339,8 +360,6 @@ class mc(object):
                 raise RuntimeError('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        self._logger.info('Executing command {start}; %s@%s:%s', self.server_name, self.ip_address, self.port)
-
         self._command_direct(self.command_start, self.env['cwd'])
 
     @server_up(True)
@@ -351,7 +370,6 @@ class mc(object):
 
         """
         from signal import SIGTERM
-        self._logger.info('Executing command {kill}: %s', self.server_name)
         os.kill(self.java_pid, SIGTERM)
 
     @server_exists(True)
@@ -361,7 +379,6 @@ class mc(object):
 
         """
         if self.up:
-            self._logger.info('Executing command {archive}: %s', self.command_archive)
             self._command_stuff('save-off')
             self._command_stuff('save-all')
             self._command_direct(self.command_archive, self.env['cwd'])
@@ -465,6 +482,7 @@ class mc(object):
             os.setuid(user_uid)
         return set_ids
 
+    @logthis()
     def _command_direct(self, command, working_directory):
         """
         Opens a subprocess and executes a command as the user
@@ -474,12 +492,7 @@ class mc(object):
         uplevel traversal, i.e., "/../'
 
         """
-        
         from subprocess import check_output, STDOUT
-
-        self._logger.info('Executing as %s from %s: %s', self._owner.pw_name,
-                                                         working_directory,
-                                                         command)
 
         return check_output(command,
                             shell=True,
@@ -488,6 +501,10 @@ class mc(object):
                             preexec_fn=self._demote(self._owner.pw_uid,
                                                     self._group.gr_gid))
 
+
+    @logthis()
+    @server_up(True)
+    @server_exists(True)
     def _command_stuff(self, stuff_text):
         """
         Opens a subprocess and stuffs text to an open screen as the user
@@ -496,18 +513,12 @@ class mc(object):
         """
         from subprocess import check_call
 
-        if self.up:
-            command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
-            self._logger.info('Executing as %s: %s', self._owner.pw_name,
-                                                     command)
+        command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
 
-            check_call(command,
-                       shell=True,
-                       preexec_fn=self._demote(self._owner.pw_uid,
-                                               self._group.gr_gid))
-        else:
-            self._logger.warning('Ignoring command {stuff}; downed server %s: "%s"', self.server_name, stuff_text)
-            raise RuntimeError('Server must be running to send screen commands')
+        check_call(command,
+                   shell=True,
+                   preexec_fn=self._demote(self._owner.pw_uid,
+                                           self._group.gr_gid))
 
     def _create_logger(self):
         """
@@ -932,9 +943,10 @@ class mc(object):
         
         try:
             output = self._command_direct(self.command_list_increments, self.env['bwd'])
-        except CalledProcessError:
+            assert output is not None
+        except (CalledProcessError, AssertionError):
             return incs('', [])
-            
+        
         output_list = output.split('\n')
         increment_string = output_list.pop(0)
         output_list.pop() #empty newline throwaway

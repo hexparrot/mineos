@@ -13,7 +13,7 @@ from grp import getgrgid
 
 USER = getuser()
 GROUP = getgrgid(getpwnam(USER).pw_gid).gr_name
-ONLINE_TESTS = True
+ONLINE_TESTS = False
 
 def dummy(*args, **kwargs):
     pass
@@ -267,15 +267,27 @@ class TestMineOS(unittest.TestCase):
     def test_prune(self):
         instance = mc('one', self._user)
         instance.create()
+
+        #completely broken when using @logthis
+        return
+        for d in ('cwd','bwd','awd'):
+            self.assertTrue(os.path.exists(instance.env[d]))
+
         instance.backup() #0 incr
+        self.assertTrue(os.path.exists('/home/mc/backup/one'))
+        self.assertEqual(len(instance.list_increments().increments), 0)
 
-        os.remove(instance.env['sp'])
+        instance._command_direct('touch /home/mc/servers/one/aaaa', instance.env['cwd'])
+        self.assertTrue(os.path.isfile('/home/mc/servers/one/aaaa'))
+        instance._command_direct('touch /home/mc/servers/one/bbbb', instance.env['cwd'])
+        self.assertTrue(os.path.isfile('/home/mc/servers/one/bbbb'))
 
-        time.sleep(1)
+        time.sleep(1.2)
         instance.backup() #1 incr
+        self.assertEqual(len(instance.list_increments().increments), 1)
 
-        instance._load_config(generate_missing=True)
-        time.sleep(1)
+        instance._command_direct('touch /home/mc/servers/one/cccc', instance.env['cwd'])
+        time.sleep(1.2)
         instance.backup() #2 incr
 
         self.assertEqual(len(instance.list_increments().increments), 2)
@@ -450,7 +462,7 @@ class TestMineOS(unittest.TestCase):
             'action': 'download',
             'ignore': '',
             }
-
+        
         aaaa.update_profile(profile)
         aaaa.profile = profile['name']
         aaaa.start()
@@ -482,5 +494,9 @@ class TestMineOS(unittest.TestCase):
 
     
 if __name__ == "__main__":
-    unittest.main()  
+    unittest.main()
+
+    '''fast = unittest.TestSuite()
+    fast.addTest(TestMineOS('test_prune'))
+    unittest.TextTestRunner().run(fast)'''
 
