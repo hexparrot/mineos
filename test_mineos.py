@@ -268,25 +268,22 @@ class TestMineOS(unittest.TestCase):
         instance = mc('one', self._user)
         instance.create()
 
-        #completely broken when using @logthis
-        return
         for d in ('cwd','bwd','awd'):
             self.assertTrue(os.path.exists(instance.env[d]))
 
         instance.backup() #0 incr
-        self.assertTrue(os.path.exists('/home/mc/backup/one'))
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-        instance._command_direct('touch /home/mc/servers/one/aaaa', instance.env['cwd'])
-        self.assertTrue(os.path.isfile('/home/mc/servers/one/aaaa'))
-        instance._command_direct('touch /home/mc/servers/one/bbbb', instance.env['cwd'])
-        self.assertTrue(os.path.isfile('/home/mc/servers/one/bbbb'))
+        instance._command_direct('touch me', instance.env['cwd'])
+        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'], 'me')))
 
-        time.sleep(1.2)
+        time.sleep(1.1)
         instance.backup() #1 incr
         self.assertEqual(len(instance.list_increments().increments), 1)
 
-        instance._command_direct('touch /home/mc/servers/one/cccc', instance.env['cwd'])
+        instance._command_direct('touch you', instance.env['cwd'])
+        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'], 'you')))
+        
         time.sleep(1.2)
         instance.backup() #2 incr
 
@@ -496,7 +493,10 @@ class TestMineOS(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
-    '''fast = unittest.TestSuite()
-    fast.addTest(TestMineOS('test_prune'))
-    unittest.TextTestRunner().run(fast)'''
+    '''
 
+    fast = unittest.TestSuite()
+    fast.addTest(TestMineOS('test_prune'))
+    unittest.TextTestRunner().run(fast)
+    '''
+    

@@ -21,27 +21,6 @@ from functools import wraps
 
 # decorators
 
-LOGFILE = '/var/log/mineos.log'
-FORMAT = '%(asctime)s %(levelname)s: %(message)s'
-
-try:
-    logging.basicConfig(filename=LOGFILE,level=logging.DEBUG,format=FORMAT)
-except:
-    logging.basicConfig(level=logging.DEBUG,format=FORMAT)
-
-def logthis():
-    def dec(fn):
-        @wraps(fn)
-        def wrapper(self, *args, **kwargs):
-            try:
-                logging.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, args))
-                fn(self, *args, **kwargs)
-            except RuntimeError as ex:
-                logging.error('%s raised: %s' %(fn.__name__, ex))
-                raise
-        return wrapper
-    return dec
-
 def server_exists(state):
     def dec(fn):
         @wraps(fn)
@@ -67,6 +46,8 @@ def server_up(up):
 
 class mc(object):
 
+    LOGGING_DIR = '/var/log/mineos'
+    LOGGING_FORMAT = '%(asctime)s %(levelname)s: %(message)s'
     NICE_VALUE = 10
     DEFAULT_PATHS = {
         'servers': 'servers',
@@ -103,7 +84,7 @@ class mc(object):
         self._container_directory = container_directory
         
         self._set_owner(owner, group)
-        #self._create_logger()
+        self._create_logger()
         self._set_environment()
         self._load_config()
 
@@ -482,7 +463,6 @@ class mc(object):
             os.setuid(user_uid)
         return set_ids
 
-    @logthis()
     def _command_direct(self, command, working_directory):
         """
         Opens a subprocess and executes a command as the user
@@ -494,6 +474,7 @@ class mc(object):
         """
         from subprocess import check_output, STDOUT
 
+        self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
         return check_output(command,
                             shell=True,
                             cwd=working_directory,
@@ -502,7 +483,6 @@ class mc(object):
                                                     self._group.gr_gid))
 
 
-    @logthis()
     @server_up(True)
     @server_exists(True)
     def _command_stuff(self, stuff_text):
@@ -514,7 +494,7 @@ class mc(object):
         from subprocess import check_call
 
         command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
-
+        self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
         check_call(command,
                    shell=True,
                    preexec_fn=self._demote(self._owner.pw_uid,
@@ -525,21 +505,30 @@ class mc(object):
         Create a logger item.
 
         """
-        self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
-
-        if not self.server_name:
-            return
 
         try:
-            self._logger = logging.getLogger(self.server_name)
-            self._logger_fh = logging.FileHandler(os.path.join(self._homepath,
-                                                               self.DEFAULT_PATHS['log'],
-                                                               self.server_name))
-        except (TypeError, AttributeError):
-            self._logger = None
-            self._logger_fh = None
+            logfile = os.path.join(self.LOGGING_DIR, self.server_name)
+            self._make_directory(os.path.join(self.LOGGING_DIR))
+            open(logfile, 'a').close()  
+        except OSError as ex:
+            '''
+            #IOError: [Errno 13] Permission denied:
+            #IOError: [Errno 2] No such file or directory
+            '''
+            if ex[0] in (2,13):
+                self._make_directory(os.path.join(self._homepath, self.DEFAULT_PATHS['log']))
+                logfile = os.path.join(self._homepath, self.DEFAULT_PATHS['log'], self.server_name)
+            
+                self._logger = logging.getLogger(self.server_name)
+                self._logger_fh = logging.FileHandler(logfile)
+            else:
+                raise
+        except AttributeError:
+            pass # instance started with no server_name; no logging
         else:
-            formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s: %(message)s')
+            self._logger = logging.getLogger(self.server_name)
+            self._logger_fh = logging.FileHandler(logfile)
+            formatter = logging.Formatter(self.LOGGING_FORMAT)
             self._logger_fh.setFormatter(formatter)
             self._logger.addHandler(self._logger_fh)
             self._logger.setLevel(logging.DEBUG)
