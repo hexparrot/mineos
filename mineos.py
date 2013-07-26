@@ -510,7 +510,7 @@ class mc(object):
             logfile = os.path.join(self.LOGGING_DIR, self.server_name)
             self._make_directory(os.path.join(self.LOGGING_DIR))
             open(logfile, 'a').close()  
-        except OSError as ex:
+        except (IOError,OSError) as ex:
             '''
             #IOError: [Errno 13] Permission denied:
             #IOError: [Errno 2] No such file or directory
