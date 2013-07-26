@@ -28,7 +28,10 @@ def server_exists(state):
             if (self.server_name in self.list_servers()) == state:
                 fn(self, *args, **kwargs)
             else:
-                raise RuntimeWarning('Ignoring {%s}: no server named %s' % (fn.__name__,self.server_name))
+                if state:
+                    raise RuntimeWarning('Ignoring {%s}: no server named "%s"' % (fn.__name__,self.server_name))
+                else:
+                    raise RuntimeWarning('Ignoring {%s}: server may not exist "%s"' % (fn.__name__,self.server_name))
         return wrapper
     return dec
 

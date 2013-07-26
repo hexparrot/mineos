@@ -83,6 +83,46 @@ class TestMineOS(unittest.TestCase):
             instance = mc(server_name, self._user)
             self.assertIsNotNone(instance.server_name)
 
+    @root_prohibited
+    def test_create_log(self):
+        server_to_create = 'one'
+        try:
+            logfile = os.path.join(mc().LOGGING_DIR, server_to_create)
+            open(logfile, 'a').close()
+        except IOError:
+            instance = mc(server_to_create)
+            instance.create()
+            self.assertTrue(os.path.isfile(os.path.join(instance._homepath,
+                                                        'log',
+                                                        instance.server_name)))
+            instance._logger.debug('it works')
+        else:
+            instance = mc(server_to_create)
+            instance.create()
+            self.assertTrue(os.path.isfile(os.path.join(instance.LOGGING_DIR,
+                                                        'log',
+                                                        instance.server_name)))
+            instance._logger.debug('it works')
+
+    @root_required
+    def test_create_var_log(self):
+        server_to_create = 'one'
+        user_to_use = 'mc'
+        group_to_use = 'mcserver'
+        base_dir = '/var/games'
+        
+        instance = mc(server_to_create,
+                      owner=user_to_use,
+                      group=group_to_use,
+                      base_directory=base_dir,
+                      container_directory=group_to_use)
+        instance.create()
+        self.assertTrue(os.path.isfile(os.path.join(instance.LOGGING_DIR,
+                                                    instance.server_name)))
+        instance._logger.debug('it works')
+        instance._destroy_logger()
+        rmtree(os.path.join(base_dir, group_to_use))
+
     def test_set_owner(self):
         with self.assertRaises(KeyError): instance = mc('a', 'fake')
         with self.assertRaises(TypeError): instance = mc('b', 123)
