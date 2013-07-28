@@ -14,6 +14,7 @@ import procfs_reader
 from conf_reader import config_file
 from collections import namedtuple
 from distutils.spawn import find_executable
+from functools import wraps
 
 def server_exists(state):
     def dec(fn):
@@ -23,9 +24,9 @@ def server_exists(state):
                 fn(self, *args, **kwargs)
             else:
                 if state:
-                    raise RuntimeWarning('Ignoring {%s}: no server named "%s"' % (fn.__name__,self.server_name))
+                    raise RuntimeWarning('Ignoring {%s}: could not find server: "%s"' % (fn.__name__,self.server_name))
                 else:
-                    raise RuntimeWarning('Ignoring {%s}: server may not exist "%s"' % (fn.__name__,self.server_name))
+                    raise RuntimeWarning('Ignoring {%s}: server already exists: "%s"' % (fn.__name__,self.server_name))
         return wrapper
     return dec
 
@@ -36,7 +37,7 @@ def server_up(up):
             if self.up == up:
                 fn(self, *args, **kwargs)
             else:
-                raise RuntimeError('Ignoring {%s}: server.up must be %s' % (fn.__name__,up))
+                raise RuntimeError('Ignoring {%s}: server.up must be %s' % (fn.__name__, up))
         return wrapper
     return dec
 
@@ -149,6 +150,7 @@ class mc(object):
                 else:
                     raise RuntimeError('No config files found: server.properties or server.config')   
 
+    @server_exists(True)
     def _create_sp(self, startup_values={}):
         """
         Creates a server.properties file for the server given a dict.
@@ -241,6 +243,7 @@ class mc(object):
                 for option in d[section]:
                     sc[section:option] = str(d[section][option])
 
+    @server_exists(False)
     def create(self, sc={}, sp={}):
         """
         Creates a server's directories and generates configurations.
@@ -255,6 +258,8 @@ class mc(object):
         self._create_sp(sp)
         self._load_config()
 
+    @server_up(False)
+    @server_exists(True)
     def start(self):
         """
         Checks if a server is running on its bound IP:PORT
@@ -272,6 +277,8 @@ class mc(object):
         self._load_config(generate_missing=True)
         self._command_direct(self.command_start, self.env['cwd'])
 
+    @server_up(True)
+    @server_exists(True)
     def kill(self):
         """
         Kills a server instance by SIGTERM
@@ -279,6 +286,7 @@ class mc(object):
         """
         self._command_direct(self.command_kill, self.env['cwd'])
 
+    @server_exists(True)
     def archive(self):
         """
         Creates a timestamped, gzipped tarball of the server contents.
@@ -292,6 +300,7 @@ class mc(object):
         else:
             self._command_direct(self.command_archive, self.env['cwd'])
 
+    @server_exists(True)
     def backup(self):
         """
         Creates an rdiff-backup of a server.
@@ -305,6 +314,8 @@ class mc(object):
         else:
             self._command_direct(self.command_backup, self.env['cwd'])
 
+    @server_up(False)
+    @server_exists(True)
     def restore(self, steps='now', overwrite=False):
         """
         Overwrites the /servers/ version of a server with the /backup/.
@@ -328,6 +339,7 @@ class mc(object):
         else:
             raise RuntimeError('Ignoring command {restore}; Unable to locate backup')
 
+    @server_exists(True)
     def prune(self, steps=None):
         """
         Removes old rdiff-backup data/metadata.
@@ -339,7 +351,6 @@ class mc(object):
         self._command_direct(self.command_prune, self.env['bwd'])
 
     def update_profile(self, profile_dict, do_download=True):
-
         self._make_directory(os.path.join(self.env['pwd'],
                                           profile_dict['name']))
 
@@ -403,6 +414,8 @@ class mc(object):
                             stderr=STDOUT,
                             preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
+    @server_up(True)
+    @server_exists(True)
     def _command_stuff(self, stuff_text):
         """
         Opens a subprocess and stuffs text to an open screen as the user

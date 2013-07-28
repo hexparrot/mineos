@@ -384,7 +384,7 @@ class TestMineOS(unittest.TestCase):
                          'minecraft_server.1.6.2.jar')
 
     @online_test
-    def test_start_a_home_server(self):
+    def test_astart_home_server(self):
         instance = mc('one', **self.inst_args)
         instance.create()
 
