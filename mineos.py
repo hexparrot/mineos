@@ -15,6 +15,31 @@ from conf_reader import config_file
 from collections import namedtuple
 from distutils.spawn import find_executable
 
+def server_exists(state):
+    def dec(fn):
+        @wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            if (self.server_name in self.list_servers(self.base)) == state:
+                fn(self, *args, **kwargs)
+            else:
+                if state:
+                    raise RuntimeWarning('Ignoring {%s}: no server named "%s"' % (fn.__name__,self.server_name))
+                else:
+                    raise RuntimeWarning('Ignoring {%s}: server may not exist "%s"' % (fn.__name__,self.server_name))
+        return wrapper
+    return dec
+
+def server_up(up):
+    def dec(fn):
+        @wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            if self.up == up:
+                fn(self, *args, **kwargs)
+            else:
+                raise RuntimeError('Ignoring {%s}: server.up must be %s' % (fn.__name__,up))
+        return wrapper
+    return dec
+
 class mc(object):
 
     NICE_VALUE = 10
@@ -793,8 +818,8 @@ class mc(object):
         """
         from itertools import chain
         return list(chain(
-            self._list_subdirs(os.path.join(base_directory, self.DEFAULT_PATHS['servers'])),
-            self._list_subdirs(os.path.join(base_directory, self.DEFAULT_PATHS['backup']))
+            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
+            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
             ))
 
     @classmethod
