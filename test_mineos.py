@@ -13,7 +13,7 @@ from grp import getgrgid
 
 USER = getuser()
 GROUP = getgrgid(getpwnam(USER).pw_gid).gr_name
-ONLINE_TESTS = False
+ONLINE_TESTS = True
 
 def dummy(*args, **kwargs):
     pass
@@ -303,7 +303,7 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
                                                     'update.sh')))
         self.assertEqual(self.find_owner(os.path.join(instance.env['cwd'],
-                                                      'update.sh')), instance._owner.pw_name)
+                                                      'update.sh')), instance.owner.pw_name)
             
         self.assertFalse(instance._update_file(url1,
                                                instance.env['cwd'],
@@ -428,7 +428,7 @@ class TestMineOS(unittest.TestCase):
         except RuntimeError:
             pass #just want to suppress, not anticipate
         else:
-            time.sleep(3)
+            time.sleep(1.5)
 
     @root_required
     @online_test

@@ -77,11 +77,13 @@ class mc(object):
             'pwd': os.path.join(self.base, self.DEFAULT_PATHS['profiles'])
             }
 
-        self.env['sp'] = os.path.join(self.env['cwd'], 'server.properties')
-        self.env['sc'] =os.path.join(self.env['cwd'], 'server.config')
-        self.env['pc'] = os.path.join(self.base, self.DEFAULT_PATHS['profiles'], 'profile.config')
-        self.env['sp_backup'] = os.path.join(self.env['bwd'], 'server.properties')
-        self.env['sc_backup'] = os.path.join(self.env['bwd'], 'server.config')
+        self.env.update({
+            'sp': os.path.join(self.env['cwd'], 'server.properties'),
+            'sc': os.path.join(self.env['cwd'], 'server.config'),
+            'pc': os.path.join(self.base, self.DEFAULT_PATHS['profiles'], 'profile.config'),
+            'sp_backup': os.path.join(self.env['bwd'], 'server.properties'),
+            'sc_backup': os.path.join(self.env['bwd'], 'server.config')
+            })
 
     def _load_config(self, load_backup=False, generate_missing=False):
         """
@@ -94,6 +96,7 @@ class mc(object):
         """
         def load_sp():
             self.server_properties = config_file(self.env['sp_backup']) if load_backup else config_file(self.env['sp'])
+            self.server_properties.use_sections(False)
             return self.server_properties[:]
 
         def load_sc():
@@ -161,7 +164,7 @@ class mc(object):
             if option not in sanitize_integers:
                 defaults[option] = value
 
-        #self._command_direct('touch %s' % self.env['sp'], self.env['cwd'])
+        self._command_direct('touch %s' % self.env['sp'], self.env['cwd'])
         with config_file(self.env['sp']) as sp:
             sp.use_sections(False)
             for key, value in defaults.iteritems():
@@ -311,7 +314,37 @@ class mc(object):
         self._command_direct(self.command_prune, self.env['bwd'])
 
     def update_profile(self, profile_dict, do_download=True):
-        pass
+
+        self._make_directory(os.path.join(self.env['pwd'],
+                                          profile_dict['name']))
+
+        with self.profile_config as pc:
+            from ConfigParser import DuplicateSectionError
+            
+            try:
+                pc.add_section(profile_dict['name'])
+            except DuplicateSectionError:
+                pass
+            
+            for option, value in profile_dict.iteritems():
+                if option != 'name':
+                    pc[profile_dict['name']:option] = value
+
+        if profile_dict['type'] == 'standard_jar':
+            from shutil import move
+
+            if profile_dict['action'] == 'download' and do_download:
+                self._update_file(profile_dict['url'],
+                                  self.env['pwd'],
+                                  profile_dict['save_as'])
+            
+                move(os.path.join(self.env['pwd'],
+                                  pc[profile_dict['name']:'save_as']),
+                     os.path.join(self.env['pwd'],
+                                  profile_dict['name'],
+                                  pc[profile_dict['name']:'run_as']))
+        else:
+            raise NotImplementedError
 
     @staticmethod
     def _demote(user_uid, user_gid):
@@ -339,7 +372,6 @@ class mc(object):
         """
         from subprocess import check_output, STDOUT
 
-        #self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
         return check_output(command,
                             shell=True,
                             cwd=working_directory,
@@ -355,25 +387,9 @@ class mc(object):
         from subprocess import check_call
 
         command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
-        #self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
         check_call(command,
                    shell=True,
                    preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
-
-    def _create_logger(self):
-        """
-        Create a logger item.
-
-        """
-
-        pass
-
-    def _destroy_logger(self):
-        """
-        Closes the self._logger filehandler (is not implemented anywhere).
-
-        """
-        pass
 
     def valid_server_name(self, name):
         """
@@ -462,7 +478,7 @@ class mc(object):
         Returns the process id of the server's java instance.
 
         """
-        for server, java_pid, screen_pid in self._list_server_pids():
+        for server, java_pid, screen_pid, base_dir in self._list_server_pids():
             if self.server_name == server:
                 return java_pid
         else:
@@ -474,7 +490,7 @@ class mc(object):
         Returns the process id of the server's screen instance.
 
         """
-        for server, java_pid, screen_pid in self._list_server_pids():
+        for server, java_pid, screen_pid, base_dir in self._list_server_pids():
             if self.server_name == server:
                 return screen_pid
         else:
@@ -661,7 +677,30 @@ class mc(object):
         into the live working directory.
 
         """       
-        pass
+        required_arguments = {
+            'profile': self.profile,
+            'rsync': self.BINARY_PATHS['rsync'],
+            'pwd': os.path.join(self.env['pwd']),
+            'exclude': '',
+            'cwd': '.'
+            }
+
+        try:
+            files_to_exclude_str = self.profile_config[self.profile:'ignore']
+        except (TypeError,KeyError):
+            raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
+        else:
+            if ',' in files_to_exclude_str:
+                files = [f.strip() for f in files_to_exclude_str.split(',')]
+            else:
+                files = [f.strip() for f in files_to_exclude_str.split()]
+            required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
     @property
     def profile(self):
@@ -669,11 +708,29 @@ class mc(object):
         Returns the profile the server is set to
 
         """
-        pass
+        try:
+            return self.server_config['minecraft':'profile'] or None
+        except KeyError:
+            return None
 
     @profile.setter
     def profile(self, value):
-        pass
+        try:
+            self.profile_config[value:]
+        except KeyError:
+            raise KeyError('There is no defined profile by this name in profile.config')
+        else:
+            with self.server_config as sc:
+                from ConfigParser import DuplicateSectionError
+                
+                try:
+                    sc.add_section('minecraft')
+                except DuplicateSectionError:
+                    pass
+                finally:
+                    sc['minecraft':'profile'] = str(value).strip()
+            
+            self._command_direct(self.command_apply_profile, self.env['cwd'])  
 
     @property
     def port(self):
@@ -746,8 +803,8 @@ class mc(object):
         Generator: all servers which were started with "mc-SERVER" name.
 
         """
-        for instance in cls._list_server_pids():
-            yield (instance.server_name, base_dir)
+        for name, java, screen, base in cls._list_server_pids():
+            yield (name, base)
 
     @classmethod
     def list_ports_up(cls):
@@ -814,13 +871,13 @@ class mc(object):
 
             for pid, cmdline in pids.iteritems():
                 if '-jar' in cmdline:
-                    if 'screen' in cmdline.lower() and 'mc-%s' % serv in cmdline:
+                    if 'screen' in cmdline.lower() and 'mc-%s' % name in cmdline:
                         screen = int(pid)
-                    elif '/%s/' % serv in cmdline:
+                    elif '/%s/' % name in cmdline:
                         java = int(pid)
                     if java and screen:
                         break
-            yield instance_pids(serv, java, screen, base)
+            yield instance_pids(name, java, screen, base)
 
     def _make_directory(self, path, do_raise=False):
         """
@@ -851,7 +908,50 @@ class mc(object):
         IOError: internet non-connectivity or overwrite failure
         
         """
-        pass
+        from urllib import FancyURLopener
+        
+        def md5sum(filepath):
+            from hashlib import md5
+            with open(filepath, 'rb') as infile:
+                m = md5()
+                m.update(infile.read())
+                return m.hexdigest()
+
+        self._make_directory(root_path)
+        old_path = os.path.join(root_path, dest_filename)
+        try:
+            old_md5 = md5sum(old_path)
+        except IOError:
+            old_md5 = None #dest_file does not exist to md5
+
+        new_path = os.path.join(root_path, '%s.new' % dest_filename)
+
+        try:
+            FancyURLopener().retrieve(url, new_path)
+        except IOError:
+            raise IOError('Invalid download URL or no internet connection, aborting download...')
+        else:
+            new_md5 = md5sum(new_path)
+
+        if new_md5 != old_md5:
+            from shutil import move
+            try:
+                os.chown(new_path,
+                         self.owner.pw_uid,
+                         self.owner.pw_gid)
+                move(new_path, old_path)
+            except IOError:
+                raise IOError('move() activity failed')
+            else:
+                #Existing file overwritten with new copy
+                return True
+        else:
+            try:
+                os.unlink(new_path)
+            except IOError:
+                raise IOError('unlink() activity failed')
+            else:
+                return False
 
     def copytree(self, src, dst, ignore=None):
         """
