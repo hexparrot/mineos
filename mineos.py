@@ -35,14 +35,24 @@ class mc(object):
         'kill': find_executable('kill')
         }
     
-    def __init__(self, server_name, base_directory='/var/games/minecraft'):
+    def __init__(self,
+                 server_name,
+                 owner=None,
+                 base_directory=None,
+                 ):
+        
         if self.valid_server_name(server_name):
             self._server_name = server_name
         else:
             raise ValueError('Server contains invalid characters')
 
+        self.owner = owner
+
         if os.path.exists(os.path.normpath(base_directory)):
             self._base_directory = os.path.normpath(base_directory)
+        elif base_directory is None:
+            from pwd import getpwnam
+            self._base_directory = getpwnam(self.owner).pw_dir
         else:
             raise ValueError('base_directory does not exist: %s' % os.path.normpath(base_directory))
 
@@ -194,7 +204,7 @@ class mc(object):
             except (KeyError, ValueError):
                 d[section][option] = defaults[section][option]
 
-        #self._command_direct('touch %s' % self.env['sc'], self.env['cwd'])
+        self._command_direct('touch %s' % self.env['sc'], self.env['cwd'])
         with config_file(self.env['sc']) as sc:
             for section in d:
                 sc.add_section(section)
@@ -230,7 +240,7 @@ class mc(object):
                 raise RuntimeError('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        #self._command_direct(self.command_start, self.env['cwd'])
+        self._command_direct(self.command_start, self.env['cwd'])
 
     def kill(self):
         """
@@ -303,7 +313,7 @@ class mc(object):
                             shell=True,
                             cwd=working_directory,
                             stderr=STDOUT,
-                            preexec_fn=self._demote(self.owner.uid, self.owner,gid))
+                            preexec_fn=self._demote(self.owner.uid, self.owner.gid))
 
     def _command_stuff(self, stuff_text):
         """
@@ -378,7 +388,7 @@ class mc(object):
 
         try:
             user = getpwnam(self._owner)
-        except AttributeError:
+        except (AttributeError,TypeError):
             self._owner = getuser()
             user = getpwnam(self._owner)
 
@@ -387,13 +397,35 @@ class mc(object):
                    user.pw_uid,
                    user.pw_gid)
 
+    @owner.setter
+    def owner(self, newowner):
+        """
+        Sets the instance's intended owner for
+        _make_directory and _command_direct functions, etc.
+
+        """
+        from pwd import getpwnam
+
+        try:
+            getpwnam(newowner)
+        except KeyError:
+            raise KeyError('No user found %s' % newowner)
+        except TypeError:
+            if newowner is None:
+                from getpass import getuser
+                self._owner = getuser()
+            else:
+                raise TypeError('Username must be string')
+        finally:
+            self._owner = newowner        
+
     @property
     def up(self):
         """
         Returns True if the server has a running process.
 
         """
-        pass
+        return self.server_name in self.list_servers_up()
 
     @property
     def java_pid(self):
@@ -401,7 +433,11 @@ class mc(object):
         Returns the process id of the server's java instance.
 
         """
-        pass
+        for server, java_pid, screen_pid in self._list_server_pids():
+            if self.server_name == server:
+                return java_pid
+        else:
+            return 0
 
     @property
     def screen_pid(self):
@@ -409,11 +445,18 @@ class mc(object):
         Returns the process id of the server's screen instance.
 
         """
-        pass
+        for server, java_pid, screen_pid in self._list_server_pids():
+            if self.server_name == server:
+                return screen_pid
+        else:
+            return 0
 
     @property
     def previous_arguments(self):
-        pass
+        try:
+            return self._previous_arguments
+        except AttributeError:
+            return None
     
     @property
     def command_start(self):
@@ -428,7 +471,30 @@ class mc(object):
         remain at the root.
 
         """
-        pass
+        if not self.server_config:
+            return None
+
+        required_arguments = {
+            'screen_name': 'mc-%s' % self.server_name,
+            'screen': self.BINARY_PATHS['screen'],
+            'java': self.BINARY_PATHS['java'],
+            'java_xmx': self.server_config['java':'java_xmx'],
+            'java_xms': self.server_config['java':'java_xmx'],
+            'java_tweaks': self.server_config['java':'java_tweaks'],
+            'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.jar'),
+            'jar_args': '-nogui'
+            }
+
+        if self.server_config.has_option('java','java_xms') :
+            required_arguments['java_xms'] = self.server_config['java':'java_xms']
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in start command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(screen)s -dmS %(screen_name)s ' \
+                   '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
+                   '-jar %(jar_file)s %(jar_args)s' % required_arguments
 
     @property
     def command_archive(self):
@@ -437,7 +503,25 @@ class mc(object):
         Note, this command should be run from the /servers/[servername] directory.
 
         """
-        pass
+        from time import strftime
+
+        required_arguments = {
+            'nice': self.BINARY_PATHS['nice'],
+            'tar': self.BINARY_PATHS['tar'],
+            'nice_value': self.NICE_VALUE,
+            'archive_filename': os.path.join(self.env['awd'],
+                                             'server-%s_%s.tar.gz' % (self.server_name,
+                                                                      strftime("%Y-%m-%d_%H:%M:%S"))),
+            'cwd': '.'
+            }
+
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in archive command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(nice)s -n %(nice_value)s ' \
+                   '%(tar)s czf %(archive_filename)s %(cwd)s' % required_arguments
 
     @property
     def command_backup(self):
@@ -445,7 +529,20 @@ class mc(object):
         Returns the actual command used to rdiff-backup a minecraft server.
 
         """
-        pass
+        required_arguments = {
+            'nice': self.BINARY_PATHS['nice'],
+            'nice_value': self.NICE_VALUE,
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'cwd': self.env['cwd'],
+            'bwd': self.env['bwd']
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in backup command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(nice)s -n %(nice_value)s ' \
+                   '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
 
     @property
     def command_kill(self):
@@ -453,7 +550,16 @@ class mc(object):
         Returns the command to kill a pid
 
         """
-        pass
+        required_arguments = {
+            'kill': self.BINARY_PATHS['kill'],
+            'pid': self.screen_pid
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(kill)s %(pid)s' % required_arguments
 
     @property
     def command_restore(self):
@@ -461,7 +567,20 @@ class mc(object):
         Returns the actual command used to rdiff restore a minecraft server.
 
         """
-        pass
+        required_arguments = {
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
+            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else 'now',
+            'bwd': self.env['bwd'],
+            'cwd': self.env['cwd']
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
+                   '%(bwd)s %(cwd)s' % required_arguments
 
     @property
     def command_prune(self):
@@ -469,7 +588,25 @@ class mc(object):
         Returns the actual command used to rdiff prune minecraft backups.
 
         """
-        pass
+        required_arguments = {
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'steps': None,
+            'bwd': self.env['bwd']
+            }
+
+        try:
+            required_arguments['steps'] = self._rdiff_backup_steps
+        except AttributeError:
+            pass
+        else:
+            if type(required_arguments['steps']) is int:
+                required_arguments['steps'] = '%sB' % required_arguments['steps']
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in prune command: %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
 
     @property
     def command_list_increments(self):
@@ -477,7 +614,16 @@ class mc(object):
         Returns the number of increments found at the backup dir
 
         """
-        pass
+        required_arguments = {
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'bwd': self.env['bwd']
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in list_increments command; %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
     @property
     def command_apply_profile(self):
@@ -506,7 +652,14 @@ class mc(object):
         Returns the port value from server.properties at time of instance creation.
 
         """
-        pass
+        try:
+            return int(self.server_properties['server-port'])
+        except (ValueError, KeyError):
+            ''' KeyError: server-port option does not exist
+                ValueError: value is not an integer
+                exception Note: when value is absent or not an int, vanilla
+                adds/replaces the value in server.properties to 25565'''
+            return 25565
 
     @property
     def ip_address(self):
@@ -516,7 +669,10 @@ class mc(object):
         because it is the effective value vanilla minecraft will run at.
 
         """
-        pass
+        return self.server_properties['server-ip'::'0.0.0.0'] or '0.0.0.0'
+        ''' If server-ip is absent, vanilla starts at *,
+            which is effectively 0.0.0.0 and
+            also adds 'server-ip=' to server.properties.'''
 
     @property
     def memory(self):
@@ -524,7 +680,21 @@ class mc(object):
         Returns the amount of memory the java instance is using (VmRSS)
 
         """
-        pass
+        def sizeof_fmt(num):
+            ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
+                http://stackoverflow.com/a/1094933/1191579
+            '''
+            for x in ['bytes','KB','MB','GB','TB']:
+                if num < 1024.0:
+                    return "%3.2f %s" % (num, x)
+                num /= 1024.0
+                
+        try:
+            mem_str = dict(procfs_reader.entries(self.java_pid, 'status'))['VmRSS']
+            mem = int(mem_str.split()[0]) * 1024
+            return sizeof_fmt(mem)
+        except IOError:
+            return '0'
 
     ''' generator expressions '''
 
@@ -568,7 +738,25 @@ class mc(object):
         and a list of all the increment files found.
 
         """
-        pass
+        from subprocess import CalledProcessError
+
+        incs = namedtuple('increments', 'current_mirror increments')
+        
+        try:
+            output = self._command_direct(self.command_list_increments, self.env['bwd'])
+            assert output is not None
+        except (CalledProcessError, AssertionError):
+            return incs('', [])
+        
+        output_list = output.split('\n')
+        increment_string = output_list.pop(0)
+        output_list.pop() #empty newline throwaway
+        current_string = output_list.pop()
+
+        '''num_increments = iter(int(p) for p in increment_string.split() if p.isdigit()).next()'''
+        timestamp = current_string.partition(':')[-1].strip()
+        
+        return incs(timestamp, [d.strip() for d in output_list])
 
     @classmethod
     def _list_server_pids(cls):
@@ -595,7 +783,7 @@ class mc(object):
             java = None
             screen = None
 
-            for pid, cmdline in pids.itervalues():
+            for pid, cmdline in pids.iteritems():
                 if '-jar' in cmdline:
                     if 'screen' in cmdline.lower() and 'mc-%s' % serv in cmdline:
                         screen = int(pid)

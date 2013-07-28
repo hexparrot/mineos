@@ -51,6 +51,11 @@ class TestMineOS(unittest.TestCase):
         self._owner = getpwnam(self._user)
         self._path = '/home/mc'
 
+        self.inst_args = {
+            'owner':'mc',
+            'base_directory':'/home/mc'
+            }
+
     def tearDown(self):
         for d in mc.DEFAULT_PATHS.values():
             try:
@@ -79,10 +84,10 @@ class TestMineOS(unittest.TestCase):
 
         for server_name in bad_names:
             with self.assertRaises(ValueError):
-                instance = mc(server_name, self._path)
+                instance = mc(server_name, self.inst_args)
 
         for server_name in ok_names:
-            instance = mc(server_name, self._path)
+            instance = mc(server_name, self.inst_args)
             self.assertIsNotNone(instance.server_name)
 
     @skip_test
@@ -127,70 +132,15 @@ class TestMineOS(unittest.TestCase):
         rmtree(os.path.join(base_dir, group_to_use))
 
     def test_set_owner(self):
-        with self.assertRaises(KeyError): instance = mc('a', 'fake')
-        with self.assertRaises(TypeError): instance = mc('b', 123)
-        with self.assertRaises(TypeError): instance = mc('c', {})
-        with self.assertRaises(KeyError): instance = mc('d', 'mc', 'fake')
-        with self.assertRaises(OSError): instance = mc('e', 'mc', 'www-data')
-        with self.assertRaises(KeyError): instance = mc('f', 'will', 'fake')
-        with self.assertRaises(OSError): instance = mc('g', 'will', 'www-data')
-        with self.assertRaises(KeyError): instance = mc('h', 'fake')
-        with self.assertRaises(KeyError): instance = mc('i', 'fake', 'www-data')
-
-    @root_required
-    def test_set_owner_two(self):
-        #assumes root is part of group GROUP
-        from grp import struct_group
-        from pwd import struct_passwd
-
-        global GROUP
-        
-        combinations = [
-            ('x', self._user, None),
-            ('y', self._user, GROUP),
-            ]
-
-        for server_name, user, group in combinations:
-            instance = mc(server_name, user, group)
-            expected_owner = getpwnam(user)
-            expected_group = getgrgid(expected_owner.pw_gid)
-
-            self.assertIsInstance(instance._owner, struct_passwd)
-            self.assertIsInstance(instance._group, struct_group)
-            
-            self.assertEqual(instance._owner, expected_owner)
-            self.assertEqual(instance._group, expected_group)
-            self.assertTrue(user in expected_group.gr_mem)
-
-    @root_prohibited
-    def test_set_owner_three(self):
-        #assumes current user is part of group 'group_to_test'
-        from grp import struct_group, getgrnam, getgrgid
-        from pwd import struct_passwd, getpwnam
-
-        global GROUP
-        
-        combinations = [
-            ('x', self._user, None),
-            ('y', self._user, GROUP),
-            ]
-
-        for server_name, user, group in combinations:
-            instance = mc(server_name, user, group)
-            expected_owner = getpwnam(user)
-            expected_group = getgrgid(expected_owner.pw_gid)
-
-            self.assertIsInstance(instance._owner, struct_passwd)
-            self.assertIsInstance(instance._group, struct_group)
-            
-            self.assertEqual(instance._owner, expected_owner)
-            self.assertEqual(instance._group, expected_group)
-            self.assertTrue(user in expected_group.gr_mem)
+        with self.assertRaises(KeyError): instance = mc('a', owner='fake')
+        with self.assertRaises(TypeError): instance = mc('b', owner=123)
+        with self.assertRaises(TypeError): instance = mc('c', owner={})
+        with self.assertRaises(KeyError): instance = mc('d', base_directory='/home/mc', owner='mc')
 
     def test_load_config(self):
         from conf_reader import config_file
         
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
 
         self.assertIsInstance(instance.server_properties, config_file)
         self.assertIsInstance(instance.server_properties[:], dict)
@@ -202,7 +152,7 @@ class TestMineOS(unittest.TestCase):
         
     def test_sp_defaults(self):
         from conf_reader import config_file
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create(sp={'server-ip':'127.0.0.1'})
         conf = config_file(instance.env['sp'])
         self.assertFalse(conf._use_sections)
@@ -210,14 +160,14 @@ class TestMineOS(unittest.TestCase):
 
     def test_sc_defaults(self):
         from conf_reader import config_file
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create(sc={'java':{'java-bin':'isworking'}})
         conf = config_file(instance.env['sc'])
         self.assertTrue(conf._use_sections)
         self.assertEqual(conf['java':'java-bin'], 'isworking')
 
     def test_create(self):
-        instance = mc('one', self._path)
+        instance = mc('one', owner='mc', base_directory=self._path)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -236,7 +186,7 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertIsNone(instance.command_prune)
 
-        instance = mc('two', self._user)
+        instance = mc('two', **self.inst_args)
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
 
         self.assertEqual(instance.server_properties['server-port'], '27000')
@@ -249,7 +199,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_bogus'], 'wow!')
 
     def test_change_config(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         with instance.server_properties as sp:
@@ -267,7 +217,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
 
     def test_start(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         self.assertEqual(instance.java_pid, 0)
@@ -281,19 +231,19 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.screen_pid, 0)
 
     def test_archive(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
         instance.archive()
         #self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
 
     def test_backup(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
         instance.backup()
         self.assertTrue(os.path.exists(os.path.join(instance.env['bwd'], 'rdiff-backup-data')))
 
     def test_restore(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         with self.assertRaises(RuntimeError): instance.restore()
@@ -308,7 +258,7 @@ class TestMineOS(unittest.TestCase):
         instance.restore(overwrite=True)
 
     def test_prune(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -339,7 +289,7 @@ class TestMineOS(unittest.TestCase):
 
     @online_test
     def test_update_file(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         url1 = 'http://minecraft.codeemo.com/crux/mineos-scripts/update.sh'
@@ -380,7 +330,7 @@ class TestMineOS(unittest.TestCase):
                                       'update.sh')'''
 
     def test_copytree(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         second_dir = os.path.join(instance.base,
@@ -410,7 +360,7 @@ class TestMineOS(unittest.TestCase):
 
     @online_test
     def test_profiles(self):        
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         profile = {
@@ -451,7 +401,7 @@ class TestMineOS(unittest.TestCase):
 
     @online_test
     def test_start_a_home_server(self):
-        instance = mc('one', self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         profile = {
