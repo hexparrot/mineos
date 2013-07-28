@@ -112,25 +112,6 @@ class TestMineOS(unittest.TestCase):
                                                         instance.server_name)))
             instance._logger.debug('it works')
 
-    @root_required
-    def test_create_var_log(self):
-        server_to_create = 'one'
-        user_to_use = 'mc'
-        group_to_use = 'mcserver'
-        base_dir = '/var/games'
-        
-        instance = mc(server_to_create,
-                      owner=user_to_use,
-                      group=group_to_use,
-                      base_directory=base_dir,
-                      container_directory=group_to_use)
-        instance.create()
-        self.assertTrue(os.path.isfile(os.path.join(instance.LOGGING_DIR,
-                                                    instance.server_name)))
-        instance._logger.debug('it works')
-        instance._destroy_logger()
-        rmtree(os.path.join(base_dir, group_to_use))
-
     def test_set_owner(self):
         with self.assertRaises(KeyError): instance = mc('a', owner='fake')
         with self.assertRaises(TypeError): instance = mc('b', owner=123)
@@ -223,15 +204,15 @@ class TestMineOS(unittest.TestCase):
         instance = mc('one', **self.inst_args)
         instance.create()
 
-        self.assertEqual(instance.java_pid, 0)
-        self.assertEqual(instance.screen_pid, 0)
+        self.assertIsNone(instance.java_pid)
+        self.assertIsNone(instance.screen_pid)
         self.assertEqual(instance.memory, '0')
 
         instance.start()
         time.sleep(1)
         #expected to be zero because no profile/jar
-        self.assertEqual(instance.java_pid, 0)
-        self.assertEqual(instance.screen_pid, 0)
+        self.assertIsNone(instance.java_pid)
+        self.assertIsNone(instance.screen_pid)
 
     def test_archive(self):
         instance = mc('one', **self.inst_args)
@@ -435,15 +416,14 @@ class TestMineOS(unittest.TestCase):
     def test_zstart_a_var_games_server(self):
 
         user_to_use = 'mc'
-        group_to_use = 'mcserver'
-        base_dir = '/var/games/'
+        base_dir = '/var/games/minecraft'
+
+        os.system('mkdir -p %s' % base_dir)
         
         #create first server
         aaaa = mc(server_name='one',
                   owner=user_to_use,
-                  group=group_to_use,
-                  base_directory=base_dir,
-                  container_directory=group_to_use)
+                  base_directory=base_dir)
         aaaa.create()
 
         profile = {
@@ -464,9 +444,7 @@ class TestMineOS(unittest.TestCase):
         #create second server
         bbbb = mc(server_name='two',
                   owner=user_to_use,
-                  group=group_to_use,
-                  base_directory=base_dir,
-                  container_directory=group_to_use)
+                  base_directory=base_dir)
         bbbb.create(sp={'server-port':25570})
         bbbb.profile = profile['name']
         bbbb.start()
@@ -475,15 +453,15 @@ class TestMineOS(unittest.TestCase):
         #kill servers
         aaaa.kill()
         bbbb.kill()
-        time.sleep(10)
+        time.sleep(5)
         
-        with self.assertRaises(RuntimeWarning):
+        with self.assertRaises(RuntimeError):
             aaaa.kill()
 
-        with self.assertRaises(RuntimeWarning):
+        with self.assertRaises(RuntimeError):
             bbbb.kill()
 
-        rmtree(os.path.join(base_dir, group_to_use))
+        rmtree(base_dir)
 
     
 if __name__ == "__main__":

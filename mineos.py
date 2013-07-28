@@ -482,7 +482,7 @@ class mc(object):
             if self.server_name == server:
                 return java_pid
         else:
-            return 0
+            return None
 
     @property
     def screen_pid(self):
@@ -494,7 +494,7 @@ class mc(object):
             if self.server_name == server:
                 return screen_pid
         else:
-            return 0
+            return None
 
     @property
     def previous_arguments(self):
