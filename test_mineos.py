@@ -84,10 +84,10 @@ class TestMineOS(unittest.TestCase):
 
         for server_name in bad_names:
             with self.assertRaises(ValueError):
-                instance = mc(server_name, self.inst_args)
+                instance = mc(server_name, **self.inst_args)
 
         for server_name in ok_names:
-            instance = mc(server_name, self.inst_args)
+            instance = mc(server_name, **self.inst_args)
             self.assertIsNotNone(instance.server_name)
 
     @skip_test
@@ -135,7 +135,10 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(KeyError): instance = mc('a', owner='fake')
         with self.assertRaises(TypeError): instance = mc('b', owner=123)
         with self.assertRaises(TypeError): instance = mc('c', owner={})
-        with self.assertRaises(KeyError): instance = mc('d', base_directory='/home/mc', owner='mc')
+        instance = mc('d', base_directory='/home/mc', owner='mc')
+        instance = mc('e', owner='mc')
+        instance = mc('f', owner='will')
+        instance = mc('g', owner='root')
 
     def test_load_config(self):
         from conf_reader import config_file
@@ -192,7 +195,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_properties['server-port'], '27000')
         self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
 
-        instance = mc('three', self._user)
+        instance = mc('three', **self.inst_args)
         instance.create(sc={'java':{'java_bogus': 'wow!'}}, sp={'bogus-value':'abcd'})
 
         self.assertEqual(instance.server_properties['bogus-value'], 'abcd')
@@ -234,7 +237,7 @@ class TestMineOS(unittest.TestCase):
         instance = mc('one', **self.inst_args)
         instance.create()
         instance.archive()
-        #self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
+        self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
 
     def test_backup(self):
         instance = mc('one', **self.inst_args)
@@ -347,7 +350,7 @@ class TestMineOS(unittest.TestCase):
         for (directory, _, files) in os.walk(second_dir):
             for f in files:
                 path = os.path.join(directory, f)
-                self.assertEqual(self.find_owner(path), instance.owner.user)
+                self.assertEqual(self.find_owner(path), instance.owner.pw_name)
 
         self.assertEqual(mc.list_files(instance.env['cwd']),
                          mc.list_files(second_dir))

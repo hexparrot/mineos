@@ -38,8 +38,7 @@ class mc(object):
     def __init__(self,
                  server_name,
                  owner=None,
-                 base_directory=None,
-                 ):
+                 base_directory=None):
         
         if self.valid_server_name(server_name):
             self._server_name = server_name
@@ -48,15 +47,18 @@ class mc(object):
 
         self.owner = owner
 
-        if os.path.exists(os.path.normpath(base_directory)):
-            self._base_directory = os.path.normpath(base_directory)
-        elif base_directory is None:
+        if base_directory is None:
             from pwd import getpwnam
-            self._base_directory = getpwnam(self.owner).pw_dir
+            self._base_directory = getpwnam(self.owner.pw_name).pw_dir
         else:
-            raise ValueError('base_directory does not exist: %s' % os.path.normpath(base_directory))
+            normalized = os.path.normpath(base_directory)
+            if os.path.exists(normalized):
+                self._base_directory = normalized
+            else:
+                raise ValueError('base_directory does not exist: %s' % normalized)
 
         self._set_environment()
+        self._load_config()
         
     def _set_environment(self):
         """
@@ -247,28 +249,56 @@ class mc(object):
         Kills a server instance by SIGTERM
 
         """
-        pass
+        self._command_direct(self.command_kill, self.env['cwd'])
 
     def archive(self):
         """
         Creates a timestamped, gzipped tarball of the server contents.
 
         """
-        pass
+        if self.up:
+            self._command_stuff('save-off')
+            self._command_stuff('save-all')
+            self._command_direct(self.command_archive, self.env['cwd'])
+            self._command_stuff('save-on')
+        else:
+            self._command_direct(self.command_archive, self.env['cwd'])
 
     def backup(self):
         """
         Creates an rdiff-backup of a server.
 
         """
-        pass
+        if self.up:
+            self._command_stuff('save-off')
+            self._command_stuff('save-all')
+            self._command_direct(self.command_backup, self.env['cwd'])
+            self._command_stuff('save-on')
+        else:
+            self._command_direct(self.command_backup, self.env['cwd'])
 
     def restore(self, steps='now', overwrite=False):
         """
         Overwrites the /servers/ version of a server with the /backup/.
 
         """
-        pass
+        from subprocess import CalledProcessError
+        
+        self._load_config(load_backup=True)
+
+        if self.server_properties or self.server_config:
+            self._rdiff_backup_steps = steps
+            self._rdiff_backup_force = '--force' if overwrite else ''
+
+            self._make_directory(self.env['cwd'])
+            try:
+                self._command_direct(self.command_restore, self.env['cwd'])
+            except CalledProcessError as e:
+                raise RuntimeError(e.message)
+
+            self._load_config(generate_missing=True)
+        else:
+            raise RuntimeError('Ignoring command {restore}; Unable to locate backup')
 
     def prune(self, steps=None):
         """
@@ -277,7 +307,8 @@ class mc(object):
         FIXME: Does not do any sanitization on steps.
 
         """
-        pass
+        self._rdiff_backup_steps = steps
+        self._command_direct(self.command_prune, self.env['bwd'])
 
     def update_profile(self, profile_dict, do_download=True):
         pass
@@ -313,7 +344,7 @@ class mc(object):
                             shell=True,
                             cwd=working_directory,
                             stderr=STDOUT,
-                            preexec_fn=self._demote(self.owner.uid, self.owner.gid))
+                            preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
     def _command_stuff(self, stuff_text):
         """
@@ -321,7 +352,13 @@ class mc(object):
         specified in self._owner.
 
         """
-        pass
+        from subprocess import check_call
+
+        command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
+        #self._logger.info('[%s] Executing as %s: %s' % (self.server_name, self._owner.pw_name, command))
+        check_call(command,
+                   shell=True,
+                   preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
     def _create_logger(self):
         """
@@ -382,20 +419,12 @@ class mc(object):
         """
         from getpass import getuser
         from pwd import getpwnam
-        from grp import getgrgid
-
-        own = namedtuple('owner', 'user group uid gid')
 
         try:
-            user = getpwnam(self._owner)
+            return getpwnam(self._owner)
         except (AttributeError,TypeError):
             self._owner = getuser()
-            user = getpwnam(self._owner)
-
-        return own(user.pw_name,
-                   getgrgid(user.pw_uid).gr_name,
-                   user.pw_uid,
-                   user.pw_gid)
+            return getpwnam(self._owner)
 
     @owner.setter
     def owner(self, newowner):
@@ -718,18 +747,18 @@ class mc(object):
 
         """
         for instance in cls._list_server_pids():
-            yield instance.server_name
+            yield (instance.server_name, base_dir)
 
     @classmethod
-    def list_ports_up(cls, base_directory):
+    def list_ports_up(cls):
         """
         Returns IP address and port used by all live,
         running instances of Minecraft.
 
         """
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
-        for server in cls.list_servers_up():
-            instance = mc(server, base_directory=base_directory)
+        for server, base_dir in cls.list_servers_up():
+            instance = cls(server, base_directory=base_dir)
             yield instance_connection(server, instance.port, instance.ip_address)
 
     def list_increments(self):
@@ -804,7 +833,7 @@ class mc(object):
         except OSError:
             if do_raise: raise
         else:
-            os.chown(path, self.owner.uid, self.owner.gid)
+            os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
 
     def _update_file(self, url, root_path, dest_filename):
         """
@@ -857,8 +886,8 @@ class mc(object):
                 else:
                     copy2(srcname, dstname)
                     os.chown(dstname,
-                             self.owner.uid,
-                             self.owner.gid)
+                             self.owner.pw_uid,
+                             self.owner.pw_gid)
             except (IOError, os.error) as why:
                 errors.append((srcname, dstname, str(why)))
             except Error as err:
