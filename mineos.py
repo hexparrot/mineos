@@ -508,7 +508,7 @@ class mc(object):
         Returns True if the server has a running process.
 
         """
-        return self.server_name in self.list_servers_up()
+        return any(s.server_name == self.server_name for s in self.list_servers_up())
 
     @property
     def java_pid(self):
@@ -516,7 +516,7 @@ class mc(object):
         Returns the process id of the server's java instance.
 
         """
-        for server, java_pid, screen_pid, base_dir in self._list_server_pids():
+        for server, java_pid, screen_pid, base_dir in self.list_servers_up():
             if self.server_name == server:
                 return java_pid
         else:
@@ -528,7 +528,7 @@ class mc(object):
         Returns the process id of the server's screen instance.
 
         """
-        for server, java_pid, screen_pid, base_dir in self._list_server_pids():
+        for server, java_pid, screen_pid, base_dir in self.list_servers_up():
             if self.server_name == server:
                 return screen_pid
         else:
@@ -836,15 +836,6 @@ class mc(object):
             ))
 
     @classmethod
-    def list_servers_up(cls):
-        """
-        Generator: all servers which were started with "mc-SERVER" name.
-
-        """
-        for name, java, screen, base in cls._list_server_pids():
-            yield (name, base)
-
-    @classmethod
     def list_ports_up(cls):
         """
         Returns IP address and port used by all live,
@@ -852,9 +843,9 @@ class mc(object):
 
         """
         instance_connection = namedtuple('instance_connection', 'server_name port ip_address')
-        for server, base_dir in cls.list_servers_up():
-            instance = cls(server, base_directory=base_dir)
-            yield instance_connection(server, instance.port, instance.ip_address)
+        for name, java, screen, base_dir in cls.list_servers_up():
+            instance = cls(name, base_directory=base_dir)
+            yield instance_connection(name, instance.port, instance.ip_address)
 
     def list_increments(self):
         """
@@ -883,10 +874,9 @@ class mc(object):
         return incs(timestamp, [d.strip() for d in output_list])
 
     @classmethod
-    def _list_server_pids(cls):
+    def list_servers_up(cls):
         """
         Generator: screen and java pid info for all running servers
-        Returns: (server_name, java_pid, screen_pid)
         
         """
         pids = dict(procfs_reader.pid_cmdline())

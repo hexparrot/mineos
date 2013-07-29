@@ -402,6 +402,7 @@ class TestMineOS(unittest.TestCase):
         instance.profile = profile['name']
         instance.start()
         time.sleep(20)
+        self.assertTrue(instance.up)
         instance._command_stuff('stop')
         time.sleep(5)
         try:
