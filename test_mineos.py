@@ -163,12 +163,14 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(instance.server_properties[:])
         self.assertTrue(instance.server_config[:])
 
-        self.assertTrue(instance.command_start)
+        with self.assertRaises(RuntimeError):
+            self.assertTrue(instance.command_start)
+        with self.assertRaises(RuntimeError):
+            self.assertIsNone(instance.command_prune)
+            
         self.assertTrue(instance.command_backup)
         self.assertTrue(instance.command_archive)
         self.assertTrue(instance.command_restore)
-        with self.assertRaises(RuntimeError):
-            self.assertIsNone(instance.command_prune)
 
         instance = mc('two', **self.inst_args)
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
@@ -208,8 +210,9 @@ class TestMineOS(unittest.TestCase):
         self.assertIsNone(instance.screen_pid)
         self.assertEqual(instance.memory, '0')
 
-        instance.start()
-        time.sleep(1)
+        with self.assertRaises(RuntimeError):
+            instance.start()
+            
         #expected to be zero because no profile/jar
         self.assertIsNone(instance.java_pid)
         self.assertIsNone(instance.screen_pid)
@@ -396,6 +399,7 @@ class TestMineOS(unittest.TestCase):
             'run_as': 'minecraft_server.jar',
             'action': 'download',
             'ignore': '',
+            'jar_args': 'nogui'
             }
 
         instance.update_profile(profile)
@@ -435,6 +439,7 @@ class TestMineOS(unittest.TestCase):
             'run_as': 'minecraft_server.jar',
             'action': 'download',
             'ignore': '',
+            'jar_args': 'nogui'
             }
         
         aaaa.update_profile(profile)

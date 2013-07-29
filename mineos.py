@@ -554,7 +554,7 @@ class mc(object):
         remain at the root.
 
         """
-        if not self.server_config:
+        if not self.server_config or not self.profile_config:
             return None
 
         required_arguments = {
@@ -564,9 +564,16 @@ class mc(object):
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks'],
-            'jar_file': os.path.join(self.env['cwd'], 'minecraft_server.jar'),
             'jar_args': '-nogui'
             }
+
+        try:
+            required_arguments['jar_file'] = os.path.join(self.env['cwd'],
+                                                          self.profile_config[self.profile:'run_as'])
+            required_arguments['jar_args'] = self.profile_config[self.profile:'jar_args':'']
+        except TypeError:
+            required_arguments['jar_file'] = None
+            required_arguments['jar_args'] = None        
 
         if self.server_config.has_option('java','java_xms') :
             required_arguments['java_xms'] = self.server_config['java':'java_xms']
