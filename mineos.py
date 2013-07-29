@@ -58,7 +58,8 @@ class mc(object):
         'java': find_executable('java'),
         'nice': find_executable('nice'),
         'tar': find_executable('tar'),
-        'kill': find_executable('kill')
+        'kill': find_executable('kill'),
+        'wget': find_executable('wget'),
         }
     
     def __init__(self,
@@ -351,8 +352,18 @@ class mc(object):
         self._command_direct(self.command_prune, self.env['bwd'])
 
     def update_profile(self, profile_dict, do_download=True):
+        def md5sum(filepath):
+            from hashlib import md5
+            with open(filepath, 'rb') as infile:
+                m = md5()
+                m.update(infile.read())
+                return m.hexdigest()
+
         self._make_directory(os.path.join(self.env['pwd'],
                                           profile_dict['name']))
+
+        profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
+        profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
 
         with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
@@ -370,15 +381,27 @@ class mc(object):
             from shutil import move
 
             if profile_dict['action'] == 'download' and do_download:
-                self._update_file(profile_dict['url'],
-                                  self.env['pwd'],
-                                  profile_dict['save_as'])
-            
-                move(os.path.join(self.env['pwd'],
-                                  pc[profile_dict['name']:'save_as']),
-                     os.path.join(self.env['pwd'],
-                                  profile_dict['name'],
-                                  pc[profile_dict['name']:'run_as']))
+                self._profile_to_download = profile_dict['name']
+                self._command_direct(self.command_wget_profile, self.env['pwd'])
+
+                old_file_path = os.path.join(self.env['pwd'],
+                                             profile_dict['name'],
+                                             profile_dict['save_as'])
+                new_file_path = os.path.join(self.env['pwd'],
+                                             profile_dict['save_as'])
+
+                try:
+                    old_file_md5 = md5sum(old_file_path)
+                except IOError:
+                    old_file_md5 = None
+
+                new_file_md5 = md5sum(new_file_path)
+
+                if new_file_md5 != old_file_md5:
+                    move(os.path.join(new_file_path),
+                         os.path.join(self.env['pwd'],old_file_path))
+                else:
+                    os.unlink(new_file_path) #os.unlink or _command_direct?
         else:
             raise NotImplementedError
 
@@ -429,7 +452,8 @@ class mc(object):
                    shell=True,
                    preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
-    def valid_server_name(self, name):
+    @staticmethod
+    def valid_server_name(name):
         """
         Checks if a server name is only alphanumerics,
         underscores or dots.
@@ -446,6 +470,20 @@ class mc(object):
         elif name.startswith('.'):
             return False
         return True
+
+    @staticmethod
+    def valid_filename(fn):
+        from string import ascii_letters, digits
+        
+        valid_chars = set('%s%s-_.' % (ascii_letters, digits))
+
+        if not fn:
+            raise ValueError('Filename is empty')
+        elif any(c for c in fn if c not in valid_chars):
+            raise ValueError('Disallowed characters in filename "%s"' % fn)
+        elif fn.startswith('.'):
+            raise ValueError('Files should not be hidden: "%s"' % fn)
+        return fn
 
     ''' properties '''
 
@@ -546,13 +584,6 @@ class mc(object):
         """
         Returns the actual command used to start up a minecraft server.
 
-        FIXME: this does not currently implement profiles and depends
-        on the server jar being called 'minecraft_server.jar'.
-
-        This is a placeholder until it is decided whether profiles will
-        be using symlinks to /jars/[somefile.jar] or if they will
-        remain at the root.
-
         """
         if not self.server_config or not self.profile_config:
             return None
@@ -568,10 +599,10 @@ class mc(object):
             }
 
         try:
-            required_arguments['jar_file'] = os.path.join(self.env['cwd'],
-                                                          self.profile_config[self.profile:'run_as'])
+            jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
+            required_arguments['jar_file'] = os.path.join(self.env['cwd'], jar_file)
             required_arguments['jar_args'] = self.profile_config[self.profile:'jar_args':'']
-        except TypeError:
+        except (TypeError,ValueError):
             required_arguments['jar_file'] = None
             required_arguments['jar_args'] = None        
 
@@ -714,6 +745,25 @@ class mc(object):
         else:
             self._previous_arguments = required_arguments
             return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
+
+    @property
+    def command_wget_profile(self):
+        """
+        Returns the command to download a new file
+
+        """
+        required_arguments = {
+            'wget': self.BINARY_PATHS['wget'],
+            'newfile': os.path.join(self.env['pwd'],
+                                    self.profile_config[self._profile_to_download:'save_as']),
+            'url': self.profile_config[self._profile_to_download:'url']
+            }
+
+        if None in required_arguments.values():
+            raise RuntimeError('Missing value in wget command; %s' % str(required_arguments))
+        else:
+            self._previous_arguments = required_arguments
+            return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
 
     @property
     def command_apply_profile(self):
@@ -926,67 +976,6 @@ class mc(object):
             if do_raise: raise
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
-
-    def _update_file(self, url, root_path, dest_filename):
-        """
-        Downloads a file and checks md5sum hash versus any existing file.
-        Keyword arguments:
-        url -- url of resource
-        root_path -- base directory where file should be saved
-        dest_filename -- ultimate filename of downloaded resource
-        
-        Returns:
-        True: if download is successful and retained
-        False: if download is successful and discarded
-        
-        Raises:
-        IOError: internet non-connectivity or overwrite failure
-        
-        """
-        from urllib import FancyURLopener
-        
-        def md5sum(filepath):
-            from hashlib import md5
-            with open(filepath, 'rb') as infile:
-                m = md5()
-                m.update(infile.read())
-                return m.hexdigest()
-
-        self._make_directory(root_path)
-        old_path = os.path.join(root_path, dest_filename)
-        try:
-            old_md5 = md5sum(old_path)
-        except IOError:
-            old_md5 = None #dest_file does not exist to md5
-
-        new_path = os.path.join(root_path, '%s.new' % dest_filename)
-
-        try:
-            FancyURLopener().retrieve(url, new_path)
-        except IOError:
-            raise IOError('Invalid download URL or no internet connection, aborting download...')
-        else:
-            new_md5 = md5sum(new_path)
-
-        if new_md5 != old_md5:
-            from shutil import move
-            try:
-                os.chown(new_path,
-                         self.owner.pw_uid,
-                         self.owner.pw_gid)
-                move(new_path, old_path)
-            except IOError:
-                raise IOError('move() activity failed')
-            else:
-                #Existing file overwritten with new copy
-                return True
-        else:
-            try:
-                os.unlink(new_path)
-            except IOError:
-                raise IOError('unlink() activity failed')
-            else:
-                return False
 
     def copytree(self, src, dst, ignore=None):
         """

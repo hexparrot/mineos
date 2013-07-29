@@ -49,11 +49,11 @@ class TestMineOS(unittest.TestCase):
         global USER
         self._user = USER
         self._owner = getpwnam(self._user)
-        self._path = '/home/mc'
+        self._path = self._owner.pw_dir
 
         self.inst_args = {
-            'owner':'mc',
-            'base_directory':'/home/mc'
+            'owner': getpwnam(USER).pw_name,
+            'base_directory': getpwnam(USER).pw_dir
             }
 
     def tearDown(self):
@@ -151,7 +151,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(conf['java':'java-bin'], 'isworking')
 
     def test_create(self):
-        instance = mc('one', owner='mc', base_directory=self._path)
+        instance = mc('one', **self.inst_args)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -274,48 +274,6 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-    @online_test
-    def test_update_file(self):
-        instance = mc('one', **self.inst_args)
-        instance.create()
-
-        url1 = 'http://minecraft.codeemo.com/crux/mineos-scripts/update.sh'
-        url2 = 'http://minecraft.codeemo.com/crux/rsync/stable/usr/games/minecraft/mineos.config'
-        self.assertTrue(instance._update_file(url1,
-                                              instance.env['cwd'],
-                                              'update.sh'))
-        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
-                                                    'update.sh')))
-        self.assertEqual(self.find_owner(os.path.join(instance.env['cwd'],
-                                                      'update.sh')), instance.owner.pw_name)
-            
-        self.assertFalse(instance._update_file(url1,
-                                               instance.env['cwd'],
-                                               'update.sh'))
-        self.assertTrue(instance._update_file(url2,
-                                              instance.env['cwd'],
-                                              'update.sh'))
-        with self.assertRaises(IOError):
-            instance._update_file('file',
-                                  instance.env['cwd'],
-                                  'update.sh')
-
-        with self.assertRaises(IOError):
-            instance._update_file('http://fakefilesuffix',
-                                  instance.env['cwd'],
-                                  'update.sh')
-
-        '''
-        the web-ui service run as root will have privileges
-        to _update_file to root-owned places.  _update_file
-        thus should never ever be executed with unsanitized
-        input!
-        if self._user != 'root':
-            with self.assertRaises(IOError):
-                instance._update_file(url1,
-                                      '/root',
-                                      'update.sh')'''
-
     def test_copytree(self):
         instance = mc('one', **self.inst_args)
         instance.create()
@@ -416,6 +374,7 @@ class TestMineOS(unittest.TestCase):
         else:
             time.sleep(1.5)
 
+    @skip_test
     @root_required
     @online_test
     def test_zstart_a_var_games_server(self):
