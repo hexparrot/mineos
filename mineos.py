@@ -75,11 +75,7 @@ class mc(object):
                  owner=None,
                  base_directory=None):
         
-        if self.valid_server_name(server_name):
-            self._server_name = server_name
-        else:
-            raise ValueError('Server contains invalid characters')
-
+        self._server_name = self.valid_server_name(server_name)
         self.owner = owner
 
         if base_directory is None:
@@ -142,22 +138,21 @@ class mc(object):
             self.profile_config = config_file(self.env['pc'])
             return self.profile_config[:]
 
-        if hasattr(self, 'env'):
-            load_sc()
-            load_sp()
-            load_profiles()
+        load_sc()
+        load_sp()
+        load_profiles()
 
-            if generate_missing and not load_backup:
-                if self.server_properties[:] and self.server_config[:]:
-                    pass
-                elif self.server_properties[:] and not self.server_config[:]:
-                    self._create_sc()
-                    load_sc()
-                elif self.server_config[:] and not self.server_properties[:]:
-                    self._create_sp()
-                    load_sp()
-                else:
-                    raise RuntimeError('No config files found: server.properties or server.config')   
+        if generate_missing and not load_backup:
+            if self.server_properties[:] and self.server_config[:]:
+                pass
+            elif self.server_properties[:] and not self.server_config[:]:
+                self._create_sc()
+                load_sc()
+            elif self.server_config[:] and not self.server_properties[:]:
+                self._create_sp()
+                load_sp()
+            else:
+                raise RuntimeError('No config files found: server.properties or server.config')   
 
     @server_exists(True)
     def _create_sp(self, startup_values={}):
@@ -277,11 +272,11 @@ class mc(object):
         """
         if self.port in [s.port for s in self.list_ports_up()]:
             if (self.port, self.ip_address) in [(s.port, s.ip_address) for s in self.list_ports_up()]:
-                raise RuntimeError('Ignoring command {start}; server already up at %s:%s.' % (self.ip_address, self.port))
+                raise RuntimeError('Ignoring {start}; server already up at %s:%s.' % (self.ip_address, self.port))
             elif self.ip_address == '0.0.0.0':
-                raise RuntimeError('Ignoring command {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
+                raise RuntimeError('Ignoring {start}; can not listen on (0.0.0.0) if port %s already in use.' % self.port)
             elif any(s for s in self.list_ports_up() if s.ip_address == '0.0.0.0'):
-                raise RuntimeError('Ignoring command {start}; server already listening on ip address (0.0.0.0).')
+                raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
         self._command_direct(self.command_start, self.env['cwd'])
@@ -472,12 +467,12 @@ class mc(object):
         valid_chars = set('%s%s_.' % (ascii_letters, digits))
 
         if not name:
-            return False
+            raise ValueError('Servername must be a string at least 1 length')
         elif any(c for c in name if c not in valid_chars):
-            return False
+            raise ValueError('Servername contains invalid characters')
         elif name.startswith('.'):
-            return False
-        return True
+            raise ValueError('Servername may not start with "."')
+        return name
 
     @staticmethod
     def valid_filename(fn):
