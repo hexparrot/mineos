@@ -16,6 +16,16 @@ from collections import namedtuple
 from distutils.spawn import find_executable
 from functools import wraps
 
+def sanitize(fn):
+    @wraps(fn)
+    def wrapper(self):
+        return_func = fn(self)
+        if None in self.previous_arguments.values():
+            raise RuntimeError('Missing value in %s command: %s' % (fn.__name__,
+                                                                    str(self.previous_arguments)))
+        return return_func
+    return wrapper
+
 def server_exists(state):
     def dec(fn):
         @wraps(fn)
@@ -577,9 +587,10 @@ class mc(object):
         try:
             return self._previous_arguments
         except AttributeError:
-            return None
+            return {}
     
     @property
+    @sanitize
     def command_start(self):
         """
         Returns the actual command used to start up a minecraft server.
@@ -609,15 +620,13 @@ class mc(object):
         if self.server_config.has_option('java','java_xms') :
             required_arguments['java_xms'] = self.server_config['java':'java_xms']
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in start command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(screen)s -dmS %(screen_name)s ' \
-                   '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
-                   '-jar %(jar_file)s %(jar_args)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(screen)s -dmS %(screen_name)s ' \
+               '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
+               '-jar %(jar_file)s %(jar_args)s' % required_arguments
 
     @property
+    @sanitize
     def command_archive(self):
         """
         Returns the actual command used to archive a minecraft server.
@@ -636,15 +645,12 @@ class mc(object):
             'cwd': '.'
             }
 
-
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in archive command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(nice)s -n %(nice_value)s ' \
-                   '%(tar)s czf %(archive_filename)s %(cwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(nice)s -n %(nice_value)s ' \
+               '%(tar)s czf %(archive_filename)s %(cwd)s' % required_arguments
 
     @property
+    @sanitize
     def command_backup(self):
         """
         Returns the actual command used to rdiff-backup a minecraft server.
@@ -658,14 +664,12 @@ class mc(object):
             'bwd': self.env['bwd']
             }
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in backup command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(nice)s -n %(nice_value)s ' \
-                   '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(nice)s -n %(nice_value)s ' \
+               '%(rdiff)s %(cwd)s/ %(bwd)s' % required_arguments
 
     @property
+    @sanitize
     def command_kill(self):
         """
         Returns the command to kill a pid
@@ -676,13 +680,11 @@ class mc(object):
             'pid': self.screen_pid
             }
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(kill)s %(pid)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(kill)s %(pid)s' % required_arguments
 
     @property
+    @sanitize
     def command_restore(self):
         """
         Returns the actual command used to rdiff restore a minecraft server.
@@ -696,14 +698,12 @@ class mc(object):
             'cwd': self.env['cwd']
             }
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in restore command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
-                   '%(bwd)s %(cwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
+               '%(bwd)s %(cwd)s' % required_arguments
 
     @property
+    @sanitize
     def command_prune(self):
         """
         Returns the actual command used to rdiff prune minecraft backups.
@@ -723,13 +723,11 @@ class mc(object):
             if type(required_arguments['steps']) is int:
                 required_arguments['steps'] = '%sB' % required_arguments['steps']
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in prune command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
 
     @property
+    @sanitize
     def command_list_increments(self):
         """
         Returns the number of increments found at the backup dir
@@ -740,13 +738,11 @@ class mc(object):
             'bwd': self.env['bwd']
             }
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in list_increments command; %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
     @property
+    @sanitize
     def command_wget_profile(self):
         """
         Returns the command to download a new file
@@ -759,13 +755,11 @@ class mc(object):
             'url': self.profile_config[self._profile_to_download:'url']
             }
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in wget command; %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
 
     @property
+    @sanitize
     def command_apply_profile(self):
         """
         Returns the command to copy profile files
@@ -791,11 +785,8 @@ class mc(object):
                 files = [f.strip() for f in files_to_exclude_str.split()]
             required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
 
-        if None in required_arguments.values():
-            raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
-        else:
-            self._previous_arguments = required_arguments
-            return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
+        self._previous_arguments = required_arguments
+        return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
     @property
     def profile(self):
