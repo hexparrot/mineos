@@ -43,7 +43,8 @@ class config_file(ConfigParser.SafeConfigParser):
             with config_file_sectionless(self.filepath) as cf:
                 self.readfp(cf)
         except TypeError:
-            pass #if filepath==None
+            if filepath is not None:
+                raise
 
     def __enter__(self):
         return self
