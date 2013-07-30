@@ -48,25 +48,40 @@ class TestMineOS(unittest.TestCase):
     def setUp(self):
         global USER
         self._user = USER
-        self._owner = getpwnam(self._user)
-        self._path = self._owner.pw_dir
 
-        self.inst_args = {
+        self.args = {
+            'root': {
+                'owner': 'root',
+                'base_directory': '/root'
+                },
+            'mc': {
+                'owner': 'mc',
+                'base_directory': '/home/mc'
+                }
+            }
+
+        self.args['self'] =  {
             'owner': getpwnam(USER).pw_name,
             'base_directory': getpwnam(USER).pw_dir
             }
 
+        try:
+            self.instance_arguments = self.args.get(USER)
+        except KeyError:
+            self.instance_arguments = self.args['self']
+
     def tearDown(self):
         for d in mc.DEFAULT_PATHS.values():
             try:
-                rmtree(os.path.join(self._path, d))
+                rmtree(os.path.join(self.args[self._user]['base_directory'], d))
             except OSError:
                 continue
 
     def test_bare_environment(self):
+        with self.assertRaises(TypeError): instance = mc()
+            
         for s in (None, '', False):
-            with self.assertRaises(TypeError):
-                instance = mc()
+            with self.assertRaises(ValueError): instance = mc(s)
 
     def test_binary_paths(self):
         for k,v in mc.BINARY_PATHS.iteritems():
@@ -84,74 +99,67 @@ class TestMineOS(unittest.TestCase):
 
         for server_name in bad_names:
             with self.assertRaises(ValueError):
-                instance = mc(server_name, **self.inst_args)
+                instance = mc(server_name, **self.instance_arguments)
 
         for server_name in ok_names:
-            instance = mc(server_name, **self.inst_args)
+            instance = mc(server_name, **self.instance_arguments)
             self.assertIsNotNone(instance.server_name)
-
-    @skip_test
-    @root_prohibited
-    def test_create_log(self):
-        server_to_create = 'one'
-        try:
-            logfile = os.path.join(mc().LOGGING_DIR, server_to_create)
-            open(logfile, 'a').close()
-        except IOError:
-            instance = mc(server_to_create)
-            instance.create()
-            self.assertTrue(os.path.isfile(os.path.join(instance._homepath,
-                                                        'log',
-                                                        instance.server_name)))
-            instance._logger.debug('it works')
-        else:
-            instance = mc(server_to_create)
-            instance.create()
-            self.assertTrue(os.path.isfile(os.path.join(instance.LOGGING_DIR,
-                                                        'log',
-                                                        instance.server_name)))
-            instance._logger.debug('it works')
 
     def test_set_owner(self):
         with self.assertRaises(KeyError): instance = mc('a', owner='fake')
         with self.assertRaises(TypeError): instance = mc('b', owner=123)
         with self.assertRaises(TypeError): instance = mc('c', owner={})
-        instance = mc('d', base_directory='/home/mc', owner='mc')
-        instance = mc('e', owner='mc')
-        instance = mc('f', owner='will')
+        instance = mc('d', owner='mc', base_directory='/home/mc')
+        instance = mc('e', owner='mc', base_directory='/var/games/minecraft')
+        instance = mc('f', owner='mc')
         instance = mc('g', owner='root')
+        instance = mc('h', owner='root', base_directory='/home/mc')
+        instance = mc('i', owner='root', base_directory='/var/games/minecraft')
 
     def test_load_config(self):
         from conf_reader import config_file
         
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
 
         self.assertIsInstance(instance.server_properties, config_file)
         self.assertIsInstance(instance.server_properties[:], dict)
         self.assertIsInstance(instance.server_config, config_file)
         self.assertIsInstance(instance.server_config[:], dict)
+        self.assertIsInstance(instance.profile_config, config_file)
+        self.assertIsInstance(instance.profile_config[:], dict)
 
         self.assertFalse(os.path.isfile(instance.env['sp']))
         self.assertFalse(os.path.isfile(instance.env['sc']))
+        self.assertFalse(os.path.isfile(instance.env['pc']))
         
     def test_sp_defaults(self):
         from conf_reader import config_file
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create(sp={'server-ip':'127.0.0.1'})
+        
         conf = config_file(instance.env['sp'])
         self.assertFalse(conf._use_sections)
         self.assertEqual(conf['server-ip'],'127.0.0.1')
+        
+        instance = mc('one', **self.instance_arguments)
+        self.assertFalse(conf._use_sections)
+        self.assertEqual(instance.server_properties['server-ip'], '127.0.0.1')
 
     def test_sc_defaults(self):
         from conf_reader import config_file
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create(sc={'java':{'java-bin':'isworking'}})
+        
         conf = config_file(instance.env['sc'])
         self.assertTrue(conf._use_sections)
         self.assertEqual(conf['java':'java-bin'], 'isworking')
 
+        instance = mc('one', **self.instance_arguments)
+        self.assertTrue(conf._use_sections)
+        self.assertEqual(instance.server_config['java':'java-bin'], 'isworking')
+
     def test_create(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -167,25 +175,28 @@ class TestMineOS(unittest.TestCase):
             self.assertTrue(instance.command_start)
         with self.assertRaises(RuntimeError):
             self.assertIsNone(instance.command_prune)
+        with self.assertRaises(RuntimeError):
+            self.assertIsNone(instance.command_kill)
             
         self.assertTrue(instance.command_backup)
         self.assertTrue(instance.command_archive)
         self.assertTrue(instance.command_restore)
+        self.assertTrue(instance.command_restore)
 
-        instance = mc('two', **self.inst_args)
+        instance = mc('two', **self.instance_arguments)
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})
 
         self.assertEqual(instance.server_properties['server-port'], '27000')
         self.assertEqual(instance.server_config['java':'java_xmx'], '2048')
 
-        instance = mc('three', **self.inst_args)
+        instance = mc('three', **self.instance_arguments)
         instance.create(sc={'java':{'java_bogus': 'wow!'}}, sp={'bogus-value':'abcd'})
 
         self.assertEqual(instance.server_properties['bogus-value'], 'abcd')
         self.assertEqual(instance.server_config['java':'java_bogus'], 'wow!')
 
     def test_change_config(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         with instance.server_properties as sp:
@@ -203,7 +214,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.server_config['java':'java_xmx'], '1024')
 
     def test_start(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         self.assertIsNone(instance.java_pid)
@@ -212,31 +223,31 @@ class TestMineOS(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             instance.start()
-            
-        #expected to be zero because no profile/jar
+
         self.assertIsNone(instance.java_pid)
         self.assertIsNone(instance.screen_pid)
 
     def test_archive(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
         instance.archive()
         self.assertTrue(os.path.isfile(instance._previous_arguments['archive_filename']))
 
     def test_backup(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
         instance.backup()
         self.assertTrue(os.path.exists(os.path.join(instance.env['bwd'], 'rdiff-backup-data')))
 
     def test_restore(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         with self.assertRaises(RuntimeError): instance.restore()
-        instance.backup()
 
+        instance.backup()
         rmtree(instance.env['cwd'])
+        
         self.assertFalse(os.path.exists(instance.env['cwd']))
         instance.restore()
         self.assertTrue(os.path.exists(instance.env['cwd']))
@@ -245,7 +256,7 @@ class TestMineOS(unittest.TestCase):
         instance.restore(overwrite=True)
 
     def test_prune(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         for d in ('cwd','bwd','awd'):
@@ -275,7 +286,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(len(instance.list_increments().increments), 0)
 
     def test_copytree(self):
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         second_dir = os.path.join(instance.base,
@@ -305,7 +316,7 @@ class TestMineOS(unittest.TestCase):
 
     @online_test
     def test_profiles(self):        
-        instance = mc('one', **self.inst_args)
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         profile = {
@@ -344,9 +355,10 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(instance.profile_config['vanilla':'run_as'],
                          'minecraft_server.1.6.2.jar')
 
+    @skip_test
     @online_test
-    def test_astart_home_server(self):
-        instance = mc('one', **self.inst_args)
+    def test_start_home_server(self):
+        instance = mc('one', **self.instance_arguments)
         instance.create()
 
         profile = {
@@ -374,21 +386,13 @@ class TestMineOS(unittest.TestCase):
         else:
             time.sleep(1.5)
 
-    @skip_test
-    @root_required
     @online_test
-    def test_zstart_a_var_games_server(self):
+    def test_start_home_server_x2(self):
+        srv_a = mc('one', **self.instance_arguments)
+        srv_a.create(sp={'server-port':25566})
 
-        user_to_use = 'mc'
-        base_dir = '/var/games/minecraft'
-
-        os.system('mkdir -p %s' % base_dir)
-        
-        #create first server
-        aaaa = mc(server_name='one',
-                  owner=user_to_use,
-                  base_directory=base_dir)
-        aaaa.create()
+        srv_b = mc('two', **self.instance_arguments)
+        srv_b.create(sp={'server-port':25567})
 
         profile = {
             'name': 'vanilla',
@@ -400,33 +404,36 @@ class TestMineOS(unittest.TestCase):
             'ignore': '',
             'jar_args': 'nogui'
             }
+
+        srv_a.update_profile(profile)
+        srv_b.update_profile(profile, do_download=False)
         
-        aaaa.update_profile(profile)
-        aaaa.profile = profile['name']
-        aaaa.start()
-        time.sleep(25)
+        srv_a.profile = profile['name']
+        srv_b.profile = profile['name']
+        
+        srv_a.start()
+        time.sleep(20)
+        self.assertTrue(srv_a.up)
 
-        #create second server
-        bbbb = mc(server_name='two',
-                  owner=user_to_use,
-                  base_directory=base_dir)
-        bbbb.create(sp={'server-port':25570})
-        bbbb.profile = profile['name']
-        bbbb.start()
-        time.sleep(25)
+        srv_b.start()
+        time.sleep(20)
+        self.assertTrue(srv_b.up)
 
-        #kill servers
-        aaaa.kill()
-        bbbb.kill()
+        srv_a._command_stuff('stop')
+        srv_b._command_stuff('stop')
+
         time.sleep(5)
         
-        with self.assertRaises(RuntimeError):
-            aaaa.kill()
+        try:
+            srv_a.kill()
+        except RuntimeError:
+            pass #just want to suppress, not anticipate
+        try:
+            srv_b.kill()
+        except RuntimeError:
+            pass #just want to suppress, not anticipate
 
-        with self.assertRaises(RuntimeError):
-            bbbb.kill()
-
-        rmtree(base_dir)
+        time.sleep(1.5)
 
     
 if __name__ == "__main__":
