@@ -10,7 +10,6 @@ __version__ = "0.6.0"
 __email__ = "wdchromium@gmail.com"
 
 import os
-import procfs_reader
 from conf_reader import config_file
 from collections import namedtuple
 from distutils.spawn import find_executable
@@ -21,8 +20,7 @@ def sanitize(fn):
     def wrapper(self):
         return_func = fn(self)
         if None in self.previous_arguments.values():
-            raise RuntimeError('Missing value in %s command: %s' % (fn.__name__,
-                                                                    str(self.previous_arguments)))
+            raise RuntimeError('Missing value in %s: %s' % (fn.__name__,str(self.previous_arguments)))
         return return_func
     return wrapper
 
@@ -596,9 +594,6 @@ class mc(object):
         Returns the actual command used to start up a minecraft server.
 
         """
-        if not self.server_config or not self.profile_config:
-            return None
-
         required_arguments = {
             'screen_name': 'mc-%s' % self.server_name,
             'screen': self.BINARY_PATHS['screen'],
@@ -617,8 +612,13 @@ class mc(object):
             required_arguments['jar_file'] = None
             required_arguments['jar_args'] = None        
 
-        if self.server_config.has_option('java','java_xms') :
-            required_arguments['java_xms'] = self.server_config['java':'java_xms']
+        try:
+            java_xms = self.server_config['java':'java_xms']
+        except KeyError:
+            pass
+        else:
+            if java_xms.strip():
+                self.server_config['java':'java_xms'] = java_xms.strip()                
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
@@ -861,8 +861,10 @@ class mc(object):
                     return "%3.2f %s" % (num, x)
                 num /= 1024.0
                 
+        from procfs_reader import entries
+          
         try:
-            mem_str = dict(procfs_reader.entries(self.java_pid, 'status'))['VmRSS']
+            mem_str = dict(entries(self.java_pid, 'status'))['VmRSS']
             mem = int(mem_str.split()[0]) * 1024
             return sizeof_fmt(mem)
         except IOError:
@@ -927,7 +929,9 @@ class mc(object):
         Generator: screen and java pid info for all running servers
         
         """
-        pids = dict(procfs_reader.pid_cmdline())
+        from procfs_reader import pid_cmdline
+        
+        pids = dict(pid_cmdline())
         instance_pids = namedtuple('instance_pids', 'server_name java_pid screen_pid base_dir')
         
         def name_base():
