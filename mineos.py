@@ -440,9 +440,9 @@ class mc(object):
 
         """
         from subprocess import check_output, STDOUT
+        from shlex import split
 
-        return check_output(command,
-                            shell=True,
+        return check_output(split(command),
                             cwd=working_directory,
                             stderr=STDOUT,
                             preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
@@ -456,10 +456,10 @@ class mc(object):
 
         """
         from subprocess import check_call
+        from shlex import split
 
         command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
-        check_call(command,
-                   shell=True,
+        check_call(split(command),
                    preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
     @staticmethod
