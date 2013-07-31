@@ -19,31 +19,39 @@ if __name__=="__main__":
     parser.add_argument('-s',
                         dest='server_name',
                         help='the server to act upon')
+    parser.add_argument('-u',
+                        dest='user',
+                        help='alternate user than current',
+                        default=None)
+    parser.add_argument('-d',
+                        dest='base_directory',
+                        help='the base of the mc file structure',
+                        default=None)
     parser.add_argument('argv',
                         nargs='*',
                         help='additional arguments to pass to the command() function',
                         default=None)
-    parser.add_argument('--force', dest='force', action='store_const',
-                       const=True, default=False,
-                       help='force the action to take place, e.g., restore')
-    parser.add_argument('--debug', dest='debug', action='store_const',
-                       const=True, default=False,
-                       help='show full traceback output')
     args = parser.parse_args()
     args.cmd = args.cmd.lower()
+    arguments = list(args.argv)
+
+    available_methods = list(m for m in dir(mc) if callable(getattr(mc,m)) \
+                             and not m.startswith('_'))
+    available_properties = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
+                                and not m.startswith('_'))
 
     if args.server_name:
-        arguments = list(args.argv)
-        available_methods = list(m for m in dir(mc) if callable(getattr(mc,m)) \
-                                 and not m.startswith('_'))
-        available_properties = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
-                                    and not m.startswith('_'))
+        init_args = {
+            'server_name': args.server_name,
+            'owner': args.user,
+            'base_directory': args.base_directory
+            }
 
         import types, pprint
         pp = pprint.PrettyPrinter(indent=4)
 
         if args.cmd in available_methods:
-            instance = mc(args.server_name)
+            instance = mc(**init_args)
             retval = getattr(instance, args.cmd)(*arguments)
             if retval:
                 if isinstance(retval, types.GeneratorType):
@@ -53,7 +61,7 @@ if __name__=="__main__":
             else:
                 print '{%s} completed without error.' % args.cmd
         elif args.cmd in available_properties:
-            instance = mc(args.server_name)
+            instance = mc(**init_args)
             try:
                 previous_value = getattr(instance, args.cmd)
                 setattr(instance, args.cmd, arguments[0])
@@ -64,17 +72,22 @@ if __name__=="__main__":
             except IndexError:
                 pp.pprint(getattr(instance, args.cmd))            
         else:
-            instance = mc(args.server_name)
+            instance = mc(**init_args)
             text = '%s %s' % (args.cmd, ' '.join(arguments))
             instance._command_stuff(text)
             print '{%s} sent to gameserver console [screen_pid:%s] successfully.' % (text,
                                                                                     instance.screen_pid)
     else:
+        init_args = {
+            'server_name': 'throwaway',
+            'owner': args.user,
+            'base_directory': args.base_directory
+            }
         arguments = list(args.argv)
 
         if args.cmd == 'update_profile':
             #this logic branch is not suited for /var/games
-            instance = mc('throwaway')
+            instance = mc(**init_args)
             instance.update_profile(arguments[0])
         elif args.cmd == 'define_profile':
             if arguments[0] == 'vanilla':
@@ -87,10 +100,19 @@ if __name__=="__main__":
                     'action': 'download',
                     'ignore': '',
                     }
-                instance = mc('throwaway')
+                instance = mc(**init_args)
                 instance.define_profile(profile)
             else:
                 raise NotImplementedError
+        elif args.cmd in available_methods:
+            retval = getattr(mc, args.cmd)(*arguments)
+            if retval:
+                if isinstance(retval, types.GeneratorType):
+                    pp.pprint(list(retval))
+                else:
+                    pp.pprint(retval)
+            else:
+                print '{%s} completed without error.' % args.cmd
         else:
             raise NotImplementedError
             
