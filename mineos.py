@@ -344,17 +344,8 @@ class mc(object):
         self._rdiff_backup_steps = steps
         self._command_direct(self.command_prune, self.env['bwd'])
 
-    def update_profile(self, profile_dict, do_download=True):
-        def md5sum(filepath):
-            from hashlib import md5
-            with open(filepath, 'rb') as infile:
-                m = md5()
-                m.update(infile.read())
-                return m.hexdigest()
-
-        self._make_directory(os.path.join(self.env['pwd'],
-                                          profile_dict['name']))
-
+    def define_profile(self, profile_dict):
+        self._make_directory(os.path.join(self.env['pwd']))
         profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
         profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
 
@@ -370,15 +361,31 @@ class mc(object):
                 if option != 'name':
                     pc[profile_dict['name']:option] = value
 
+    def update_profile(self, profile):
+        def md5sum(filepath):
+            from hashlib import md5
+            with open(filepath, 'rb') as infile:
+                m = md5()
+                m.update(infile.read())
+                return m.hexdigest()
+
+        self._make_directory(os.path.join(self.env['pwd'], profile))
+        profile_dict = {}
+
+        with self.profile_config as pc:
+            pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
+            pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
+            profile_dict = pc[profile:]
+
         if profile_dict['type'] == 'standard_jar':
             from shutil import move
 
-            if profile_dict['action'] == 'download' and do_download:
-                self._profile_to_download = profile_dict['name']
+            if profile_dict['action'] == 'download':
+                self._profile_to_download = profile
                 self._command_direct(self.command_wget_profile, self.env['pwd'])
 
                 old_file_path = os.path.join(self.env['pwd'],
-                                             profile_dict['name'],
+                                             profile,
                                              profile_dict['save_as'])
                 new_file_path = os.path.join(self.env['pwd'],
                                              profile_dict['save_as'])

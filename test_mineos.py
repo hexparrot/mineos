@@ -332,7 +332,8 @@ class TestMineOS(unittest.TestCase):
         self.assertIsNone(instance.profile)
         with self.assertRaises(KeyError): instance.profile = 'vanilla'
 
-        instance.update_profile(profile)
+        instance.define_profile(profile)
+        instance.update_profile(profile['name'])
         
         self.assertTrue(os.path.exists(os.path.join(instance.env['pwd'],
                                                     profile['name'])))
@@ -344,13 +345,9 @@ class TestMineOS(unittest.TestCase):
                                                     profile['name'],
                                                     profile['run_as'])))
 
-        instance.profile = profile['name']
-        self.assertTrue(os.path.isfile(os.path.join(instance.env['cwd'],
-                                                    profile['run_as'])))      
-
         profile['run_as'] = 'minecraft_server.1.6.2.jar'
         
-        instance.update_profile(profile, do_download=False)
+        instance.define_profile(profile)
         
         self.assertEqual(instance.profile_config['vanilla':'run_as'],
                          'minecraft_server.1.6.2.jar')
@@ -372,7 +369,8 @@ class TestMineOS(unittest.TestCase):
             'jar_args': 'nogui'
             }
 
-        instance.update_profile(profile)
+        instance.define_profile(profile)
+        instance.update_profile(profile['name'])
         instance.profile = profile['name']
         instance.start()
         time.sleep(20)
@@ -391,9 +389,6 @@ class TestMineOS(unittest.TestCase):
         srv_a = mc('one', **self.instance_arguments)
         srv_a.create(sp={'server-port':25566})
 
-        srv_b = mc('two', **self.instance_arguments)
-        srv_b.create(sp={'server-port':25567})
-
         profile = {
             'name': 'vanilla',
             'type': 'standard_jar',
@@ -405,8 +400,11 @@ class TestMineOS(unittest.TestCase):
             'jar_args': 'nogui'
             }
 
-        srv_a.update_profile(profile)
-        srv_b.update_profile(profile, do_download=False)
+        srv_a.define_profile(profile)
+        srv_a.update_profile(profile['name'])
+
+        srv_b = mc('two', **self.instance_arguments)
+        srv_b.create(sp={'server-port':25567})
         
         srv_a.profile = profile['name']
         srv_b.profile = profile['name']
