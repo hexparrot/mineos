@@ -76,21 +76,11 @@ class mc(object):
                  base_directory=None):
         
         self._server_name = self.valid_server_name(server_name)
-        self.owner = owner
-
-        if base_directory is None:
-            from pwd import getpwnam
-            self._base_directory = getpwnam(self.owner.pw_name).pw_dir
-        else:
-            normalized = os.path.normpath(base_directory)
-            if os.path.exists(normalized):
-                self._base_directory = normalized
-            else:
-                raise ValueError('base_directory does not exist: %s' % normalized)
+        self._owner, self._base_directory = self.valid_user(owner, base_directory)
 
         self._set_environment()
         self._load_config()
-        
+
     def _set_environment(self):
         """
         Sets the most common short-hand paths for the minecraft directories
@@ -408,6 +398,8 @@ class mc(object):
         else:
             raise NotImplementedError
 
+#actual command execution methods
+
     @staticmethod
     def _demote(user_uid, user_gid):
         """
@@ -455,6 +447,8 @@ class mc(object):
         check_call(split(command),
                    preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
+#validation checks
+
     @staticmethod
     def valid_server_name(name):
         """
@@ -488,6 +482,33 @@ class mc(object):
             raise ValueError('Files should not be hidden: "%s"' % fn)
         return fn
 
+    @staticmethod
+    def valid_user(owner=None, base_directory=None):
+        from getpass import getuser
+        from pwd import getpwnam
+
+        try:
+            owner_info = getpwnam(owner)
+        except KeyError:
+            raise KeyError('No user found %s' % owner)
+        except TypeError:
+            if owner is None:
+                from getpass import getuser
+                owner_info = getpwnam(getuser())
+            else:
+                raise TypeError('Username must be string')
+
+        if base_directory is None:
+            base_directory = owner_info.pw_dir
+        else:
+            normalized = os.path.normpath(base_directory)
+            if os.path.exists(normalized):
+                base_directory = normalized
+            else:
+                raise ValueError('base_directory does not exist: %s' % normalized)
+
+        return (owner_info, base_directory)
+
     ''' properties '''
 
     @property
@@ -509,39 +530,10 @@ class mc(object):
     @property
     def owner(self):
         """
-        Returns a named tuple with name/group & pids
+        Returns pwd named tuple
 
         """
-        from getpass import getuser
-        from pwd import getpwnam
-
-        try:
-            return getpwnam(self._owner)
-        except (AttributeError,TypeError):
-            self._owner = getuser()
-            return getpwnam(self._owner)
-
-    @owner.setter
-    def owner(self, newowner):
-        """
-        Sets the instance's intended owner for
-        _make_directory and _command_direct functions, etc.
-
-        """
-        from pwd import getpwnam
-
-        try:
-            getpwnam(newowner)
-        except KeyError:
-            raise KeyError('No user found %s' % newowner)
-        except TypeError:
-            if newowner is None:
-                from getpass import getuser
-                self._owner = getuser()
-            else:
-                raise TypeError('Username must be string')
-        finally:
-            self._owner = newowner        
+        return self._owner
 
     @property
     def up(self):
@@ -576,12 +568,96 @@ class mc(object):
             return None
 
     @property
+    def profile(self):
+        """
+        Returns the profile the server is set to
+
+        """
+        try:
+            return self.server_config['minecraft':'profile'] or None
+        except KeyError:
+            return None
+
+    @profile.setter
+    def profile(self, value):
+        try:
+            self.profile_config[value:]
+        except KeyError:
+            raise KeyError('There is no defined profile by this name in profile.config')
+        else:
+            with self.server_config as sc:
+                from ConfigParser import DuplicateSectionError
+                
+                try:
+                    sc.add_section('minecraft')
+                except DuplicateSectionError:
+                    pass
+                finally:
+                    sc['minecraft':'profile'] = str(value).strip()
+            
+            self._command_direct(self.command_apply_profile, self.env['cwd'])  
+
+    @property
+    def port(self):
+        """
+        Returns the port value from server.properties at time of instance creation.
+
+        """
+        try:
+            return int(self.server_properties['server-port'])
+        except (ValueError, KeyError):
+            ''' KeyError: server-port option does not exist
+                ValueError: value is not an integer
+                exception Note: when value is absent or not an int, vanilla
+                adds/replaces the value in server.properties to 25565'''
+            return 25565
+
+    @property
+    def ip_address(self):
+        """
+        Returns the ip address value from server.properties at time of instance creation.
+        This may return '0.0.0.0' even if that is not the value in the file,
+        because it is the effective value vanilla minecraft will run at.
+
+        """
+        return self.server_properties['server-ip'::'0.0.0.0'] or '0.0.0.0'
+        ''' If server-ip is absent, vanilla starts at *,
+            which is effectively 0.0.0.0 and
+            also adds 'server-ip=' to server.properties.'''
+
+    @property
+    def memory(self):
+        """
+        Returns the amount of memory the java instance is using (VmRSS)
+
+        """
+        def sizeof_fmt(num):
+            ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
+                http://stackoverflow.com/a/1094933/1191579
+            '''
+            for x in ['bytes','KB','MB','GB','TB']:
+                if num < 1024.0:
+                    return "%3.2f %s" % (num, x)
+                num /= 1024.0
+                
+        from procfs_reader import entries
+          
+        try:
+            mem_str = dict(entries(self.java_pid, 'status'))['VmRSS']
+            mem = int(mem_str.split()[0]) * 1024
+            return sizeof_fmt(mem)
+        except IOError:
+            return '0'
+
+# shell command constructor properties
+
+    @property
     def previous_arguments(self):
         try:
             return self._previous_arguments
         except AttributeError:
             return {}
-    
+
     @property
     @sanitize
     def command_start(self):
@@ -783,89 +859,7 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
-    @property
-    def profile(self):
-        """
-        Returns the profile the server is set to
-
-        """
-        try:
-            return self.server_config['minecraft':'profile'] or None
-        except KeyError:
-            return None
-
-    @profile.setter
-    def profile(self, value):
-        try:
-            self.profile_config[value:]
-        except KeyError:
-            raise KeyError('There is no defined profile by this name in profile.config')
-        else:
-            with self.server_config as sc:
-                from ConfigParser import DuplicateSectionError
-                
-                try:
-                    sc.add_section('minecraft')
-                except DuplicateSectionError:
-                    pass
-                finally:
-                    sc['minecraft':'profile'] = str(value).strip()
-            
-            self._command_direct(self.command_apply_profile, self.env['cwd'])  
-
-    @property
-    def port(self):
-        """
-        Returns the port value from server.properties at time of instance creation.
-
-        """
-        try:
-            return int(self.server_properties['server-port'])
-        except (ValueError, KeyError):
-            ''' KeyError: server-port option does not exist
-                ValueError: value is not an integer
-                exception Note: when value is absent or not an int, vanilla
-                adds/replaces the value in server.properties to 25565'''
-            return 25565
-
-    @property
-    def ip_address(self):
-        """
-        Returns the ip address value from server.properties at time of instance creation.
-        This may return '0.0.0.0' even if that is not the value in the file,
-        because it is the effective value vanilla minecraft will run at.
-
-        """
-        return self.server_properties['server-ip'::'0.0.0.0'] or '0.0.0.0'
-        ''' If server-ip is absent, vanilla starts at *,
-            which is effectively 0.0.0.0 and
-            also adds 'server-ip=' to server.properties.'''
-
-    @property
-    def memory(self):
-        """
-        Returns the amount of memory the java instance is using (VmRSS)
-
-        """
-        def sizeof_fmt(num):
-            ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
-                http://stackoverflow.com/a/1094933/1191579
-            '''
-            for x in ['bytes','KB','MB','GB','TB']:
-                if num < 1024.0:
-                    return "%3.2f %s" % (num, x)
-                num /= 1024.0
-                
-        from procfs_reader import entries
-          
-        try:
-            mem_str = dict(entries(self.java_pid, 'status'))['VmRSS']
-            mem = int(mem_str.split()[0]) * 1024
-            return sizeof_fmt(mem)
-        except IOError:
-            return '0'
-
-    ''' generator expressions '''
+#generator expressions
 
     @classmethod
     def list_servers(cls, base_directory):
@@ -953,6 +947,8 @@ class mc(object):
                     if java and screen:
                         break
             yield instance_pids(name, java, screen, base)
+
+#filesystem functions
 
     def _make_directory(self, path, do_raise=False):
         """
