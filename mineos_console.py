@@ -50,7 +50,11 @@ if __name__=="__main__":
         import types, pprint
         pp = pprint.PrettyPrinter(indent=4)
 
-        if args.cmd in available_methods:
+        if args.cmd in ['screen', 'console']:
+            import os
+            instance = mc(**init_args)
+            os.system('screen -r %s' % instance.screen_pid)
+        elif args.cmd in available_methods:
             instance = mc(**init_args)
             retval = getattr(instance, args.cmd)(*arguments)
             if retval:
@@ -59,7 +63,7 @@ if __name__=="__main__":
                 else:
                     pp.pprint(retval)
             else:
-                print '{%s} completed without error.' % args.cmd
+                print '{%s} completed successfully.' % args.cmd
         elif args.cmd in available_properties:
             instance = mc(**init_args)
             try:
@@ -86,10 +90,8 @@ if __name__=="__main__":
         arguments = list(args.argv)
 
         if args.cmd == 'update_profile':
-            #this logic branch is not suited for /var/games
-            instance = mc(**init_args)
-            instance.update_profile(arguments[0])
-        elif args.cmd == 'define_profile':
+            mc(**init_args).update_profile(arguments[0])
+        elif args.cmd == 'stock_profile':
             if arguments[0] == 'vanilla':
                 profile = {
                     'name': 'vanilla',
@@ -100,10 +102,18 @@ if __name__=="__main__":
                     'action': 'download',
                     'ignore': '',
                     }
-                instance = mc(**init_args)
-                instance.define_profile(profile)
+                mc(**init_args).define_profile(profile)
             else:
                 raise NotImplementedError
+        elif args.cmd == 'define_profile':
+            from collections import OrderedDict
+            profile = OrderedDict([(k,None) for k in ('name', 'type', 'url',
+                                                      'save_as', 'run_as','ignore')])
+            for k,v in profile.iteritems():
+                profile[k] = raw_input('%s: ' % k)
+            else:
+                profile['action'] = 'download'
+                mc(**init_args).define_profile(profile)
         elif args.cmd in available_methods:
             retval = getattr(mc, args.cmd)(*arguments)
             if retval:
