@@ -32,9 +32,9 @@ def server_exists(state):
                 fn(self, *args, **kwargs)
             else:
                 if state:
-                    raise RuntimeWarning('Ignoring {%s}: could not find server: "%s"' % (fn.__name__,self.server_name))
+                    raise RuntimeWarning('Ignoring {%s}: server not found "%s"' % (fn.__name__,self.server_name))
                 else:
-                    raise RuntimeWarning('Ignoring {%s}: server already exists: "%s"' % (fn.__name__,self.server_name))
+                    raise RuntimeWarning('Ignoring {%s}: server already exists "%s"' % (fn.__name__,self.server_name))
         return wrapper
     return dec
 
@@ -656,6 +656,41 @@ class mc(object):
             return sizeof_fmt(mem)
         except IOError:
             return '0'
+
+    @property
+    def ping(self):
+        import socket
+
+        server_ping = namedtuple('ping', ['protocol_version',
+                                          'server_version',
+                                          'motd',
+                                          'players_online',
+                                          'max_players'])
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((self.ip_address, self.port))
+            s.send('\xfe\x01')
+            d = s.recv(1024)
+            s.shutdown(socket.SHUT_RDWR)
+        except socket.error:
+            try:
+                return server_ping(None,None,None,None,self.server_properties['max-players'])
+            except KeyError:
+                raise RuntimeWarning('Server not found "%s"' % self.server_name)
+        finally:
+            s.close()
+
+        assert d[0] == '\xff'
+
+        segments = d[3:].decode('utf-16be')
+
+        if segments[0] == u'\xa7': #1.5.2
+            segments = [str(c) for c in segments[3:].split('\x00')]
+            return server_ping(*segments)
+        else:
+            segments = [str(c) for c in segments.split(u'\xa7')]
+            return server_ping(*segments)
 
 # shell command constructor properties
 
