@@ -671,7 +671,18 @@ class mc(object):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((self.ip_address, self.port))
-                s.send('\xfe\x01')
+                s.send('\xfe')     #1
+                s.send('\x01')     #2
+                s.send('\xfa')     #3
+                s.send('\x00\x06') #4
+                s.send('\x00\x6d\x00\x69\x00\x6e\x00\x65\x00\x6f\x00\x73') #5
+                s.send('\x00\x19') #6
+                s.send('\x49')     #7
+                s.send('\x00\x09') #8 
+                s.send('\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68'
+                       '\x00\x6f\x00\x73\x00\x74')
+                s.send('\x00\x00\x63\xdd') #10
+
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
             except socket.error:
