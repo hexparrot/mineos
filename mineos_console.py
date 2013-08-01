@@ -40,15 +40,15 @@ if __name__=="__main__":
     available_properties = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                                 and not m.startswith('_'))
 
+    import pprint, types
+    pp = pprint.PrettyPrinter(indent=4)
+
     if args.server_name:
         init_args = {
             'server_name': args.server_name,
             'owner': args.user,
             'base_directory': args.base_directory
             }
-
-        import types, pprint
-        pp = pprint.PrettyPrinter(indent=4)
 
         if args.cmd in ['screen', 'console']:
             import os
