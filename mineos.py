@@ -252,8 +252,8 @@ class mc(object):
         self._create_sp(sp)
         self._load_config()
 
-    @server_up(False)
     @server_exists(True)
+    @server_up(False)
     def start(self):
         """
         Checks if a server is running on its bound IP:PORT
@@ -271,8 +271,8 @@ class mc(object):
         self._load_config(generate_missing=True)
         self._command_direct(self.command_start, self.env['cwd'])
 
-    @server_up(True)
     @server_exists(True)
+    @server_up(True)
     def kill(self):
         """
         Kills a server instance by SIGTERM
@@ -281,6 +281,7 @@ class mc(object):
         self._command_direct(self.command_kill, self.env['cwd'])
 
     @server_exists(True)
+    @server_up(False)
     def archive(self):
         """
         Creates a timestamped, gzipped tarball of the server contents.
@@ -308,8 +309,8 @@ class mc(object):
         else:
             self._command_direct(self.command_backup, self.env['cwd'])
 
-    @server_up(False)
     @server_exists(True)
+    @server_up(False)
     def restore(self, steps='now', overwrite=False):
         """
         Overwrites the /servers/ version of a server with the /backup/.
@@ -439,8 +440,8 @@ class mc(object):
                             stderr=STDOUT,
                             preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
-    @server_up(True)
     @server_exists(True)
+    @server_up(True)
     def _command_stuff(self, stuff_text):
         """
         Opens a subprocess and stuffs text to an open screen as the user
@@ -876,7 +877,7 @@ class mc(object):
 
         """
         from itertools import chain
-        return list(chain(
+        return set(chain(
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
             ))
@@ -953,7 +954,9 @@ class mc(object):
                         java = int(pid)
                     if java and screen:
                         break
-            yield instance_pids(name, java, screen, base)
+            yield instance_pids(name, java, screen, os.path.dirname(os.path.dirname(base)))
+            '''dirname x2 truncates /servers/ from the string.  all these scripts operate
+            on the assumption of child directories anyway, so this is hardcoded'''
 
 #filesystem functions
 
