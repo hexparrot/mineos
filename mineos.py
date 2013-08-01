@@ -656,7 +656,7 @@ class mc(object):
             return sizeof_fmt(mem)
         except IOError:
             return '0'
-
+        
     @property
     def ping(self):
         import socket
@@ -667,30 +667,35 @@ class mc(object):
                                           'players_online',
                                           'max_players'])
 
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((self.ip_address, self.port))
-            s.send('\xfe\x01')
-            d = s.recv(1024)
-            s.shutdown(socket.SHUT_RDWR)
-        except socket.error:
+        if self.up:
             try:
-                return server_ping(None,None,None,None,self.server_properties['max-players'])
-            except KeyError:
-                raise RuntimeWarning('Server not found "%s"' % self.server_name)
-        finally:
-            s.close()
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((self.ip_address, self.port))
+                s.send('\xfe\x01')
+                d = s.recv(1024)
+                s.shutdown(socket.SHUT_RDWR)
+            except socket.error:
+                return server_ping(None,None,self.server_properties['motd'::''],
+                                   '-1',self.server_properties['max-players'])
+            finally:
+                s.close()
 
-        assert d[0] == '\xff'
+            assert d[0] == '\xff'
 
-        segments = d[3:].decode('utf-16be')
+            segments = d[3:].decode('utf-16be')
 
-        if segments[0] == u'\xa7': #1.5.2
-            segments = [str(c) for c in segments[3:].split('\x00')]
-            return server_ping(*segments)
+            if segments[0] == u'\xa7': #1.5.2
+                segments = [str(c) for c in segments[3:].split('\x00')]
+                return server_ping(*segments)
+            else:
+                segments = [str(c) for c in segments.split(u'\xa7')]
+                return server_ping(*segments)
         else:
-            segments = [str(c) for c in segments.split(u'\xa7')]
-            return server_ping(*segments)
+            if self.server_name in self.list_servers(self.base):
+                return server_ping(None,None,self.server_properties['motd'::''],
+                                   '0',self.server_properties['max-players'])
+            else:
+                raise RuntimeWarning('Server not found "%s"' % self.server_name)
 
 # shell command constructor properties
 
