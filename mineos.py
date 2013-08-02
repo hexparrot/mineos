@@ -363,13 +363,6 @@ class mc(object):
                     pc[profile_dict['name']:option] = value
 
     def update_profile(self, profile):
-        def md5sum(filepath):
-            from hashlib import md5
-            with open(filepath, 'rb') as infile:
-                m = md5()
-                m.update(infile.read())
-                return m.hexdigest()
-
         self._make_directory(os.path.join(self.env['pwd'], profile))
         profile_dict = {}
 
@@ -392,11 +385,11 @@ class mc(object):
                                              profile_dict['save_as'])
 
                 try:
-                    old_file_md5 = md5sum(old_file_path)
+                    old_file_md5 = self._md5sum(old_file_path)
                 except IOError:
                     old_file_md5 = None
 
-                new_file_md5 = md5sum(new_file_path)
+                new_file_md5 = self._md5sum(new_file_path)
 
                 if new_file_md5 != old_file_md5:
                     move(os.path.join(new_file_path),
@@ -671,17 +664,17 @@ class mc(object):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((self.ip_address, self.port))
-                s.send('\xfe')     #1
-                s.send('\x01')     #2
-                s.send('\xfa')     #3
-                s.send('\x00\x06') #4
-                s.send('\x00\x6d\x00\x69\x00\x6e\x00\x65\x00\x6f\x00\x73') #5
-                s.send('\x00\x19') #6
-                s.send('\x49')     #7
-                s.send('\x00\x09') #8 
-                s.send('\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68'
-                       '\x00\x6f\x00\x73\x00\x74')
-                s.send('\x00\x00\x63\xdd') #10
+                s.send('\xfe'      #1
+                       '\x01'      #2
+                       '\xfa'      #3
+                       '\x00\x06'  #4
+                       '\x00\x6d\x00\x69\x00\x6e\x00\x65\x00\x6f\x00\x73'
+                       '\x00\x19'  #6
+                       '\x49'      #7
+                       '\x00\x09'  #8
+                       '\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68'
+                       '\x00\x6f\x00\x73\x00\x74'
+                       '\x00\x00\x63\xdd') #10
 
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
@@ -696,17 +689,23 @@ class mc(object):
             segments = d[3:].decode('utf-16be')
 
             if segments[0] == u'\xa7': #1.5.2
-                segments = [str(c) for c in segments[3:].split('\x00')]
-                return server_ping(*segments)
+                return server_ping(*[str(c) for c in segments[3:].split('\x00')])
             else:
-                segments = [str(c) for c in segments.split(u'\xa7')]
-                return server_ping(*segments)
+                return server_ping(*[str(c) for c in segments.split(u'\xa7')])
         else:
             if self.server_name in self.list_servers(self.base):
                 return server_ping(None,None,self.server_properties['motd'::''],
                                    '0',self.server_properties['max-players'])
             else:
                 raise RuntimeWarning('Server not found "%s"' % self.server_name)
+
+    @property
+    def sp(self):
+        return self.server_properties[:]
+
+    @property
+    def sc(self):
+        return self.server_config[:]        
 
 # shell command constructor properties
 
@@ -921,13 +920,17 @@ class mc(object):
 #generator expressions
 
     @classmethod
-    def list_servers(cls, base_directory):
+    def list_servers(cls, base_directory=None):
         """
         Lists all directories in /servers/ and /backup/.
         Note, not all listings may be servers.
 
-        """
+        """        
         from itertools import chain
+
+        if base_directory is None:
+            base_directory = cls.valid_user()[1]
+        
         return set(chain(
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
@@ -1008,6 +1011,37 @@ class mc(object):
             yield instance_pids(name, java, screen, os.path.dirname(os.path.dirname(base)))
             '''dirname x2 truncates /servers/ from the string.  all these scripts operate
             on the assumption of child directories anyway, so this is hardcoded'''
+
+    @classmethod
+    def list_profiles(cls, base_directory=None):
+        if base_directory is None:
+            base_directory = cls.valid_user()[1]
+
+        pc = config_file(os.path.join(base_directory, 'profiles', 'profile.config'))
+        return pc[:]
+
+    @classmethod
+    def list_profiles_md5(cls, base_directory=None):
+        if base_directory is None:
+            base_directory = cls.valid_user()[1]
+
+        md5s = {}
+
+        for profile, opt_dict in cls.list_profiles(base_directory).iteritems():
+            path = os.path.join(base_directory, 'profiles', profile)
+            md5s[profile] = {}
+            md5s[profile]['save_as'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
+            
+        return md5s
+
+    @staticmethod
+    def _md5sum(filepath):
+        from hashlib import md5
+        with open(filepath, 'rb') as infile:
+            m = md5()
+            m.update(infile.read())
+            return m.hexdigest()
 
 #filesystem functions
 
