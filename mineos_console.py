@@ -90,7 +90,10 @@ if __name__=="__main__":
         arguments = list(args.argv)
 
         if args.cmd == 'update_profile':
-            mc(**init_args).update_profile(*arguments)
+            try:
+                mc(**init_args).update_profile(*arguments)
+            except RuntimeWarning as ex:
+                print ex.message
         elif args.cmd == 'stock_profile':
             if arguments[0] == 'vanilla':
                 profile = {

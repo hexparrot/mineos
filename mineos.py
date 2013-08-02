@@ -269,7 +269,12 @@ class mc(object):
                 raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        self._command_direct(self.command_start, self.env['cwd'])
+        cmd = self.command_start
+
+        if self.list_profiles_md5()[self.profile]['run_as'] != self._md5sum(self.previous_arguments['jar_file']):
+            raise RuntimeError('Assigned jar does not match copy in profile directory') 
+
+        self._command_direct(cmd, self.env['cwd'])
 
     @server_exists(True)
     @server_up(True)
@@ -377,10 +382,10 @@ class mc(object):
             try:
                 old_file_md5 = self._md5sum(old_file_path)
             except IOError:
-                old_file_md5 = None       
+                old_file_md5 = None
             finally:
                 if expected_md5 and old_file_md5 == expected_md5:
-                    return
+                    raise RuntimeWarning('Did not download; existing md5 matches expected md5.')
 
             new_file_path = os.path.join(self.env['pwd'], profile_dict['save_as'])
             
@@ -392,6 +397,10 @@ class mc(object):
                 move(new_file_path, old_file_path)
             else:
                 os.unlink(new_file_path) #os.unlink or _command_direct?
+                raise RuntimeWarning('Discarding download; new download matches existing md5.')
+
+            with self.profile_config as pc:
+                pc[profile:'save_as'] = self._md5sum(old_file_path)
         else:
             raise NotImplementedError
 
