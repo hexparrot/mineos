@@ -269,13 +269,9 @@ class mc(object):
                 raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        cmd = self.command_start
-
-        if self.list_profiles_md5(self.base)[self.profile]['run_as_md5'] != \
-           self._md5sum(self.previous_arguments['jar_file']):
+        if not self.profile_current:
             raise RuntimeError('Assigned jar does not match copy in profile directory') 
-
-        self._command_direct(cmd, self.env['cwd'])
+        self._command_direct(self.command_start, self.env['cwd'])
 
     @server_exists(True)
     @server_up(True)
@@ -608,6 +604,15 @@ class mc(object):
                     sc['minecraft':'profile'] = str(value).strip()
             
             self._command_direct(self.command_apply_profile, self.env['cwd'])  
+
+    @property
+    def profile_current(self):
+        try:
+            return self.list_profiles_md5(self.base)[self.profile]['run_as_md5'] == \
+                   self._md5sum(os.path.join(self.env['cwd'],
+                                             self.profile_config[self.profile:'run_as']))
+        except KeyError:
+            raise RuntimeError('Server is not assigned a valid profile.')
 
     @property
     def port(self):
