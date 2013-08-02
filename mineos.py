@@ -271,7 +271,8 @@ class mc(object):
         self._load_config(generate_missing=True)
         cmd = self.command_start
 
-        if self.list_profiles_md5()[self.profile]['run_as'] != self._md5sum(self.previous_arguments['jar_file']):
+        if self.list_profiles_md5(self.base)[self.profile]['run_as_md5'] != \
+           self._md5sum(self.previous_arguments['jar_file']):
             raise RuntimeError('Assigned jar does not match copy in profile directory') 
 
         self._command_direct(cmd, self.env['cwd'])
@@ -392,7 +393,11 @@ class mc(object):
             self._profile_to_download = profile
             self._command_direct(self.command_wget_profile, self.env['pwd'])
 
-            if old_file_md5 != self._md5sum(new_file_path):
+            new_file_md5 = self._md5sum(new_file_path)
+
+            if expected_md5 and expected_md5 != new_file_md5:
+                raise RuntimeError('Discarding download; new download md5 mismatch with provided hash')
+            elif old_file_md5 != new_file_md5:
                 from shutil import move
                 move(new_file_path, old_file_path)
             else:
@@ -400,7 +405,8 @@ class mc(object):
                 raise RuntimeWarning('Discarding download; new download matches existing md5.')
 
             with self.profile_config as pc:
-                pc[profile:'save_as'] = self._md5sum(old_file_path)
+                pc[profile:'save_as_md5'] = self._md5sum(old_file_path)
+                pc[profile:'run_as_md5'] = self._md5sum(old_file_path)
         else:
             raise NotImplementedError
 
@@ -1035,8 +1041,8 @@ class mc(object):
         for profile, opt_dict in cls.list_profiles(base_directory).iteritems():
             path = os.path.join(base_directory, 'profiles', profile)
             md5s[profile] = {}
-            md5s[profile]['save_as'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
+            md5s[profile]['save_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
             
         return md5s
 

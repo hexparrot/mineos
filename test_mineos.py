@@ -15,6 +15,16 @@ USER = getuser()
 GROUP = getgrgid(getpwnam(USER).pw_gid).gr_name
 ONLINE_TESTS = True
 
+VANILLA_PROFILE = {
+    'name': 'vanilla',
+    'type': 'standard_jar',
+    'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+    'save_as': 'minecraft_server.jar',
+    'run_as': 'minecraft_server.jar',
+    'action': 'download',
+    'ignore': '',
+    }
+
 def dummy(*args, **kwargs):
     pass
 
@@ -315,63 +325,85 @@ class TestMineOS(unittest.TestCase):
         return getpwuid(stat(fn).st_uid).pw_name
 
     @online_test
-    def test_profiles(self):        
+    def test_profiles(self):
+        global VANILLA_PROFILE
+        
         instance = mc('one', **self.instance_arguments)
         instance.create()
-
-        profile = {
-            'name': 'vanilla',
-            'type': 'standard_jar',
-            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-            'save_as': 'minecraft_server.jar',
-            'run_as': 'minecraft_server.jar',
-            'action': 'download',
-            'ignore': '',
-            }
 
         self.assertIsNone(instance.profile)
         with self.assertRaises(KeyError): instance.profile = 'vanilla'
 
-        instance.define_profile(profile)
-        instance.update_profile(profile['name'])
+        instance.define_profile(VANILLA_PROFILE)
+        instance.update_profile(VANILLA_PROFILE['name'])
         
         self.assertTrue(os.path.exists(os.path.join(instance.env['pwd'],
-                                                    profile['name'])))
+                                                    VANILLA_PROFILE['name'])))
         
         self.assertFalse(os.path.isfile(os.path.join(instance.env['pwd'],
-                                                     profile['save_as'])))
+                                                     VANILLA_PROFILE['save_as'])))
 
         self.assertTrue(os.path.isfile(os.path.join(instance.env['pwd'],
-                                                    profile['name'],
-                                                    profile['run_as'])))
+                                                    VANILLA_PROFILE['name'],
+                                                    VANILLA_PROFILE['run_as'])))
 
-        profile['run_as'] = 'minecraft_server.1.6.2.jar'
+        from copy import copy
+        newprofile = copy(VANILLA_PROFILE)
+        newprofile['run_as'] = 'minecraft_server.1.6.2.jar'
         
-        instance.define_profile(profile)
+        instance.define_profile(newprofile)
         
         self.assertEqual(instance.profile_config['vanilla':'run_as'],
                          'minecraft_server.1.6.2.jar')
 
-    @skip_test
+    @online_test
+    def test_update_profile(self):
+        global VANILLA_PROFILE
+        
+        instance = mc('one', **self.instance_arguments)
+        instance.define_profile(VANILLA_PROFILE)
+
+        with self.assertRaises(RuntimeError):
+            instance.update_profile(VANILLA_PROFILE['name'], 'asdfasdf')
+            
+        instance.update_profile(VANILLA_PROFILE['name'])
+
+        with self.assertRaises(RuntimeWarning):
+            instance.update_profile(VANILLA_PROFILE['name'], '39df9f29e6904ea7b351ffb4fe949881')
+
+        with self.assertRaises(RuntimeWarning):
+            instance.update_profile(VANILLA_PROFILE['name'])
+
+    @online_test
+    def test_profile_jar_match_md5(self):
+        global VANILLA_PROFILE
+        
+        instance = mc('one', **self.instance_arguments)
+        instance.create()
+        
+        instance.define_profile(VANILLA_PROFILE)
+        instance.update_profile(VANILLA_PROFILE['name'])
+        instance.profile = VANILLA_PROFILE['name']
+
+        with instance.profile_config as pc:
+            pc[VANILLA_PROFILE['name']:'run_as_md5'] = 'abcd'
+
+        self.assertEqual(instance.profile_config[VANILLA_PROFILE['name']:'run_as_md5'], 'abcd')
+        self.assertNotEqual(instance.list_profiles_md5(instance.base)[instance.profile]['run_as_md5'], 'abcd')
+        '''profile.config has been tainted, and thus should equal 'abcd'
+           list_profiles_md5 actually checksums the file, and should always be correct
+        '''
+
     @online_test
     def test_start_home_server(self):
+        global VANILLA_PROFILE
+        
         instance = mc('one', **self.instance_arguments)
         instance.create()
 
-        profile = {
-            'name': 'vanilla',
-            'type': 'standard_jar',
-            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-            'save_as': 'minecraft_server.jar',
-            'run_as': 'minecraft_server.jar',
-            'action': 'download',
-            'ignore': '',
-            'jar_args': 'nogui'
-            }
-
-        instance.define_profile(profile)
-        instance.update_profile(profile['name'])
-        instance.profile = profile['name']
+        instance.define_profile(VANILLA_PROFILE)
+        instance.update_profile(VANILLA_PROFILE['name'])
+        instance.profile = VANILLA_PROFILE['name']
         instance.start()
         time.sleep(20)
         self.assertTrue(instance.up)
@@ -385,29 +417,20 @@ class TestMineOS(unittest.TestCase):
             time.sleep(1.5)
 
     @online_test
+    @skip_test
     def test_start_home_server_x2(self):
+        global VANILLA_PROFILE
+        ta = mc('throwaway', **self.instance_arguments)
+        ta.define_profile(VANILLA_PROFILE)
+        ta.update_profile(VANILLA_PROFILE['name'])
+        
         srv_a = mc('one', **self.instance_arguments)
         srv_a.create(sp={'server-port':25566})
-
-        profile = {
-            'name': 'vanilla',
-            'type': 'standard_jar',
-            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-            'save_as': 'minecraft_server.jar',
-            'run_as': 'minecraft_server.jar',
-            'action': 'download',
-            'ignore': '',
-            'jar_args': 'nogui'
-            }
-
-        srv_a.define_profile(profile)
-        srv_a.update_profile(profile['name'])
+        srv_a.profile = VANILLA_PROFILE['name']
 
         srv_b = mc('two', **self.instance_arguments)
         srv_b.create(sp={'server-port':25567})
-        
-        srv_a.profile = profile['name']
-        srv_b.profile = profile['name']
+        srv_b.profile = VANILLA_PROFILE['name']
         
         srv_a.start()
         time.sleep(20)
