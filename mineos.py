@@ -362,40 +362,36 @@ class mc(object):
                 if option != 'name':
                     pc[profile_dict['name']:option] = value
 
-    def update_profile(self, profile):
+    def update_profile(self, profile, expected_md5=None):
         self._make_directory(os.path.join(self.env['pwd'], profile))
-        profile_dict = {}
 
         with self.profile_config as pc:
             pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
             pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
-            profile_dict = pc[profile:]
+
+        profile_dict = self.profile_config[profile:]
 
         if profile_dict['type'] == 'standard_jar':
-            from shutil import move
+            old_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'])
 
-            if profile_dict['action'] == 'download':
-                self._profile_to_download = profile
-                self._command_direct(self.command_wget_profile, self.env['pwd'])
+            try:
+                old_file_md5 = self._md5sum(old_file_path)
+            except IOError:
+                old_file_md5 = None       
+            finally:
+                if expected_md5 and old_file_md5 == expected_md5:
+                    return
 
-                old_file_path = os.path.join(self.env['pwd'],
-                                             profile,
-                                             profile_dict['save_as'])
-                new_file_path = os.path.join(self.env['pwd'],
-                                             profile_dict['save_as'])
+            new_file_path = os.path.join(self.env['pwd'], profile_dict['save_as'])
+            
+            self._profile_to_download = profile
+            self._command_direct(self.command_wget_profile, self.env['pwd'])
 
-                try:
-                    old_file_md5 = self._md5sum(old_file_path)
-                except IOError:
-                    old_file_md5 = None
-
-                new_file_md5 = self._md5sum(new_file_path)
-
-                if new_file_md5 != old_file_md5:
-                    move(os.path.join(new_file_path),
-                         os.path.join(self.env['pwd'],old_file_path))
-                else:
-                    os.unlink(new_file_path) #os.unlink or _command_direct?
+            if old_file_md5 != self._md5sum(new_file_path):
+                from shutil import move
+                move(new_file_path, old_file_path)
+            else:
+                os.unlink(new_file_path) #os.unlink or _command_direct?
         else:
             raise NotImplementedError
 

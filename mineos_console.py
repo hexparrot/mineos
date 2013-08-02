@@ -90,7 +90,7 @@ if __name__=="__main__":
         arguments = list(args.argv)
 
         if args.cmd == 'update_profile':
-            mc(**init_args).update_profile(arguments[0])
+            mc(**init_args).update_profile(*arguments)
         elif args.cmd == 'stock_profile':
             if arguments[0] == 'vanilla':
                 profile = {
@@ -99,7 +99,6 @@ if __name__=="__main__":
                     'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
                     'save_as': 'minecraft_server.jar',
                     'run_as': 'minecraft_server.jar',
-                    'action': 'download',
                     'ignore': '',
                     }
                 mc(**init_args).define_profile(profile)
@@ -111,9 +110,8 @@ if __name__=="__main__":
                                                       'save_as', 'run_as','ignore')])
             for k,v in profile.iteritems():
                 profile[k] = raw_input('%s: ' % k)
-            else:
-                profile['action'] = 'download'
-                mc(**init_args).define_profile(profile)
+            
+            mc(**init_args).define_profile(profile)
         elif args.cmd in available_methods:
             retval = getattr(mc, args.cmd)(*arguments)
             if retval:
