@@ -587,11 +587,11 @@ class mc(object):
             return None
 
     @profile.setter
-    def profile(self, value):
+    def profile(self, name):
         try:
-            self.profile_config[value:]
+            self.profile_config[name:]
         except KeyError:
-            raise KeyError('There is no defined profile by this name in profile.config')
+            raise KeyError('There is no defined profile "%s" in profile.config' % name)
         else:
             with self.server_config as sc:
                 from ConfigParser import DuplicateSectionError
@@ -601,7 +601,7 @@ class mc(object):
                 except DuplicateSectionError:
                     pass
                 finally:
-                    sc['minecraft':'profile'] = str(value).strip()
+                    sc['minecraft':'profile'] = str(name).strip()
             
             self._command_direct(self.command_apply_profile, self.env['cwd'])  
 

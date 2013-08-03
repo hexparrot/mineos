@@ -24,23 +24,38 @@ class mc_server(object):
 
     @cherrypy.expose
     def command(self, **args):
-        server_name = args.pop('server_name', 'throwaway')
-        command = args.pop('cmd', None)
-        
-        if command in self.METHODS:
-            instance = mc(server_name)
-            retval = getattr(instance, command)(**args)
-            if retval:
-                if isinstance(retval, types.GeneratorType):
-                    return dumps(list(retval))
+        args = {k:str(v) for k,v in args.iteritems()}
+        server_name = args.pop('server_name', None)
+        command = args.pop('cmd')
+
+        if server_name:
+            if command in self.METHODS:
+                instance = mc(server_name)
+                retval = getattr(instance, command)(**args)
+                if retval:
+                    if isinstance(retval, types.GeneratorType):
+                        return dumps(list(retval))
+                    else:
+                        return dumps(retval)
+                return dumps(args)
+            elif command in self.PROPERTIES:
+                instance = mc(server_name)
+                if args:
+                    return dumps(setattr(instance, command, args.values()[0]))
                 else:
-                    return dumps(retval)
-            return dumps(args)
-        elif command in self.PROPERTIES:
-            instance = mc(server_name)
-            return dumps(getattr(instance, command))
+                    return dumps(getattr(instance, command))
         else:
-            return dumps(args)
+            if command in self.METHODS:
+                try:
+                    retval = getattr(mc, command)(**args)
+                    if retval: return dumps(retval)
+                except TypeError:
+                    instance = mc('throwaway')
+                    retval = getattr(instance, command)(**args)
+                    if retval:
+                        return dumps(retval)
+
+        return dumps(args)
 
 cherrypy.server.socket_host = '0.0.0.0'
 cherrypy.quickstart(mc_server())
