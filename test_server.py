@@ -122,7 +122,7 @@ class TestMineOS(unittest.TestCase):
             e = json.loads(b.getvalue())
             self.assertEqual(e['payload'], v)
 
-    @unittest.skip("demonstrating skipping")
+    #@unittest.skip("demonstrating skipping")
     def test_properties_online(self):
         global VANILLA_PROFILE
         

@@ -184,14 +184,13 @@ class TestMineOS(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.assertTrue(instance.command_start)
         with self.assertRaises(RuntimeError):
-            self.assertIsNone(instance.command_prune)
-        with self.assertRaises(RuntimeError):
             self.assertIsNone(instance.command_kill)
             
         self.assertTrue(instance.command_backup)
         self.assertTrue(instance.command_archive)
         self.assertTrue(instance.command_restore)
-        self.assertTrue(instance.command_restore)
+
+        ''' FIXME: how should prune/apply_profile/wget_profile respond? '''
 
         instance = mc('two', **self.instance_arguments)
         instance.create({'java':{'java_xmx':2048}}, {'server-port':'27000'})

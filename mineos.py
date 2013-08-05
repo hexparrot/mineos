@@ -344,8 +344,7 @@ class mc(object):
         FIXME: Does not do any sanitization on steps.
 
         """
-        self._rdiff_backup_steps = steps
-        self._command_direct(self.command_prune, self.env['bwd'])
+        self._command_direct(self.command_prune(steps), self.env['bwd'])
 
     def define_profile(self, profile_dict):
         self._make_directory(os.path.join(self.env['pwd']))
@@ -386,8 +385,7 @@ class mc(object):
 
             new_file_path = os.path.join(self.env['pwd'], profile_dict['save_as'])
             
-            self._profile_to_download = profile
-            self._command_direct(self.command_wget_profile, self.env['pwd'])
+            self._command_direct(self.command_wget_profile(profile), self.env['pwd'])
 
             new_file_md5 = self._md5sum(new_file_path)
 
@@ -603,7 +601,7 @@ class mc(object):
                 finally:
                     sc['minecraft':'profile'] = str(name).strip()
 
-            self._command_direct(self.command_apply_profile, self.env['cwd'])
+            self._command_direct(self.command_apply_profile(name), self.env['cwd'])
 
     @property
     def profile_current(self):
@@ -847,26 +845,21 @@ class mc(object):
         return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
                '%(bwd)s %(cwd)s' % required_arguments
 
-    @property
-    @sanitize
-    def command_prune(self):
+    def command_prune(self, steps):
         """
         Returns the actual command used to rdiff prune minecraft backups.
+
+        FIXME: currently not wrapped to sanitize!
 
         """
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'steps': None,
+            'steps': steps,
             'bwd': self.env['bwd']
             }
 
-        try:
-            required_arguments['steps'] = self._rdiff_backup_steps
-        except AttributeError:
-            pass
-        else:
-            if type(required_arguments['steps']) is int:
-                required_arguments['steps'] = '%sB' % required_arguments['steps']
+        if type(required_arguments['steps']) is int:
+            required_arguments['steps'] = '%sB' % required_arguments['steps']
 
         self._previous_arguments = required_arguments
         return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
@@ -886,33 +879,33 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
-    @property
-    @sanitize
-    def command_wget_profile(self):
+    def command_wget_profile(self, profile):
         """
         Returns the command to download a new file
+
+        FIXME: currently not wrapped to sanitize!
 
         """
         required_arguments = {
             'wget': self.BINARY_PATHS['wget'],
             'newfile': os.path.join(self.env['pwd'],
-                                    self.profile_config[self._profile_to_download:'save_as']),
-            'url': self.profile_config[self._profile_to_download:'url']
+                                    self.profile_config[profile:'save_as']),
+            'url': self.profile_config[profile:'url']
             }
 
         self._previous_arguments = required_arguments
         return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
 
-    @property
-    @sanitize
-    def command_apply_profile(self):
+    def command_apply_profile(self, profile):
         """
         Returns the command to copy profile files
         into the live working directory.
 
+        FIXME: currently not wrapped to sanitize!
+
         """       
         required_arguments = {
-            'profile': self.profile,
+            'profile': profile,
             'rsync': self.BINARY_PATHS['rsync'],
             'pwd': os.path.join(self.env['pwd']),
             'exclude': '',
@@ -920,7 +913,7 @@ class mc(object):
             }
 
         try:
-            files_to_exclude_str = self.profile_config[self.profile:'ignore']
+            files_to_exclude_str = self.profile_config[profile:'ignore']
         except (TypeError,KeyError):
             raise RuntimeError('Missing value in apply_profile command: %s' % str(required_arguments))
         else:

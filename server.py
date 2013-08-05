@@ -24,6 +24,8 @@ class mc_server(object):
 
     @cherrypy.expose
     def command(self, **args):
+        from subprocess import CalledProcessError
+        
         args = {k:str(v) for k,v in args.iteritems()}
         server_name = args.pop('server_name', None)
         command = args.pop('cmd')
@@ -46,30 +48,33 @@ class mc_server(object):
                     instance = mc(server_name)
                     if args:
                         setattr(instance, command, args.values()[0])
-                        retval = getattr(instance, command)
+                        retval = args.values()[0]
                     else:
                         retval = getattr(instance, command)
             else:
                 if command in self.METHODS:
                     try:
                         retval = getattr(mc, command)(**args)
-                    except TypeError:
-                        instance = mc('throwaway')
-                        retval = getattr(instance, command)(**args)
-        except RuntimeError as ex:
+                    except TypeError as ex:
+                        raise RuntimeError(ex.message)
+        except (RuntimeError, KeyError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
+        except CalledProcessError, ex:
+            response['result'] = 'error'
+            retval = ex.output
         else:
+            import types
             response['result'] = 'success'
             
             if isinstance(retval, types.GeneratorType):
                 retval = list(retval)
-        finally:
-            response['payload'] = retval
-            return dumps(response)
+
+        response['payload'] = retval
+        return dumps(response)
 
 cherrypy.server.socket_host = '0.0.0.0'
 cherrypy.quickstart(mc_server())
