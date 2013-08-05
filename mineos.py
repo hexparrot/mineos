@@ -17,8 +17,8 @@ from functools import wraps
 
 def sanitize(fn):
     @wraps(fn)
-    def wrapper(self):
-        return_func = fn(self)
+    def wrapper(self, *args, **kwargs):
+        return_func = fn(self, *args, **kwargs)
         if None in self.previous_arguments.values():
             raise RuntimeError('Missing value in %s: %s' % (fn.__name__,str(self.previous_arguments)))
         return return_func
@@ -845,11 +845,10 @@ class mc(object):
         return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
                '%(bwd)s %(cwd)s' % required_arguments
 
+    @sanitize
     def command_prune(self, steps):
         """
         Returns the actual command used to rdiff prune minecraft backups.
-
-        FIXME: currently not wrapped to sanitize!
 
         """
         required_arguments = {
@@ -879,11 +878,10 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
+    @sanitize
     def command_wget_profile(self, profile):
         """
         Returns the command to download a new file
-
-        FIXME: currently not wrapped to sanitize!
 
         """
         required_arguments = {
@@ -896,12 +894,11 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
 
+    @sanitize
     def command_apply_profile(self, profile):
         """
         Returns the command to copy profile files
         into the live working directory.
-
-        FIXME: currently not wrapped to sanitize!
 
         """       
         required_arguments = {
