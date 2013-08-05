@@ -122,6 +122,7 @@ class TestMineOS(unittest.TestCase):
             e = json.loads(b.getvalue())
             self.assertEqual(e['payload'], v)
 
+    @unittest.skip("demonstrating skipping")
     def test_properties_online(self):
         global VANILLA_PROFILE
         
@@ -162,7 +163,39 @@ class TestMineOS(unittest.TestCase):
             pass
         finally:
             time.sleep(2)
-        
+
+    def test_runtime_warning(self):
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        instance = mc('online')
+
+        d = {
+            'cmd': 'start',
+            'server_name': 'online'
+            }
+
+        self.c.setopt(pycurl.POSTFIELDS, urlencode(d))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.b.write)
+        self.c.perform()
+
+        e = json.loads(self.b.getvalue())
+        self.assertEqual(e['result'], 'warning')
+
+    def test_runtime_error(self):
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        instance = mc('online')
+        instance.create()
+
+        d = {
+            'cmd': 'kill',
+            'server_name': 'online'
+            }
+
+        self.c.setopt(pycurl.POSTFIELDS, urlencode(d))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.b.write)
+        self.c.perform()
+
+        e = json.loads(self.b.getvalue())
+        self.assertEqual(e['result'], 'error')
     
 if __name__ == "__main__":
     unittest.main()
