@@ -45,7 +45,8 @@ class mc_server(object):
                 elif command in self.PROPERTIES:
                     instance = mc(server_name)
                     if args:
-                        retval = setattr(instance, command, args.values()[0])
+                        setattr(instance, command, args.values()[0])
+                        retval = getattr(instance, command)
                     else:
                         retval = getattr(instance, command)
             else:

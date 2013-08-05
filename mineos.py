@@ -602,8 +602,8 @@ class mc(object):
                     pass
                 finally:
                     sc['minecraft':'profile'] = str(name).strip()
-            
-            self._command_direct(self.command_apply_profile, self.env['cwd'])  
+
+            self._command_direct(self.command_apply_profile, self.env['cwd'])
 
     @property
     def profile_current(self):

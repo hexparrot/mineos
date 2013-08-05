@@ -196,7 +196,38 @@ class TestMineOS(unittest.TestCase):
 
         e = json.loads(self.b.getvalue())
         self.assertEqual(e['result'], 'error')
-    
+
+    def test_properties_setting(self):
+        global VANILLA_PROFILE
+        
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        instance = mc('online')
+
+        d = {
+            'cmd': 'profile',
+            'server_name': 'online',
+            'name': 'vanilla'
+            }
+        
+        instance.create()
+        instance.define_profile(VANILLA_PROFILE)
+        instance.update_profile(d['name'])
+
+        self.assertIsNone(instance.profile)
+
+        self.c.setopt(pycurl.POSTFIELDS, urlencode(d))
+        self.c.setopt(pycurl.WRITEFUNCTION, self.b.write)
+        self.c.perform()
+
+        e = json.loads(self.b.getvalue())
+
+        self.assertEqual(e['result'], 'success')
+        self.assertEqual(e['payload'], d['name'])
+
+        #because config was changed by a subprocess
+        instance._load_config()
+        self.assertEquals(instance.profile, d['name'])
+
 if __name__ == "__main__":
     unittest.main()
 
