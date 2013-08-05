@@ -59,7 +59,9 @@ class TestMineOS(unittest.TestCase):
         self.c.setopt(pycurl.URL, "http://127.0.0.1:8080")
         self.c.setopt(pycurl.POSTFIELDS, urlencode({}))
         self.c.perform()
-        self.assertTrue(self.b.getvalue())
+
+        with self.assertRaises(ValueError):
+            e = json.loads(self.b.getvalue())
 
     def test_create_servers(self):
         self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
@@ -73,7 +75,7 @@ class TestMineOS(unittest.TestCase):
         self.c.perform()
 
         e = json.loads(self.b.getvalue())
-        self.assertFalse(e)
+        self.assertEqual(e['result'], 'success')
 
         instance = mc(d['server_name'])
         self.assertTrue(d['server_name'] in instance.list_servers())
@@ -89,7 +91,7 @@ class TestMineOS(unittest.TestCase):
         self.c.perform()
         
         e = json.loads(self.b.getvalue())
-        self.assertEqual(e, ['online'])
+        self.assertEqual(e['payload'], ['online'])
 
     def test_properties_offline(self):
         self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
@@ -118,7 +120,7 @@ class TestMineOS(unittest.TestCase):
             self.c.perform()
 
             e = json.loads(b.getvalue())
-            self.assertEqual(e, v)
+            self.assertEqual(e['payload'], v)
 
     def test_properties_online(self):
         global VANILLA_PROFILE
@@ -150,9 +152,16 @@ class TestMineOS(unittest.TestCase):
             self.c.perform()
 
             e = json.loads(b.getvalue())
-            self.assertNotEqual(e, v)
+            self.assertNotEqual(e['payload'], v)
 
-        
+        instance._command_stuff('stop')
+        time.sleep(5)
+        try:
+            instance.kill()
+        except:
+            pass
+        finally:
+            time.sleep(2)
         
     
 if __name__ == "__main__":

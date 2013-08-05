@@ -28,34 +28,62 @@ class mc_server(object):
         server_name = args.pop('server_name', None)
         command = args.pop('cmd')
 
-        if server_name:
-            if command in self.METHODS:
-                instance = mc(server_name)
-                retval = getattr(instance, command)(**args)
-                if retval:
-                    if isinstance(retval, types.GeneratorType):
-                        return dumps(list(retval))
-                    else:
-                        return dumps(retval)
-                return dumps(args)
-            elif command in self.PROPERTIES:
-                instance = mc(server_name)
-                if args:
-                    return dumps(setattr(instance, command, args.values()[0]))
-                else:
-                    return dumps(getattr(instance, command))
-        else:
-            if command in self.METHODS:
-                try:
-                    retval = getattr(mc, command)(**args)
-                    if retval: return dumps(retval)
-                except TypeError:
-                    instance = mc('throwaway')
-                    retval = getattr(instance, command)(**args)
-                    if retval:
-                        return dumps(retval)
+        response = {
+            'result': None,
+            'server_name': server_name,
+            'cmd': command,
+            'payload': None
+            }
 
-        return dumps(args)
+        retval = None
+
+        if server_name:
+            try:
+                if command in self.METHODS:
+                    instance = mc(server_name)
+                    retval = getattr(instance, command)(**args)
+                elif command in self.PROPERTIES:
+                    instance = mc(server_name)
+                    if args:
+                        retval = setattr(instance, command, args.values()[0])
+                    else:
+                        retval = getattr(instance, command)
+            except RuntimeError as ex:
+                response['result'] = 'error'
+                retval = ex.message
+            except RuntimeWarning as ex:
+                response['result'] = 'warning'
+                retval = ex.message
+            else:
+                response['result'] = 'success'
+                
+                if isinstance(retval, types.GeneratorType):
+                    retval = list(retval)
+            finally:
+                response['payload'] = retval
+                return dumps(response)
+        else:
+            try:
+                if command in self.METHODS:
+                    try:
+                        retval = getattr(mc, command)(**args)
+                    except TypeError:
+                        instance = mc('throwaway')
+                        retval = getattr(instance, command)(**args)
+            except RuntimeError as ex:
+                response['result'] = 'error'
+                response['payload'] = ex.message
+            except RuntimeWarning as ex:
+                response['result'] = 'warning'
+                response['payload'] = ex.message
+            else:
+                response['result'] = 'success'
+                
+                if isinstance(retval, types.GeneratorType):
+                    retval = list(retval)
+            finally:
+                response['payload'] = retval
+                return dumps(response)
 
 cherrypy.server.socket_host = '0.0.0.0'
 cherrypy.quickstart(mc_server())
