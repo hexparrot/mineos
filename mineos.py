@@ -381,7 +381,7 @@ class mc(object):
                 old_file_md5 = None
             finally:
                 if expected_md5 and old_file_md5 == expected_md5:
-                    raise RuntimeWarning('Did not download; existing md5 matches expected md5.')
+                    raise RuntimeWarning('Did not download; expected md5 == existing md5')
 
             new_file_path = os.path.join(self.env['pwd'], profile_dict['save_as'])
             
@@ -390,17 +390,21 @@ class mc(object):
             new_file_md5 = self._md5sum(new_file_path)
 
             if expected_md5 and expected_md5 != new_file_md5:
-                raise RuntimeError('Discarding download; new download md5 mismatch with provided hash')
-            elif old_file_md5 != new_file_md5:
-                from shutil import move
-                move(new_file_path, old_file_path)
-            else:
+                raise RuntimeError('Discarding download; expected md5 != actual md5')
+            elif old_file_md5 == new_file_md5:
                 os.unlink(new_file_path) #os.unlink or _command_direct?
-                raise RuntimeWarning('Discarding download; new download matches existing md5.')
+                raise RuntimeWarning('Discarding download; new md5 == existing md5')
+
+            from shutil import move
+            move(new_file_path, old_file_path)
+
+            active_md5 = self._md5sum(old_file_path)
 
             with self.profile_config as pc:
-                pc[profile:'save_as_md5'] = self._md5sum(old_file_path)
-                pc[profile:'run_as_md5'] = self._md5sum(old_file_path)
+                pc[profile:'save_as_md5'] = active_md5
+                pc[profile:'run_as_md5'] = active_md5
+
+            return active_md5
         else:
             raise NotImplementedError
 
@@ -585,11 +589,11 @@ class mc(object):
             return None
 
     @profile.setter
-    def profile(self, name):
+    def profile(self, profile):
         try:
-            self.profile_config[name:]
+            self.profile_config[profile:]
         except KeyError:
-            raise KeyError('There is no defined profile "%s" in profile.config' % name)
+            raise KeyError('There is no defined profile "%s" in profile.config' % profile)
         else:
             with self.server_config as sc:
                 from ConfigParser import DuplicateSectionError
@@ -599,9 +603,9 @@ class mc(object):
                 except DuplicateSectionError:
                     pass
                 finally:
-                    sc['minecraft':'profile'] = str(name).strip()
+                    sc['minecraft':'profile'] = str(profile).strip()
 
-            self._command_direct(self.command_apply_profile(name), self.env['cwd'])
+            self._command_direct(self.command_apply_profile(profile), self.env['cwd'])
 
     @property
     def profile_current(self):

@@ -41,22 +41,29 @@ class mc_server(object):
 
         try:
             if server_name:
+                instance = mc(server_name)
                 if command in self.METHODS:
-                    instance = mc(server_name)
                     retval = getattr(instance, command)(**args)
                 elif command in self.PROPERTIES:
-                    instance = mc(server_name)
                     if args:
                         setattr(instance, command, args.values()[0])
                         retval = args.values()[0]
                     else:
                         retval = getattr(instance, command)
+                else:
+                    instance._command_stuff(command)
+                    retval = '"%s" successfully sent to server.' % command
             else:
-                if command in self.METHODS:
+                if command == 'update_profile':
+                    instance = mc('throwaway')
+                    retval = instance.update_profile(**args)
+                elif command in self.METHODS:
                     try:
                         retval = getattr(mc, command)(**args)
                     except TypeError as ex:
                         raise RuntimeError(ex.message)
+                else:
+                    raise RuntimeWarning('Command not found: should this be to a server?')
         except (RuntimeError, KeyError) as ex:
             response['result'] = 'error'
             retval = ex.message
@@ -72,6 +79,8 @@ class mc_server(object):
             
             if isinstance(retval, types.GeneratorType):
                 retval = list(retval)
+            elif hasattr(retval, '__dict__'):
+                retval = dict(retval.__dict__)
 
         response['payload'] = retval
         return dumps(response)
