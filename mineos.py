@@ -947,10 +947,10 @@ class mc(object):
         if base_directory is None:
             base_directory = cls.valid_user()[1]
         
-        return set(chain(
+        return list(set(chain(
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
             cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
-            ))
+            )))
 
     @classmethod
     def list_ports_up(cls):
