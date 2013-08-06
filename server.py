@@ -17,6 +17,13 @@ class mc_server(object):
                    and not m.startswith('_'))
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
+
+    def __init__(self, owner=None, base_directory=None):
+        self.owner, self.base_directory = mc.valid_user(owner, base_directory)
+        self.init_args = {
+            'owner': self.owner.pw_name,
+            'base_directory': self.base_directory
+            }
     
     @cherrypy.expose
     def index(self):
@@ -41,7 +48,7 @@ class mc_server(object):
 
         try:
             if server_name:
-                instance = mc(server_name)
+                instance = mc(server_name, **self.init_args)
                 if command in self.METHODS:
                     retval = getattr(instance, command)(**args)
                 elif command in self.PROPERTIES:
@@ -55,11 +62,17 @@ class mc_server(object):
                     retval = '"%s" successfully sent to server.' % command
             else:
                 if command == 'update_profile':
-                    instance = mc('throwaway')
+                    instance = mc('throwaway', **self.init_args)
                     retval = instance.update_profile(**args)
                 elif command in self.METHODS:
+                    import inspect
+                    
                     try:
-                        retval = getattr(mc, command)(**args)
+                        if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
+                            retval = getattr(mc, command)(base_directory=self.init_args['base_directory'],
+                                                          **args)
+                        else:
+                            retval = getattr(mc, command)(**args)
                     except TypeError as ex:
                         raise RuntimeError(ex.message)
                 else:
@@ -85,5 +98,34 @@ class mc_server(object):
         response['payload'] = retval
         return dumps(response)
 
-cherrypy.server.socket_host = '0.0.0.0'
-cherrypy.quickstart(mc_server())
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description='MineOS command line execution scripts',
+                            version=__version__)
+    parser.add_argument('-p',
+                        dest='port',
+                        help='the port to listen on',
+                        default=8080)
+    parser.add_argument('-i',
+                        dest='ip_address',
+                        help='the ip address to listen on',
+                        default='0.0.0.0')
+    parser.add_argument('-u',
+                        dest='user',
+                        help='the owner of the server process',
+                        default=None)
+    parser.add_argument('-d',
+                        dest='base_directory',
+                        help='the base of the mc file structure',
+                        default=None)
+    parser.add_argument('argv',
+                        nargs='*',
+                        help='additional arguments to pass to the command() function',
+                        default=None)
+    args = parser.parse_args()
+    arguments = list(args.argv)
+
+    cherrypy.server.socket_host = args.ip_address
+    cherrypy.server.socket_port = int(args.port)
+    cherrypy.quickstart(mc_server(args.user, args.base_directory))
