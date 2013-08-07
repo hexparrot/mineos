@@ -11,8 +11,7 @@ __email__ = "wdchromium@gmail.com"
 import cherrypy
 from json import dumps
 from mineos import mc
-from auth import AuthController, require
-
+from auth import AuthController, require, has_permissions
 
 class mc_server(object):
     _cp_config = {
@@ -32,11 +31,10 @@ class mc_server(object):
     
     @cherrypy.expose
     def index(self):
-        return 'hello!'
-
-    @cherrypy.expose
-    def whoami(self):
-        return 'hi %s' % cherrypy.session['_cp_username']
+        try:
+            return 'hi %s' % cherrypy.session['_cp_username']
+        except KeyError:
+            return 'hi!'
 
     @staticmethod
     def to_jsonable_type(retval):
@@ -136,7 +134,15 @@ class mc_server(object):
 
         try:
             instance = mc(server_name, **init_args)
-            
+
+            try:
+                actual_owner = has_permissions(init_args['owner'], instance.env['cwd'])
+                instance = mc(server_name,
+                              owner=actual_owner,
+                              base_directory=init_args['base_directory'])
+            except OSError:
+                pass
+
             if command in self.METHODS:
                 retval = getattr(instance, command)(**args)
             elif command in self.PROPERTIES:

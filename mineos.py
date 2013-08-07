@@ -422,7 +422,7 @@ class mc(object):
 
         """
         def set_ids():
-            os.umask(0113)
+            os.umask(2)
             os.setgid(user_gid)
             os.setuid(user_uid)
         return set_ids
