@@ -11,25 +11,35 @@ __email__ = "wdchromium@gmail.com"
 import cherrypy
 from json import dumps
 from mineos import mc
+from auth import AuthController, require
+
 
 class mc_server(object):
+    _cp_config = {
+        'tools.sessions.on': True,
+        'tools.auth.on': True
+    }
+    
+    auth = AuthController()
+    
     METHODS = list(m for m in dir(mc) if callable(getattr(mc,m)) \
                    and not m.startswith('_'))
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
 
-    def __init__(self, owner=None, base_directory=None):
-        self.owner, self.base_directory = mc.valid_user(owner, base_directory)
-        self.init_args = {
-            'owner': self.owner.pw_name,
-            'base_directory': self.base_directory
-            }
+    def __init__(self, base_directory=None):
+        self.base_directory = base_directory
     
     @cherrypy.expose
     def index(self):
         return 'hello!'
 
     @cherrypy.expose
+    def whoami(self):
+        return 'hi %s' % cherrypy.session['_cp_username']
+    
+    @cherrypy.expose
+    @require()
     def command(self, **args):
         from subprocess import CalledProcessError
         
@@ -46,9 +56,14 @@ class mc_server(object):
 
         retval = None
 
+        init_args = {
+            'owner': cherrypy.session['_cp_username'],
+            'base_directory': self.base_directory
+            }
+
         try:
             if server_name:
-                instance = mc(server_name, **self.init_args)
+                instance = mc(server_name, **init_args)
                 if command in self.METHODS:
                     retval = getattr(instance, command)(**args)
                 elif command in self.PROPERTIES:
@@ -62,14 +77,25 @@ class mc_server(object):
                     retval = '"%s" successfully sent to server.' % command
             else:
                 if command == 'update_profile':
-                    instance = mc('throwaway', **self.init_args)
+                    instance = mc('throwaway', **init_args)
                     retval = instance.update_profile(**args)
+                elif command == 'stock_profile':
+                    profile = {
+                        'name': 'vanilla',
+                        'type': 'standard_jar',
+                        'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+                        'save_as': 'minecraft_server.jar',
+                        'run_as': 'minecraft_server.jar',
+                        'ignore': '',
+                        }
+                    mc('throwaway', **init_args).define_profile(profile)
+                    retval = 'vanilla profile created'
                 elif command in self.METHODS:
                     import inspect
                     
                     try:
                         if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
-                            retval = getattr(mc, command)(base_directory=self.init_args['base_directory'],
+                            retval = getattr(mc, command)(base_directory=init_args['base_directory'],
                                                           **args)
                         else:
                             retval = getattr(mc, command)(**args)
@@ -111,10 +137,10 @@ if __name__ == "__main__":
                         dest='ip_address',
                         help='the ip address to listen on',
                         default='0.0.0.0')
-    parser.add_argument('-u',
-                        dest='user',
-                        help='the owner of the server process',
-                        default=None)
+    parser.add_argument('-s',
+                        dest='shared_directory',
+                        help='whether base_directory services multiple users',
+                        action='store_true')
     parser.add_argument('-d',
                         dest='base_directory',
                         help='the base of the mc file structure',
@@ -126,6 +152,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     arguments = list(args.argv)
 
-    cherrypy.server.socket_host = args.ip_address
-    cherrypy.server.socket_port = int(args.port)
-    cherrypy.quickstart(mc_server(args.user, args.base_directory))
+    conf = {
+        'global' : { 
+            'server.socket_host': args.ip_address,
+            'server.socket_port': int(args.port)
+        }
+    }
+
+    cherrypy.quickstart(mc_server(args.base_directory), config=conf)

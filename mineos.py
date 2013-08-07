@@ -351,6 +351,7 @@ class mc(object):
         profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
         profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
 
+        self._command_direct('touch %s' % self.env['pc'], self.env['pwd'])
         with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
             
@@ -925,7 +926,7 @@ class mc(object):
             required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
 
         self._previous_arguments = required_arguments
-        return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
+        return '%(rsync)s -rlptD --chmod=ug+rw %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
 #generator expressions
 
