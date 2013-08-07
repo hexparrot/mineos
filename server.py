@@ -37,24 +37,32 @@ class mc_server(object):
     @cherrypy.expose
     def whoami(self):
         return 'hi %s' % cherrypy.session['_cp_username']
-    
+
+    @staticmethod
+    def to_jsonable_type(retval):
+        import types
+
+        if isinstance(retval, types.GeneratorType):
+            return list(retval)
+        elif hasattr(retval, '__dict__'):
+            return dict(retval.__dict__)
+        else:
+            return retval
+
     @cherrypy.expose
     @require()
-    def command(self, **args):
+    def host(self, **args):
         from subprocess import CalledProcessError
         
         args = {k:str(v) for k,v in args.iteritems()}
-        server_name = args.pop('server_name', None)
         command = args.pop('cmd')
 
+        retval = None
         response = {
             'result': None,
-            'server_name': server_name,
             'cmd': command,
             'payload': None
             }
-
-        retval = None
 
         init_args = {
             'owner': cherrypy.session['_cp_username'],
@@ -62,47 +70,33 @@ class mc_server(object):
             }
 
         try:
-            if server_name:
-                instance = mc(server_name, **init_args)
-                if command in self.METHODS:
-                    retval = getattr(instance, command)(**args)
-                elif command in self.PROPERTIES:
-                    if args:
-                        setattr(instance, command, args.values()[0])
-                        retval = args.values()[0]
+            if command == 'update_profile':
+                instance = mc('throwaway', **init_args)
+                retval = instance.update_profile(**args)
+            elif command == 'stock_profile':
+                profile = {
+                    'name': 'vanilla',
+                    'type': 'standard_jar',
+                    'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+                    'save_as': 'minecraft_server.jar',
+                    'run_as': 'minecraft_server.jar',
+                    'ignore': '',
+                    }
+                mc('throwaway', **init_args).define_profile(profile)
+                retval = 'vanilla profile created'
+            elif command in self.METHODS:
+                import inspect
+                
+                try:
+                    if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
+                        retval = getattr(mc, command)(base_directory=init_args['base_directory'],
+                                                      **args)
                     else:
-                        retval = getattr(instance, command)
-                else:
-                    instance._command_stuff(command)
-                    retval = '"%s" successfully sent to server.' % command
+                        retval = getattr(mc, command)(**args)
+                except TypeError as ex:
+                    raise RuntimeError(ex.message)
             else:
-                if command == 'update_profile':
-                    instance = mc('throwaway', **init_args)
-                    retval = instance.update_profile(**args)
-                elif command == 'stock_profile':
-                    profile = {
-                        'name': 'vanilla',
-                        'type': 'standard_jar',
-                        'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-                        'save_as': 'minecraft_server.jar',
-                        'run_as': 'minecraft_server.jar',
-                        'ignore': '',
-                        }
-                    mc('throwaway', **init_args).define_profile(profile)
-                    retval = 'vanilla profile created'
-                elif command in self.METHODS:
-                    import inspect
-                    
-                    try:
-                        if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
-                            retval = getattr(mc, command)(base_directory=init_args['base_directory'],
-                                                          **args)
-                        else:
-                            retval = getattr(mc, command)(**args)
-                    except TypeError as ex:
-                        raise RuntimeError(ex.message)
-                else:
-                    raise RuntimeWarning('Command not found: should this be to a server?')
+                raise RuntimeWarning('Command not found: should this be to a server?')
         except (RuntimeError, KeyError) as ex:
             response['result'] = 'error'
             retval = ex.message
@@ -112,16 +106,57 @@ class mc_server(object):
         except CalledProcessError, ex:
             response['result'] = 'error'
             retval = ex.output
-        else:
-            import types
-            response['result'] = 'success'
-            
-            if isinstance(retval, types.GeneratorType):
-                retval = list(retval)
-            elif hasattr(retval, '__dict__'):
-                retval = dict(retval.__dict__)
 
-        response['payload'] = retval
+        response['payload'] = self.to_jsonable_type(retval)
+        return dumps(response)
+
+    @cherrypy.expose
+    @require()
+    def server(self, **args):
+        from subprocess import CalledProcessError
+
+        args = {k:str(v) for k,v in args.iteritems()}
+        server_name = args.pop('server_name')
+        command = args.pop('cmd')
+
+        retval = None
+        response = {
+            'result': None,
+            'server_name': server_name,
+            'cmd': command,
+            'payload': None
+            }
+
+        init_args = {
+            'owner': cherrypy.session['_cp_username'],
+            'base_directory': self.base_directory
+            }
+
+        try:
+            instance = mc(server_name, **init_args)
+            
+            if command in self.METHODS:
+                retval = getattr(instance, command)(**args)
+            elif command in self.PROPERTIES:
+                if args:
+                    setattr(instance, command, args.values()[0])
+                    retval = args.values()[0]
+                else:
+                    retval = getattr(instance, command)
+            else:
+                instance._command_stuff(command)
+                retval = '"%s" successfully sent to server.' % command
+        except (RuntimeError, KeyError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        except CalledProcessError, ex:
+            response['result'] = 'error'
+            retval = ex.output
+
+        response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
 
 if __name__ == "__main__":
@@ -145,12 +180,7 @@ if __name__ == "__main__":
                         dest='base_directory',
                         help='the base of the mc file structure',
                         default=None)
-    parser.add_argument('argv',
-                        nargs='*',
-                        help='additional arguments to pass to the command() function',
-                        default=None)
     args = parser.parse_args()
-    arguments = list(args.argv)
 
     conf = {
         'global' : { 
