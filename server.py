@@ -135,13 +135,16 @@ class mc_server(object):
         try:
             instance = mc(server_name, **init_args)
 
-            try:
-                actual_owner = has_permissions(init_args['owner'], instance.env['cwd'])
-                instance = mc(server_name,
-                              owner=actual_owner,
-                              base_directory=init_args['base_directory'])
-            except OSError:
-                pass
+            for d in ['cwd', 'bwd', 'awd']:
+                try:
+                    actual_owner = has_permissions(init_args['owner'], instance.env['cwd'])
+                except OSError:
+                    continue
+                else:
+                    instance = mc(server_name,
+                                  owner=actual_owner,
+                                  base_directory=init_args['base_directory'])
+                    break
 
             if command in self.METHODS:
                 retval = getattr(instance, command)(**args)
