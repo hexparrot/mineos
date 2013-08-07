@@ -106,6 +106,8 @@ class mc_server(object):
         except CalledProcessError, ex:
             response['result'] = 'error'
             retval = ex.output
+        else:
+            response['result'] = 'success'
 
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
@@ -155,6 +157,8 @@ class mc_server(object):
         except CalledProcessError, ex:
             response['result'] = 'error'
             retval = ex.output
+        else:
+            response['result'] = 'success'
 
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
