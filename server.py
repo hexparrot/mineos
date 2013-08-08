@@ -57,16 +57,20 @@ class mc_server(object):
     @require()
     def inspect_method(self, method):
         try:
-            reqd = inspect.getargspec(getattr(mc, method)).args
+            target = getattr(mc, method).func_closure[0].cell_contents
+            reqd = inspect.getargspec(target).args
         except TypeError:
-            return dumps([])
-        
-        try:
+            try:
+                reqd = inspect.getargspec(getattr(mc, method)).args
+            except TypeError:
+                return dumps([])
+
+        if "self" in reqd:
             reqd[reqd.index("self")] = "server_name"
-        except ValueError:
-            pass
-        finally:
-            return dumps(reqd)
+        elif "cls" in reqd:
+            del reqd[reqd.index("cls")]
+
+        return dumps(reqd)
                  
     @cherrypy.expose
     @require()
