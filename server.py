@@ -13,12 +13,7 @@ from json import dumps
 from mineos import mc
 from auth import AuthController, require
 
-class mc_server(object):
-    _cp_config = {
-        'tools.sessions.on': True,
-        'tools.auth.on': True
-    }
-    
+class mc_server(object):    
     auth = AuthController()
     
     METHODS = list(m for m in dir(mc) if callable(getattr(mc,m)) \
@@ -47,6 +42,16 @@ class mc_server(object):
         else:
             return retval
 
+    @cherrypy.expose
+    @require()
+    def methods(self):
+        return dumps(self.METHODS)
+
+    @cherrypy.expose
+    @require()
+    def properties(self):
+        return dumps(self.PROPERTIES)
+    
     @cherrypy.expose
     @require()
     def host(self, **args):
@@ -190,14 +195,23 @@ if __name__ == "__main__":
                         default=None)
     args = parser.parse_args()
 
+    cherrypy.config.update({
+        'tools.sessions.on': True,
+        'tools.auth.on': True
+        })
+
     conf = {
-        'global' : { 
+        'global': { 
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port)
+        },
+        '/stuff': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': '/home/mc/buzz'
+            }
         }
-    }
 
     if args.base_directory:
-         mc.make_skeleton(args.base_directory) 
+         mc._make_skeleton(args.base_directory) 
 
     cherrypy.quickstart(mc_server(args.base_directory), config=conf)

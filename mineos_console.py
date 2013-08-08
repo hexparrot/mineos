@@ -42,7 +42,7 @@ if __name__=="__main__":
     pp = pprint.PrettyPrinter(indent=4)
 
     if args.base_directory:
-         mc.make_skeleton(args.base_directory)
+         mc._make_skeleton(args.base_directory)
 
     if args.server_name:
         init_args = {

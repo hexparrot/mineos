@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Untitled Document</title>
+<style>
+body {
+	background-color: #C0CA86;
+}
+.green {
+	color: green;
+}
+.red {
+	color: red;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<script type="text/javascript">
+
+String.prototype.frmt = function() {
+			// Ex: 'the {0} brown {1} jumps over the lazy {2}'.frmt('quick', 'fox', 'dog');
+			// Note: Executes ascending from 0, so: '{0}{1}'.frmt('{1}', '{0}'); will return '{0}{0}' while: '{0}{1}'.frmt('{0}', '{1}'); will return '{0}{1}'
+	var s = this;
+	
+	for(var i = 0, iL = arguments.length; i<iL; i++) {
+		s = s.replace(new RegExp('\\{'+i+'\\}', 'gm'), arguments[i]);
+	}
+	
+	return s;
+};
+
+function viewmodel_requests() {
+	var self = this;
+	self.requests = ko.observableArray();
+	self.properties = ko.observableArray();
+	self.methods = ko.observableArray();
+	self.servers = ko.observableArray();
+	
+	self.payload = ko.observable();
+
+	self.server = function(parameters) {
+		$.getJSON('/server', parameters, function(data) {
+
+		}).success(function(data){
+			console.log(data);
+			self.requests.push(data);
+		})
+	}
+	
+	self.display_properties = function() {
+		$.getJSON("/properties", {}, function(data) {
+		}).success(function(data){
+			self.properties(data);
+			
+			$('#properties li a').on('click', function() {
+
+				$.getJSON("/server", { cmd:$(this).text(), server_name:'blamo'}, function(data) {
+				}).success(function(data){
+					self.payload(JSON.stringify(data));
+				})
+				return false;
+			})
+		})
+	}
+	
+	self.display_methods = function() {
+		$.getJSON("/methods", {}, function(data) {
+		}).success(function(data){
+			self.methods(data);
+			
+			$('#methods li a').on('click', function() {
+
+				$.getJSON("/server", { cmd:$(this).text(), server_name:'blamo'}, function(data) {
+				}).success(function(data){
+					self.payload(JSON.stringify(data));
+				})
+				return false;
+			})
+		})
+	}
+
+}
+var vm;
+$(document).ready(function() {
+	vm = new viewmodel_requests();
+	ko.applyBindings(vm);
+	
+	vm.display_properties()
+	vm.display_methods()
+});
+</script>
+</head>
+
+<body>
+<form method="post" action="/auth/login">
+<input type="hidden" name="from_page" value="/stuff/index.html" />
+Username:
+<input type="text" name="username" />
+<br />
+Password:
+<input type="password" name="password" />
+<br />
+<input type="submit" value="Log in" />
+<br>
+<table>
+  <tbody data-bind="foreach: requests">
+    <tr>
+      <td data-bind="text: result, css: { green: result=='success', red: result!='success'}"></td>
+      <td data-bind="text: server_name"></td>
+      <td data-bind="text: cmd"></td>
+      <td data-bind="text: payload"></td>
+    </tr>
+  </tbody>
+</table>
+<h2 data-bind="text: payload"></h2>
+<ul id="properties" data-bind="foreach: properties">
+	<li><a href="" data-bind="text: $data"></a></li>
+</ul>
+<ul id="methods" data-bind="foreach: methods">
+	<li><a href="" data-bind="text: $data"></a></li>
+</ul>
+</body>
+</html>

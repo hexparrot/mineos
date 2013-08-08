@@ -966,8 +966,8 @@ class mc(object):
             base_directory = cls.valid_user()[1]
         
         return list(set(chain(
-            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
-            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
+            cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
+            cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
             )))
 
     @classmethod
@@ -1092,52 +1092,8 @@ class mc(object):
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
 
-    def copytree(self, src, dst, ignore=None):
-        """
-        Recursively copies a directory and its contents.
-        Keyword Arguments:
-        src -- source directory
-        dst -- destination directory
-        ignore -- shutil.ignore_patterns object
-        Modified version of http://docs.python.org/library/shutil.html
-        
-        """
-        from shutil import copystat, copy2, Error
-        
-        names = os.listdir(src)
-        self._make_directory(dst)
-        
-        errors = []
-        
-        if ignore is not None:
-            ignored_names = ignore(src, names)
-        else:
-            ignored_names = set()
-
-        for name in names:
-            if name in ignored_names:
-                continue
-            srcname = os.path.join(src, name)
-            dstname = os.path.join(dst, name)
-            try:
-                if os.path.isdir(srcname):
-                    self.copytree(srcname, dstname, ignore)
-                else:
-                    copy2(srcname, dstname)
-                    os.chown(dstname,
-                             self.owner.pw_uid,
-                             self.owner.pw_gid)
-            except (IOError, os.error) as why:
-                errors.append((srcname, dstname, str(why)))
-            except Error as err:
-                errors.extend(err.args[0])
-        try:
-            copystat(src, dst)
-        except OSError as why:
-            errors.extend((src, dst, str(why)))
-
     @staticmethod
-    def list_subdirs(directory):
+    def _list_subdirs(directory):
         """
         Returns a list of all subdirectories of a path.
 
@@ -1148,7 +1104,7 @@ class mc(object):
             return []
 
     @staticmethod
-    def list_files(directory):
+    def _list_files(directory):
         """
         Returns a list of all files in a path (no recursion).
 
@@ -1159,7 +1115,7 @@ class mc(object):
             return []
 
     @classmethod
-    def make_skeleton(cls, directory=None):
+    def _make_skeleton(cls, directory=None):
         import os
         if directory is None:
             directory = os.getcwd()

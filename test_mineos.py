@@ -294,29 +294,6 @@ class TestMineOS(unittest.TestCase):
         instance.prune('now')
         self.assertEqual(len(instance.list_increments().increments), 0)
 
-    def test_copytree(self):
-        instance = mc('one', **self.instance_arguments)
-        instance.create()
-
-        second_dir = os.path.join(instance.base,
-                                  instance.DEFAULT_PATHS['servers'],
-                                  'two')
-        
-        instance.copytree(instance.env['cwd'], second_dir)
-
-        for (directory, _, files) in os.walk(instance.env['cwd']):
-            for f in files:
-                path = os.path.join(second_dir, f)
-                self.assertTrue(os.path.exists(path))
-
-        for (directory, _, files) in os.walk(second_dir):
-            for f in files:
-                path = os.path.join(directory, f)
-                self.assertEqual(self.find_owner(path), instance.owner.pw_name)
-
-        self.assertEqual(mc.list_files(instance.env['cwd']),
-                         mc.list_files(second_dir))
-
     def find_owner(self, fn):
         from os import stat
         from pwd import getpwuid
