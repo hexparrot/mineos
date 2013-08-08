@@ -9,6 +9,7 @@ __version__ = "0.6.0"
 __email__ = "wdchromium@gmail.com"
 
 import cherrypy
+import inspect
 from json import dumps
 from mineos import mc
 from auth import AuthController, require
@@ -51,7 +52,22 @@ class mc_server(object):
     @require()
     def properties(self):
         return dumps(self.PROPERTIES)
-    
+
+    @cherrypy.expose
+    @require()
+    def inspect_method(self, method):
+        try:
+            reqd = inspect.getargspec(getattr(mc, method)).args
+        except TypeError:
+            return dumps([])
+        
+        try:
+            reqd[reqd.index("self")] = "server_name"
+        except ValueError:
+            pass
+        finally:
+            return dumps(reqd)
+                 
     @cherrypy.expose
     @require()
     def host(self, **args):
@@ -87,9 +103,7 @@ class mc_server(object):
                     }
                 mc('throwaway', **init_args).define_profile(profile)
                 retval = 'vanilla profile created'
-            elif command in self.METHODS:
-                import inspect
-                
+            elif command in self.METHODS:                
                 try:
                     if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
                         retval = getattr(mc, command)(base_directory=init_args['base_directory'],
