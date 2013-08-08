@@ -56,7 +56,6 @@ class mc(object):
         'servers': 'servers',
         'backup': 'backup',
         'archive': 'archive',
-        'log': 'log',
         'profiles': 'profiles'
         }
     BINARY_PATHS = {
@@ -520,6 +519,29 @@ class mc(object):
                 raise ValueError('base_directory does not exist: %s' % normalized)
 
         return (owner_info, base_directory)
+
+    @staticmethod
+    def valid_owner(username, directory):
+        """custom addition to check if current user
+        is a member of the group a directory is owned by
+        and returns the actual owner for further use"""
+        from pwd import getpwuid
+        from grp import getgrgid
+
+        uid = os.stat(directory).st_uid
+        gid = os.stat(directory).st_gid
+
+        actual_owner = getpwuid(uid).pw_name
+
+        if username == actual_owner:
+            return actual_owner
+        elif username in getgrgid(gid).gr_mem:
+            return actual_owner
+        elif os.geteuid() == 0:
+            return actual_owner
+        else:
+            raise OSError("user '%s' does not have permissions on %s" % (username,
+                                                                         directory))
 
     ''' properties '''
 
@@ -1135,3 +1157,16 @@ class mc(object):
             return os.walk(directory).next()[2]
         except StopIteration:
             return []
+
+    @classmethod
+    def make_skeleton(cls, directory=None):
+        import os
+        if directory is None:
+            directory = os.getcwd()
+            
+        for d in cls.DEFAULT_PATHS:
+            try:
+                os.makedirs(os.path.join(directory, d))
+            except OSError:
+                pass   
+

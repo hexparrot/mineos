@@ -11,7 +11,7 @@ __email__ = "wdchromium@gmail.com"
 import cherrypy
 from json import dumps
 from mineos import mc
-from auth import AuthController, require, has_permissions
+from auth import AuthController, require
 
 class mc_server(object):
     _cp_config = {
@@ -134,17 +134,15 @@ class mc_server(object):
 
         try:
             instance = mc(server_name, **init_args)
-
-            for d in ['cwd', 'bwd', 'awd']:
+                                  
+            for d in ['cwd', 'bwd']:
                 try:
-                    actual_owner = has_permissions(init_args['owner'], instance.env['cwd'])
-                except OSError:
-                    continue
-                else:
                     instance = mc(server_name,
-                                  owner=actual_owner,
+                                  owner=mc.valid_owner(init_args['owner'], instance.env[d]),
                                   base_directory=init_args['base_directory'])
                     break
+                except OSError:
+                    continue
 
             if command in self.METHODS:
                 retval = getattr(instance, command)(**args)
@@ -174,6 +172,7 @@ class mc_server(object):
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    import os
 
     parser = ArgumentParser(description='MineOS command line execution scripts',
                             version=__version__)
@@ -185,10 +184,6 @@ if __name__ == "__main__":
                         dest='ip_address',
                         help='the ip address to listen on',
                         default='0.0.0.0')
-    parser.add_argument('-s',
-                        dest='shared_directory',
-                        help='whether base_directory services multiple users',
-                        action='store_true')
     parser.add_argument('-d',
                         dest='base_directory',
                         help='the base of the mc file structure',
@@ -201,5 +196,8 @@ if __name__ == "__main__":
             'server.socket_port': int(args.port)
         }
     }
+
+    if args.base_directory:
+         mc.make_skeleton(args.base_directory) 
 
     cherrypy.quickstart(mc_server(args.base_directory), config=conf)
