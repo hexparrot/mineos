@@ -10,6 +10,7 @@ __email__ = "wdchromium@gmail.com"
 
 import cherrypy
 import inspect
+import os
 from json import dumps
 from mineos import mc
 from auth import AuthController, require
@@ -24,24 +25,19 @@ class mc_server(object):
 
     def __init__(self, base_directory=None):
         self.base_directory = base_directory
-    
+
     @cherrypy.expose
     def index(self):
+        from cherrypy.lib.static import serve_file
+        
+        return serve_file(os.path.join(os.getcwd(),'index.html'))
+    
+    @cherrypy.expose
+    def whoami(self):
         try:
-            return 'hi %s' % cherrypy.session['_cp_username']
+            return "You're logged in as %s" % cherrypy.session['_cp_username']
         except KeyError:
-            return 'hi!'
-
-    @staticmethod
-    def to_jsonable_type(retval):
-        import types
-
-        if isinstance(retval, types.GeneratorType):
-            return list(retval)
-        elif hasattr(retval, '__dict__'):
-            return dict(retval.__dict__)
-        else:
-            return retval
+            return "...you are nobody"
 
     @cherrypy.expose
     @require()
@@ -193,9 +189,19 @@ class mc_server(object):
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
 
+    @staticmethod
+    def to_jsonable_type(retval):
+        import types
+
+        if isinstance(retval, types.GeneratorType):
+            return list(retval)
+        elif hasattr(retval, '__dict__'):
+            return dict(retval.__dict__)
+        else:
+            return retval
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
-    import os
 
     parser = ArgumentParser(description='MineOS command line execution scripts',
                             version=__version__)
@@ -222,10 +228,6 @@ if __name__ == "__main__":
         'global': { 
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port)
-        },
-        '/stuff': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': '/home/mc/buzz'
             }
         }
 
