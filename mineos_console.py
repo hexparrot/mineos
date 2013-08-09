@@ -11,6 +11,8 @@ __email__ = "wdchromium@gmail.com"
 if __name__=="__main__":
     from mineos import mc
     from argparse import ArgumentParser
+    from getpass import getuser
+    import os
 
     parser = ArgumentParser(description='MineOS command line execution scripts',
                             version=__version__)
@@ -19,10 +21,6 @@ if __name__=="__main__":
     parser.add_argument('-s',
                         dest='server_name',
                         help='the server to act upon')
-    parser.add_argument('-u',
-                        dest='user',
-                        help='alternate user than current',
-                        default=None)
     parser.add_argument('-d',
                         dest='base_directory',
                         help='the base of the mc file structure',
@@ -43,19 +41,29 @@ if __name__=="__main__":
     import pprint, types
     pp = pprint.PrettyPrinter(indent=4)
 
+    if args.base_directory:
+         mc._make_skeleton(args.base_directory)
+
     if args.server_name:
         init_args = {
             'server_name': args.server_name,
-            'owner': args.user,
+            'owner': getuser(),
             'base_directory': args.base_directory
             }
 
+        instance = mc(**init_args)
+        for d in ['cwd', 'bwd']:
+            try:
+                instance = mc(init_args['server_name'],
+                              owner=mc.valid_owner(init_args['owner'], instance.env[d]),
+                              base_directory=init_args['base_directory'])
+                break
+            except OSError:
+                continue
+
         if args.cmd in ['screen', 'console']:
-            import os
-            instance = mc(**init_args)
-            os.system('screen -r %s' % instance.screen_pid)
+            instance._command_direct('screen -r %s' % instance.screen_pid, instance.env['cwd'])
         elif args.cmd in available_methods:
-            instance = mc(**init_args)
             retval = getattr(instance, args.cmd)(*arguments)
             if retval:
                 if isinstance(retval, types.GeneratorType):
@@ -65,7 +73,6 @@ if __name__=="__main__":
             else:
                 print '{%s} completed successfully.' % args.cmd
         elif args.cmd in available_properties:
-            instance = mc(**init_args)
             try:
                 previous_value = getattr(instance, args.cmd)
                 setattr(instance, args.cmd, arguments[0])
@@ -76,7 +83,6 @@ if __name__=="__main__":
             except IndexError:
                 pp.pprint(getattr(instance, args.cmd))            
         else:
-            instance = mc(**init_args)
             text = '%s %s' % (args.cmd, ' '.join(arguments))
             instance._command_stuff(text)
             print '{%s} sent to gameserver console [screen_pid:%s] successfully.' % (text,
@@ -84,10 +90,9 @@ if __name__=="__main__":
     else:
         init_args = {
             'server_name': 'throwaway',
-            'owner': args.user,
+            'owner': getuser(),
             'base_directory': args.base_directory
             }
-        arguments = list(args.argv)
 
         if args.cmd == 'update_profile':
             try:

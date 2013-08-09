@@ -64,7 +64,7 @@ class TestMineOS(unittest.TestCase):
             e = json.loads(self.b.getvalue())
 
     def test_create_servers(self):
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
 
         d = {
             'cmd': 'create',
@@ -94,7 +94,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(e['payload'], ['online'])
 
     def test_properties_offline(self):
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
         instance = mc('online')
         instance.create()
 
@@ -126,7 +126,7 @@ class TestMineOS(unittest.TestCase):
     def test_properties_online(self):
         global VANILLA_PROFILE
         
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
         instance = mc('online')
         instance.create()
         instance.define_profile(VANILLA_PROFILE)
@@ -165,7 +165,7 @@ class TestMineOS(unittest.TestCase):
             time.sleep(2)
 
     def test_runtime_warning(self):
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
         instance = mc('online')
 
         d = {
@@ -181,7 +181,7 @@ class TestMineOS(unittest.TestCase):
         self.assertEqual(e['result'], 'warning')
 
     def test_runtime_error(self):
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
         instance = mc('online')
         instance.create()
 
@@ -200,7 +200,7 @@ class TestMineOS(unittest.TestCase):
     def test_properties_setting(self):
         global VANILLA_PROFILE
         
-        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/command")
+        self.c.setopt(pycurl.URL, "http://127.0.0.1:8080/server")
         instance = mc('online')
 
         d = {

@@ -56,7 +56,6 @@ class mc(object):
         'servers': 'servers',
         'backup': 'backup',
         'archive': 'archive',
-        'log': 'log',
         'profiles': 'profiles'
         }
     BINARY_PATHS = {
@@ -351,6 +350,7 @@ class mc(object):
         profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
         profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
 
+        self._command_direct('touch %s' % self.env['pc'], self.env['pwd'])
         with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
             
@@ -421,6 +421,7 @@ class mc(object):
 
         """
         def set_ids():
+            os.umask(2)
             os.setgid(user_gid)
             os.setuid(user_uid)
         return set_ids
@@ -518,6 +519,29 @@ class mc(object):
                 raise ValueError('base_directory does not exist: %s' % normalized)
 
         return (owner_info, base_directory)
+
+    @staticmethod
+    def valid_owner(username, directory):
+        """custom addition to check if current user
+        is a member of the group a directory is owned by
+        and returns the actual owner for further use"""
+        from pwd import getpwuid
+        from grp import getgrgid
+
+        uid = os.stat(directory).st_uid
+        gid = os.stat(directory).st_gid
+
+        actual_owner = getpwuid(uid).pw_name
+
+        if username == actual_owner:
+            return actual_owner
+        elif username in getgrgid(gid).gr_mem:
+            return actual_owner
+        elif os.geteuid() == 0:
+            return actual_owner
+        else:
+            raise OSError("user '%s' does not have permissions on %s" % (username,
+                                                                         directory))
 
     ''' properties '''
 
@@ -925,7 +949,7 @@ class mc(object):
             required_arguments['exclude'] = ' '.join("--exclude='%s'" % f for f in files)
 
         self._previous_arguments = required_arguments
-        return '%(rsync)s -a %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
+        return '%(rsync)s -rlptD --chmod=ug+rw %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
 #generator expressions
 
@@ -942,8 +966,8 @@ class mc(object):
             base_directory = cls.valid_user()[1]
         
         return list(set(chain(
-            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
-            cls.list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
+            cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
+            cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
             )))
 
     @classmethod
@@ -1068,52 +1092,8 @@ class mc(object):
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
 
-    def copytree(self, src, dst, ignore=None):
-        """
-        Recursively copies a directory and its contents.
-        Keyword Arguments:
-        src -- source directory
-        dst -- destination directory
-        ignore -- shutil.ignore_patterns object
-        Modified version of http://docs.python.org/library/shutil.html
-        
-        """
-        from shutil import copystat, copy2, Error
-        
-        names = os.listdir(src)
-        self._make_directory(dst)
-        
-        errors = []
-        
-        if ignore is not None:
-            ignored_names = ignore(src, names)
-        else:
-            ignored_names = set()
-
-        for name in names:
-            if name in ignored_names:
-                continue
-            srcname = os.path.join(src, name)
-            dstname = os.path.join(dst, name)
-            try:
-                if os.path.isdir(srcname):
-                    self.copytree(srcname, dstname, ignore)
-                else:
-                    copy2(srcname, dstname)
-                    os.chown(dstname,
-                             self.owner.pw_uid,
-                             self.owner.pw_gid)
-            except (IOError, os.error) as why:
-                errors.append((srcname, dstname, str(why)))
-            except Error as err:
-                errors.extend(err.args[0])
-        try:
-            copystat(src, dst)
-        except OSError as why:
-            errors.extend((src, dst, str(why)))
-
     @staticmethod
-    def list_subdirs(directory):
+    def _list_subdirs(directory):
         """
         Returns a list of all subdirectories of a path.
 
@@ -1124,7 +1104,7 @@ class mc(object):
             return []
 
     @staticmethod
-    def list_files(directory):
+    def _list_files(directory):
         """
         Returns a list of all files in a path (no recursion).
 
@@ -1133,3 +1113,16 @@ class mc(object):
             return os.walk(directory).next()[2]
         except StopIteration:
             return []
+
+    @classmethod
+    def _make_skeleton(cls, directory=None):
+        import os
+        if directory is None:
+            directory = os.getcwd()
+            
+        for d in cls.DEFAULT_PATHS:
+            try:
+                os.makedirs(os.path.join(directory, d))
+            except OSError:
+                pass   
+
