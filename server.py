@@ -15,6 +15,30 @@ from json import dumps
 from mineos import mc
 from auth import AuthController, require
 
+class ViewModel(object):
+    def __init__(self, base_directory):
+        self.base_directory = base_directory
+        
+    @cherrypy.expose
+    def status(self):
+        status = []
+        for i in mc.list_servers(self.base_directory):
+            instance = mc(i, None, self.base_directory)
+            ping_info = instance.ping
+            srv = {
+                'server_name': i,
+                'profile': instance.profile,
+                'up': instance.up,
+                'ip_address': instance.ip_address,
+                'port': instance.port,
+                'memory': instance.memory,
+                'owner': mc.valid_owner(instance.owner.pw_name,
+                                        instance.env['cwd'])
+                }
+            srv.update(dict(instance.ping._asdict()))         
+            status.append(srv)
+        return dumps(status)
+
 class mc_server(object):    
     auth = AuthController()
     
@@ -25,6 +49,7 @@ class mc_server(object):
 
     def __init__(self, base_directory=None):
         self.base_directory = base_directory
+        self.vm = ViewModel(self.base_directory)
 
     @cherrypy.expose
     def index(self):
