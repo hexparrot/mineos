@@ -1014,6 +1014,8 @@ class mc(object):
         for profile, opt_dict in cls.list_profiles(base_directory).iteritems():
             path = os.path.join(base_directory, 'profiles', profile)
             md5s[profile] = {}
+            md5s[profile]['save_as'] = opt_dict['save_as']
+            md5s[profile]['run_as'] = opt_dict['run_as']
             md5s[profile]['save_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
             md5s[profile]['run_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
             

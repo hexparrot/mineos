@@ -2,129 +2,170 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Untitled Document</title>
-<style>
-body {
-	background-color: #C0CA86;
-}
-.green {
-	color: green;
-}
-.red {
-	color: red;
-}
-ul {
-	float: left;
-}
-</style>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-2.2.1.js"></script>
+<title>MineOS Admin Panel</title>
+<link href="assets/normalize.css" rel="stylesheet" type="text/css">
+<link href="assets/stylin.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="assets/jquery.min.js"></script>
+<script type="text/javascript" src="assets/knockout-min.js"></script>
+<script type="text/javascript" src="assets/smoothie.js"></script>
+<script type="text/javascript" src="assets/scriptin.js"></script>
 <script type="text/javascript">
 
-String.prototype.frmt = function() {
-			// Ex: 'the {0} brown {1} jumps over the lazy {2}'.frmt('quick', 'fox', 'dog');
-			// Note: Executes ascending from 0, so: '{0}{1}'.frmt('{1}', '{0}'); will return '{0}{0}' while: '{0}{1}'.frmt('{0}', '{1}'); will return '{0}{1}'
-	var s = this;
-	
-	for(var i = 0, iL = arguments.length; i<iL; i++) {
-		s = s.replace(new RegExp('\\{'+i+'\\}', 'gm'), arguments[i]);
-	}
-	
-	return s;
-};
-
-function viewmodel_requests() {
+function viewmodel_status() {
 	var self = this;
-	self.requests = ko.observableArray();
-	self.properties = ko.observableArray();
-	self.methods = ko.observableArray();
-	self.servers = ko.observableArray();
-	self.payload = ko.observable();
-	
-	self.inspect = function(func) {
-		$.getJSON("/inspect_method", {method: func}, function(data) {
-		}).success(function(data){
-			self.payload(JSON.stringify(data));
-		})
-	}
-	
-	self.display_properties = function() {
-		$.getJSON("/properties", {}, function(data) {
-		}).success(function(data){
-			self.properties(data);
-			
-			$('#properties li a').on('click', function() {
-				$.getJSON("/server", { cmd:$(this).text(), server_name:'blamo'}, function(data) {
-				}).success(function(data){
-					self.payload(JSON.stringify(data));
-				})
-				return false;
-			})
-		})
-	}
-	
-	self.display_methods = function() {
-		$.getJSON("/methods", {}, function(data) {
-		}).success(function(data){
-			self.methods(data);
-			
-			$('#methods li a').on('click', function() {
-				var server_url = "/server";
-				var params = { cmd:$(this).text(), server_name:'blamo'}
-				
-				if ($(this).hasClass('inspect'))  {
-					server_url = "/inspect_method";
-					params = { method:$(this).text()}
-				}
+	self.pings = ko.observableArray();
 
-				$.getJSON(server_url, params, function(data) {
-				}).success(function(data){
-					self.payload(JSON.stringify(data));
-				})
-				return false;
+	self.get_pings = function() {
+		$.getJSON('/vm/status')
+		.success(function(data){
+			self.pings(data);
+		})
+	}
+
+	self.get_pings()
+}
+	
+function viewmodel_backup() {
+	var self = this;
+	self.rdiffs = ko.observableArray();
+
+	self.get_increments = function() {
+		$.getJSON('/vm/rdiff_backups')
+		.success(function(data){
+			self.rdiffs(data);
+		})
+	}
+
+	self.get_increments();
+}
+
+function viewmodel_profiles() {
+	var self = this;
+	self.profiles = ko.observableArray();
+
+	self.get_profiles = function() {
+		$.getJSON('/vm/profiles')
+		.success(function(data) {
+			$.each(data, function(i,v) {
+				v['profile'] = i;
+				self.profiles.push(v)
 			})
 		})
 	}
+
+	self.get_profiles();
 
 }
-var vm;
+
+var vm = {
+	status: new viewmodel_status(),
+	backup: new viewmodel_backup(),
+	profiles: new viewmodel_profiles()
+};
+
+
 $(document).ready(function() {
-	vm = new viewmodel_requests();
-	ko.applyBindings(vm);
-	
-	vm.display_properties()
-	vm.display_methods()
+	ko.applyBindings(vm['status'], $('#server_status')[0]);
+	ko.applyBindings(vm['backup'], $('#server_rdiff')[0]);
+	ko.applyBindings(vm['profiles'], $('#server_profiles')[0]);
 });
+	
 </script>
 </head>
-
 <body>
-<form method="post" action="/auth/login">
-<input type="hidden" name="from_page" value="/" />
-Username:
-<input type="text" name="username" />
-<br />
-Password:
-<input type="password" name="password" />
-<br />
-<input type="submit" value="Log in" />
-<br>
-<table>
-  <tbody data-bind="foreach: requests">
-    <tr>
-      <td data-bind="text: result, css: { green: result=='success', red: result!='success'}"></td>
-      <td data-bind="text: server_name"></td>
-      <td data-bind="text: cmd"></td>
-      <td data-bind="text: payload"></td>
-    </tr>
-  </tbody>
-</table>
-<h2 data-bind="text: payload"></h2>
-<ul id="properties" data-bind="foreach: properties">
-	<li><a class="cmd" href="" data-bind="text: $data"></a></li>
-</ul>
-<ul id="methods" data-bind="foreach: methods">
-	<li><a class="method" href="" data-bind="text: $data"></a> - <a class="inspect" href="" data-bind="text: $data"></a></li>
-</ul>
+<article id="server_status">
+    <section id="status">
+      <header>
+        <h2>Server Status</h2>
+      </header>
+      <table id="table_status">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Profile</th>
+            <th scope="col">Port</th>
+            <th scope="col">Status</th>
+            <th scope="col">Online</th>
+            <th scope="col">Memory</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tfoot>
+        </tfoot>
+        <tbody data-bind="foreach: pings">
+          <tr>
+            <td data-bind="text: server_name"></td>
+            <td data-bind="text: profile"></td>
+            <td data-bind="text: port"></td>
+            <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
+            <td data-bind="text: players_online"></td>
+            <td data-bind="text: memory"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+</article>
+<article id="server_rdiff">
+    <section id="backup">
+      <header>
+        <h2>List Restore Points</h2>
+      </header>
+      <table id="table_backup">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Status</th>
+            <th scope="col">Most recent restore point</th>
+            <th scope="col">Restore Count</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tfoot>
+        </tfoot>
+        <tbody data-bind="foreach: rdiffs">
+          <tr>
+            <td data-bind="text: server_name"></td>
+            <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
+            <td data-bind="text: mirror_stamp"></td>
+            <td data-bind="text: increments.length"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+</article>
+<article id="server_profiles">
+    <section id="profile">
+      <header>
+        <h2>Profiles-at-a-Glance</h2>
+      </header>
+      <table id="table_profiles">
+        <thead>
+          <tr>
+            <th scope="col">Profile</th>
+            <th scope="col">Runnable Jar</th>
+            <th scope="col">Downloaded Asset</th>
+            <th scope="col">Downloaed md5</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <td colspan="100%"></td>
+          </tr>
+        </tfoot>
+        <tbody data-bind="foreach: profiles">
+          <tr>
+            <td data-bind="text: profile"></td>
+            <td data-bind="text: run_as"></td>
+            <td data-bind="text: save_as"></td>
+            <td data-bind="text: save_as_md5"></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </article>
 </body>
 </html>

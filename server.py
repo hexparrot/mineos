@@ -17,13 +17,18 @@ from auth import AuthController, require
 
 class ViewModel(object):
     def __init__(self, base_directory):
+        from functools import partial
+        
         self.base_directory = base_directory
+        self.quick_create = partial(mc,
+                                    owner=None,
+                                    base_directory=base_directory)
         
     @cherrypy.expose
     def status(self):
         status = []
         for i in mc.list_servers(self.base_directory):
-            instance = mc(i, None, self.base_directory)
+            instance = self.quick_create(i)
             ping_info = instance.ping
             srv = {
                 'server_name': i,
@@ -38,6 +43,28 @@ class ViewModel(object):
             srv.update(dict(instance.ping._asdict()))         
             status.append(srv)
         return dumps(status)
+
+    @cherrypy.expose
+    def rdiff_backups(self):
+        servers_up = set(mc.list_servers_up())
+        
+        backups = []
+        for i in mc.list_servers(self.base_directory):
+            instance = self.quick_create(i)
+            increments = instance.list_increments()
+            
+            srv = {
+                'server_name': i,
+                'up': i in servers_up,
+                'mirror_stamp': increments.current_mirror,
+                'increments': increments.increments
+                }
+            backups.append(srv)
+        return dumps(backups)
+                
+    @cherrypy.expose
+    def profiles(self):
+        return dumps(mc.list_profiles_md5(self.base_directory))        
 
 class mc_server(object):    
     auth = AuthController()
@@ -249,10 +276,16 @@ if __name__ == "__main__":
         'tools.auth.on': True
         })
 
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
     conf = {
         'global': { 
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port)
+            },
+        '/assets': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'assets')
             }
         }
 
