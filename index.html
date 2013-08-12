@@ -146,24 +146,26 @@ $(document).ready(function() {
             <th scope="col">Profile</th>
             <th scope="col">Runnable Jar</th>
             <th scope="col">Downloaded Asset</th>
-            <th scope="col">Downloaed md5</th>
+            <th scope="col">Downloaded md5</th>
+            <th scope="col">mtime</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
-        <tfoot>
-          <tr>
-            <td colspan="100%"></td>
-          </tr>
-        </tfoot>
         <tbody data-bind="foreach: profiles">
           <tr>
             <td data-bind="text: profile"></td>
             <td data-bind="text: run_as"></td>
             <td data-bind="text: save_as"></td>
             <td data-bind="text: save_as_md5"></td>
+            <td data-bind="text: save_as_mtime"></td>
             <td></td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="100%"></td>
+          </tr>
+        </tfoot>
       </table>
     </section>
   </article>

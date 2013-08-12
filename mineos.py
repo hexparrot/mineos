@@ -617,10 +617,13 @@ class mc(object):
         in the LIVE SERVER DIRECTORY (e.g., update newer than executed)
         """
         try:
-            return self.list_profiles_md5(self.base)[self.profile]['run_as_md5'] == \
+            current = self.profile
+            return self._md5sum(os.path.join(self.env['pwd'],
+                                             current,
+                                             self.profile_config[current:'run_as'])) == \
                    self._md5sum(os.path.join(self.env['cwd'],
-                                             self.profile_config[self.profile:'run_as']))
-        except KeyError:
+                                             self.profile_config[current:'run_as']))
+        except TypeError:
             raise RuntimeError('Server is not assigned a valid profile.')
 
     @property
@@ -1004,7 +1007,7 @@ class mc(object):
         return pc[:]
 
     @classmethod
-    def list_profiles_md5(cls, base_directory=None):
+    def list_profiles_info(cls, base_directory=None):
         """Lists all profiles' md5sums found in profile.config at the base_directory root"""
         if base_directory is None:
             base_directory = cls.valid_user()[1]
@@ -1018,6 +1021,8 @@ class mc(object):
             md5s[profile]['run_as'] = opt_dict['run_as']
             md5s[profile]['save_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
             md5s[profile]['run_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
+            md5s[profile]['save_as_mtime'] = cls._mtime(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_mtime'] = cls._mtime(os.path.join(path,opt_dict['run_as']))
             
         return md5s
 
@@ -1029,6 +1034,15 @@ class mc(object):
             m = md5()
             m.update(infile.read())
             return m.hexdigest()
+
+    @staticmethod
+    def _mtime(filepath):
+        """Returns the mtime of a file at filepath"""
+        from time import ctime
+        try:
+            return ctime(os.path.getmtime(filepath))
+        except os.error:
+            return ''
 
 #filesystem functions
 

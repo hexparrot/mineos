@@ -64,7 +64,7 @@ class ViewModel(object):
                 
     @cherrypy.expose
     def profiles(self):
-        return dumps(mc.list_profiles_md5(self.base_directory))        
+        return dumps(mc.list_profiles_info(self.base_directory))        
 
 class mc_server(object):    
     auth = AuthController()
