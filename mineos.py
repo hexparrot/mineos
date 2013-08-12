@@ -1006,26 +1006,6 @@ class mc(object):
         pc = config_file(os.path.join(base_directory, 'profiles', 'profile.config'))
         return pc[:]
 
-    @classmethod
-    def list_profiles_info(cls, base_directory=None):
-        """Lists all profiles' md5sums found in profile.config at the base_directory root"""
-        if base_directory is None:
-            base_directory = cls.valid_user()[1]
-
-        md5s = {}
-
-        for profile, opt_dict in cls.list_profiles(base_directory).iteritems():
-            path = os.path.join(base_directory, 'profiles', profile)
-            md5s[profile] = {}
-            md5s[profile]['save_as'] = opt_dict['save_as']
-            md5s[profile]['run_as'] = opt_dict['run_as']
-            md5s[profile]['save_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
-            md5s[profile]['save_as_mtime'] = cls._mtime(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_mtime'] = cls._mtime(os.path.join(path,opt_dict['run_as']))
-            
-        return md5s
-
     @staticmethod
     def _md5sum(filepath):
         """Returns the md5 sum of a file at filepath"""

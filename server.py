@@ -61,10 +61,22 @@ class ViewModel(object):
                 }
             backups.append(srv)
         return dumps(backups)
-                
+                          
     @cherrypy.expose
     def profiles(self):
-        return dumps(mc.list_profiles_info(self.base_directory))        
+        md5s = {}
+
+        for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
+            path = os.path.join(self.base_directory, 'profiles', profile)
+            md5s[profile] = {}
+            md5s[profile]['save_as'] = opt_dict['save_as']
+            md5s[profile]['run_as'] = opt_dict['run_as']
+            md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
+            md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+            
+        return dumps(md5s)     
 
 class mc_server(object):    
     auth = AuthController()
