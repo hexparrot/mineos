@@ -22,6 +22,14 @@ function viewmodel_status() {
 		})
 	}
 
+	self.action = function(data, eventobj) {
+		params = {
+			server_name: data.server_name,
+			cmd: $(eventobj.currentTarget).data('cmd')
+		}
+		console.log(params);
+	}
+
 	self.get_pings()
 }
 	
@@ -35,7 +43,15 @@ function viewmodel_backup() {
 			self.rdiffs(data);
 		})
 	}
-
+	
+	self.action = function(data, eventobj) {
+		params = {
+			server_name: data.server_name,
+			cmd: $(eventobj.currentTarget).data('cmd')
+		}
+		console.log(params);
+	}
+	
 	self.get_increments();
 }
 
@@ -100,7 +116,9 @@ $(document).ready(function() {
             <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
             <td data-bind="text: players_online"></td>
             <td data-bind="text: memory"></td>
-            <td></td>
+            <td><a href="" data-cmd="start" data-bind="click: $root.action">Start</a>
+            		<a href="" data-cmd="stop" data-bind="click: $root.action">Stop</a>
+                <a href="" data-cmd="kill" data-bind="click: $root.action">Kill</a></td>
           </tr>
         </tbody>
       </table>
@@ -129,7 +147,8 @@ $(document).ready(function() {
             <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
             <td data-bind="text: mirror_stamp"></td>
             <td data-bind="text: increments.length"></td>
-            <td></td>
+            <td><a href="" data-cmd="backup" data-bind="click: $root.action">Create Restore Point</a>
+            		<a href="" data-cmd="archive" data-bind="click: $root.action">Create Archive</a></td>
           </tr>
         </tbody>
       </table>
