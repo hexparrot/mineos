@@ -11,6 +11,43 @@
 <script type="text/javascript" src="assets/scriptin.js"></script>
 <script type="text/javascript">
 
+function command(data, eventobj) {
+	var cmd = $(eventobj.currentTarget).data('cmd');
+	var params = {cmd: cmd};
+	
+	$.getJSON('/inspect_method', {method: cmd})
+	.success(function(args){
+		console.log('required', args);
+		$.each(args, function(i,v) {
+			if (v in $(eventobj.currentTarget).data())
+				params[v] = $(eventobj.currentTarget).data(v);
+			else if (v in data)
+				params[v] = data[v];
+		})
+	
+		if (args.indexOf('server_name') >= 0) {
+		  params['server_name'] = data['server_name'];
+			$.getJSON('/server', params)
+			.success(function(ret) {
+				console.log(ret);
+			})
+			.fail(function() {
+				
+			})
+		} else {
+			$.getJSON('/host', params)
+			.success(function(ret) {
+				console.log(ret);
+			})
+			.fail(function() {
+				
+			})
+		}
+		
+		console.log(params);
+	})
+}
+
 function model_status(data) {
 	var self = this;
 	$.extend(self, data);
@@ -32,20 +69,10 @@ function model_status(data) {
 	})
 }
 
-
-/*
-	self.overextended = ko.computed(function() {
-		try {
-			return (parseInt(self.mem_usage/1000) > self.mem_allotted ? true : false);
-		} catch (err) {
-			return false;
-		}
-	})
-*/
-
 function viewmodel_status() {
 	var self = this;
 	self.pings = ko.observableArray();
+	self.action = command;
 
 	self.get_pings = function() {
 		$.getJSON('/vm/status')
@@ -55,18 +82,13 @@ function viewmodel_status() {
 			})
 		})
 	}
-
-	self.action = function(data, eventobj) {
-		var params = $.extend({server_name: data.server_name}, $(eventobj.currentTarget).data())
-		delete params['bind']
-	}
-
 	self.get_pings()
 }
 	
 function viewmodel_backup() {
 	var self = this;
 	self.rdiffs = ko.observableArray();
+	self.action = command;
 
 	self.get_increments = function() {
 		$.getJSON('/vm/rdiff_backups')
@@ -75,17 +97,13 @@ function viewmodel_backup() {
 		})
 	}
 	
-	self.action = function(data, eventobj) {
-		var params = $.extend({server_name: data.server_name}, $(eventobj.currentTarget).data())
-		delete params['bind']
-	}
-	
 	self.get_increments();
 }
 
 function viewmodel_profiles() {
 	var self = this;
 	self.profiles = ko.observableArray();
+	self.action = command;
 
 	self.get_profiles = function() {
 		$.getJSON('/vm/profiles')
@@ -98,13 +116,33 @@ function viewmodel_profiles() {
 	}
 
 	self.get_profiles();
+}
 
+function viewmodel_increments() {
+	var self = this;
+	self.increments = ko.observableArray();
+	self.action = command;
+	
+	self.get_increments = function(server_name) {
+		$.getJSON('/vm/increments', {server_name: server_name})
+		.success(function(data) {
+			var incr = [];
+			self.increments.push({server_name: server_name, steps: '0B', timestamp: data[0]});
+			$.each(data[1], function(i,v) {
+				self.increments.push({server_name: server_name, steps: '{0}B'.format(i+1), timestamp: v.split('   ')[1]});
+			})
+		})
+	}
+	
+	self.get_increments('blamo');
 }
 
 var vm = {
 	status: new viewmodel_status(),
 	backup: new viewmodel_backup(),
-	profiles: new viewmodel_profiles()
+	profiles: new viewmodel_profiles(),
+	increments: new viewmodel_increments(),
+	pruning: new viewmodel_increments()
 };
 
 
@@ -112,107 +150,150 @@ $(document).ready(function() {
 	ko.applyBindings(vm['status'], $('#server_status')[0]);
 	ko.applyBindings(vm['backup'], $('#server_rdiff')[0]);
 	ko.applyBindings(vm['profiles'], $('#server_profiles')[0]);
+	ko.applyBindings(vm['increments'], $('#server_increments')[0]);
+	ko.applyBindings(vm['pruning'], $('#server_pruning')[0]);
 });
 	
 </script>
 </head>
 <body>
 <article id="server_status">
-    <section id="status">
-      <header>
-        <h2>Server Status</h2>
-      </header>
-      <table id="table_status">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Profile</th>
-            <th scope="col">Port</th>
-            <th scope="col">Status</th>
-            <th scope="col">Online</th>
-            <th scope="col">Memory</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody data-bind="foreach: pings">
-          <tr>
-            <td data-bind="text: server_name"></td>
-            <td data-bind="text: profile"></td>
-            <td data-bind="text: port"></td>
-            <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
-            <td data-bind="text: capacity"></td>
-            <td data-bind="text: mem_utilization, css: {red: overextended}"></td>
-            <td><a href="" data-cmd="start" data-bind="click: $root.action">Start</a>
-            		<a href="" data-cmd="stop" data-bind="click: $root.action">Stop</a>
-                <a href="" data-cmd="kill" data-bind="click: $root.action">Kill</a></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+  <section id="status">
+    <header>
+      <h2>Server Status</h2>
+    </header>
+    <table id="table_status">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Profile</th>
+          <th scope="col">Port</th>
+          <th scope="col">Status</th>
+          <th scope="col">Online</th>
+          <th scope="col">Memory</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: pings">
+        <tr>
+          <td data-bind="text: server_name"></td>
+          <td data-bind="text: profile"></td>
+          <td data-bind="text: port"></td>
+          <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
+          <td data-bind="text: capacity"></td>
+          <td data-bind="text: mem_utilization, css: {red: overextended}"></td>
+          <td><a href="" data-cmd="start" data-bind="click: $root.action">Start</a> <a href="" data-cmd="stop" data-bind="click: $root.action">Stop</a> <a href="" data-cmd="kill" data-bind="click: $root.action">Kill</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </article>
 <article id="server_rdiff">
-    <section id="backup">
-      <header>
-        <h2>List Restore Points</h2>
-      </header>
-      <table id="table_backup">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Status</th>
-            <th scope="col">Most recent restore point</th>
-            <th scope="col">Restore Count</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tfoot>
-        </tfoot>
-        <tbody data-bind="foreach: rdiffs">
-          <tr>
-            <td data-bind="text: server_name"></td>
-            <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
-            <td data-bind="text: mirror_stamp"></td>
-            <td data-bind="text: increments.length"></td>
-            <td><a href="" data-cmd="backup" data-bind="click: $root.action">Create Restore Point</a>
-            		<a href="" data-cmd="archive" data-bind="click: $root.action">Create Archive</a></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+  <section id="backup">
+    <header>
+      <h2>Backup &amp; Archive</h2>
+    </header>
+    <table id="table_backup">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Status</th>
+          <th scope="col">Most recent restore point</th>
+          <th scope="col">Restore Count</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tfoot>
+      </tfoot>
+      <tbody data-bind="foreach: rdiffs">
+        <tr>
+          <td data-bind="text: server_name"></td>
+          <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
+          <td data-bind="text: mirror_stamp"></td>
+          <td data-bind="text: increments.length"></td>
+          <td><a href="" data-cmd="backup" data-bind="click: $root.action">Create Restore Point</a> <a href="" data-cmd="archive" data-bind="click: $root.action">Create Archive</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </article>
 <article id="server_profiles">
-    <section id="profile">
-      <header>
-        <h2>Profiles-at-a-Glance</h2>
-      </header>
-      <table id="table_profiles">
-        <thead>
-          <tr>
-            <th scope="col">Profile</th>
-            <th scope="col">Runnable Jar</th>
-            <th scope="col">Downloaded Asset</th>
-            <th scope="col">Downloaded md5</th>
-            <th scope="col">mtime</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody data-bind="foreach: profiles">
-          <tr>
-            <td data-bind="text: profile"></td>
-            <td data-bind="text: run_as"></td>
-            <td data-bind="text: save_as"></td>
-            <td data-bind="text: save_as_md5"></td>
-            <td data-bind="text: save_as_mtime"></td>
-            <td></td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="100%"></td>
-          </tr>
-        </tfoot>
-      </table>
-    </section>
-  </article>
+  <section id="profile">
+    <header>
+      <h2>Profiles-at-a-Glance</h2>
+    </header>
+    <table id="table_profiles">
+      <thead>
+        <tr>
+          <th scope="col">Profile</th>
+          <th scope="col">Runnable Jar</th>
+          <th scope="col">Downloaded Asset</th>
+          <th scope="col">mtime</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: profiles">
+        <tr>
+          <td data-bind="text: profile"></td>
+          <td data-bind="text: run_as"></td>
+          <td data-bind="text: save_as"></td>
+          <td data-bind="text: save_as_mtime"></td>
+          <td><a href="" data-cmd="update_profile" data-bind="click: $root.action">Update</a></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="100%"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </section>
+</article>
+<article id="server_increments">
+  <section id="select_increment">
+    <header>
+      <h2>Restore to Specific Point in Time</h2>
+    </header>
+    <table id="table_increments">
+      <thead>
+        <tr>
+          <th scope="col">Steps</th>
+          <th scope="col">Time</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: increments">
+        <tr>
+          <td data-bind="text: steps"></td>
+          <td data-bind="text: timestamp"></td>
+          <td><a href="" data-cmd="restore" data-bind="click: $root.action, attr: {'data-server_name': server_name}">Restore to here</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</article>
+<article id="server_pruning">
+  <section id="prune_server">
+    <header>
+      <h2>Prune older restore points</h2>
+    </header>
+    <table id="table_prune">
+      <thead>
+        <tr>
+          <th scope="col">Steps</th>
+          <th scope="col">Time</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: increments">
+        <tr>
+          <td data-bind="text: steps"></td>
+          <td data-bind="text: timestamp"></td>
+          <td><a href="" data-cmd="prune" data-bind="click: $root.action, attr: {'data-server_name': server_name}">Delete older than here</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</article>
 </body>
 </html>

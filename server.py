@@ -79,6 +79,11 @@ class ViewModel(object):
             
         return dumps(md5s)     
 
+    @cherrypy.expose
+    def increments(self, server_name):
+        instance = self.quick_create(server_name)
+        return dumps(instance.list_increments())
+
 class mc_server(object):    
     auth = AuthController()
     
@@ -125,6 +130,8 @@ class mc_server(object):
                 reqd = inspect.getargspec(getattr(mc, method)).args
             except TypeError:
                 return dumps([])
+        except AttributeError:
+            reqd = ['server_name', 'command']
 
         if "self" in reqd:
             reqd[reqd.index("self")] = "server_name"
