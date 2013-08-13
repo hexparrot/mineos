@@ -37,6 +37,7 @@ class ViewModel(object):
                 'ip_address': instance.ip_address,
                 'port': instance.port,
                 'memory': instance.memory,
+                'java_xmx': instance.server_config['java':'java_xmx':''],
                 'owner': mc.valid_owner(instance.owner.pw_name,
                                         instance.env['cwd'])
                 }

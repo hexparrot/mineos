@@ -11,6 +11,38 @@
 <script type="text/javascript" src="assets/scriptin.js"></script>
 <script type="text/javascript">
 
+function model_status(data) {
+	var self = this;
+	$.extend(self, data);
+	
+	self.mem_utilization = ko.computed(function() {
+		return '{0} / {1}'.format(self.memory, self.java_xmx);
+	})
+	
+	self.capacity = ko.computed(function() {
+		return '{0} / {1}'.format(self.players_online, self.max_players);
+	})
+	
+	self.overextended = ko.computed(function() {
+		try {
+			return parseInt(self.memory) > parseInt(self.java_xmx)
+		} catch (err) {
+			return false;
+		}
+	})
+}
+
+
+/*
+	self.overextended = ko.computed(function() {
+		try {
+			return (parseInt(self.mem_usage/1000) > self.mem_allotted ? true : false);
+		} catch (err) {
+			return false;
+		}
+	})
+*/
+
 function viewmodel_status() {
 	var self = this;
 	self.pings = ko.observableArray();
@@ -18,16 +50,15 @@ function viewmodel_status() {
 	self.get_pings = function() {
 		$.getJSON('/vm/status')
 		.success(function(data){
-			self.pings(data);
+			$.each(data, function(i,v) {
+				self.pings.push(new model_status(v));
+			})
 		})
 	}
 
 	self.action = function(data, eventobj) {
-		params = {
-			server_name: data.server_name,
-			cmd: $(eventobj.currentTarget).data('cmd')
-		}
-		console.log(params);
+		var params = $.extend({server_name: data.server_name}, $(eventobj.currentTarget).data())
+		delete params['bind']
 	}
 
 	self.get_pings()
@@ -45,11 +76,8 @@ function viewmodel_backup() {
 	}
 	
 	self.action = function(data, eventobj) {
-		params = {
-			server_name: data.server_name,
-			cmd: $(eventobj.currentTarget).data('cmd')
-		}
-		console.log(params);
+		var params = $.extend({server_name: data.server_name}, $(eventobj.currentTarget).data())
+		delete params['bind']
 	}
 	
 	self.get_increments();
@@ -106,16 +134,14 @@ $(document).ready(function() {
             <th scope="col">Actions</th>
           </tr>
         </thead>
-        <tfoot>
-        </tfoot>
         <tbody data-bind="foreach: pings">
           <tr>
             <td data-bind="text: server_name"></td>
             <td data-bind="text: profile"></td>
             <td data-bind="text: port"></td>
             <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
-            <td data-bind="text: players_online"></td>
-            <td data-bind="text: memory"></td>
+            <td data-bind="text: capacity"></td>
+            <td data-bind="text: mem_utilization, css: {red: overextended}"></td>
             <td><a href="" data-cmd="start" data-bind="click: $root.action">Start</a>
             		<a href="" data-cmd="stop" data-bind="click: $root.action">Stop</a>
                 <a href="" data-cmd="kill" data-bind="click: $root.action">Kill</a></td>
