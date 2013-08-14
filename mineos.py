@@ -307,21 +307,20 @@ class mc(object):
 
     @server_exists(True)
     @server_up(False)
-    def restore(self, steps='now', overwrite=False):
+    def restore(self, steps='now', force=False):
         """Overwrites the /servers/ version of a server with the /backup/."""
         from subprocess import CalledProcessError
         
         self._load_config(load_backup=True)
 
         if self.server_properties or self.server_config:
-            self._rdiff_backup_steps = steps
-            self._rdiff_backup_force = '--force' if overwrite else ''
+            force = '--force' if force else ''
 
             self._make_directory(self.env['cwd'])
             try:
-                self._command_direct(self.command_restore, self.env['cwd'])
+                self._command_direct(self.command_restore(steps,force), self.env['cwd'])
             except CalledProcessError as e:
-                raise RuntimeError(e.message)
+                raise RuntimeError(e.output)
 
             self._load_config(generate_missing=True)
         else:
@@ -830,14 +829,13 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(kill)s %(pid)s' % required_arguments
 
-    @property
     @sanitize
-    def command_restore(self):
+    def command_restore(self, steps, force):
         """Returns the actual command used to rdiff restore a minecraft server."""
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
-            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else 'now',
+            'force': force,
+            'steps': steps,
             'bwd': self.env['bwd'],
             'cwd': self.env['cwd']
             }
