@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>MineOS Admin Panel</title>
 <link href="assets/normalize.css" rel="stylesheet" type="text/css">
+<link href="assets/styling.css" rel="stylesheet" type="text/css">
 <link href="assets/tables.css" rel="stylesheet" type="text/css">
 <link href='http://fonts.googleapis.com/css?family=Share+Tech' rel='stylesheet' type='text/css'>
 <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.0.min.js"></script>
@@ -11,11 +12,9 @@
 <script type="text/javascript" src="assets/scriptin.js"></script>
 <script type="text/javascript">
 
-
 var vm = {
 	status: new viewmodel_status()
 };
-
 
 $(document).ready(function() {
 	ko.applyBindings(vm['status'], $('#server_status')[0]);
@@ -30,20 +29,7 @@ $(function() {
 	$("table td:last-child, table th:last-child").addClass("last");
 });
 	
-	
 </script>
-<style type="text/css">
-article {
-	width: 70%;
-	margin: 0 auto;
-}
-body {
-	background-color: #DAE1B1;
-}
-h2 {
-	font-family: 'Share Tech', sans-serif;
-}
-</style>
 </head>
 <body>
 <article id="server_status">
@@ -73,6 +59,8 @@ h2 {
         </tr>
       </tbody>
     </table>
+    <p data-bind="if: whoami().length">Logged in as: <strong class="username" data-bind="text: whoami"></strong> - <a class="nounderline" href="/auth/logout">logout</a></p>
+    <p data-bind="if: !whoami().length">Not logged in: <a class="nounderline" href="/auth/login">login</a></p>
   </section>
 </article>
 </body>

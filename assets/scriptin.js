@@ -63,6 +63,14 @@ function viewmodel_status() {
 	var self = this;
 	self.pings = ko.observableArray();
 	self.action = command;
+	self.whoami = ko.observable();
+
+	self.get_whoami = function() {
+		$.get('/whoami')
+		.success(function(data){
+			self.whoami(data);
+		})
+	}
 
 	self.get_pings = function() {
 		$.getJSON('/vm/status')
@@ -72,7 +80,8 @@ function viewmodel_status() {
 			})
 		})
 	}
-	self.get_pings()
+	self.get_pings();
+	self.get_whoami();
 }
 
 

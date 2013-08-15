@@ -105,9 +105,9 @@ class mc_server(object):
     @cherrypy.expose
     def whoami(self):
         try:
-            return "You're logged in as %s" % cherrypy.session['_cp_username']
+            return cherrypy.session['_cp_username']
         except KeyError:
-            return "...you are nobody"
+            return ''
 
     @cherrypy.expose
     @require()

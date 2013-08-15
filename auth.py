@@ -111,19 +111,20 @@ class AuthController(object):
     def on_logout(self, username):
         """Called on logout"""
     
-    def get_loginform(self, username, msg="Enter login information", from_page="/"):
+    def get_loginform(self, username, msg="Enter Username and Password", from_page="/"):
         from cgi import escape
         
         username=escape(username, True)
         from_page=escape(from_page, True)
 
-        return """<html><body>
-            <form method="post" action="/auth/login">
+        return """<html><head>
+            <link href="/assets/styling.css" rel="stylesheet" type="text/css"></head><body>
+            <form id="login" method="post" action="/auth/login">
             <input type="hidden" name="from_page" value="%(from_page)s" />
             %(msg)s<br />
-            Username: <input type="text" name="username" value="%(username)s" /><br />
-            Password: <input type="password" name="password" /><br />
-            <input type="submit" value="Log in" />
+            <label>Username: </label><input type="text" name="username" value="%(username)s" /><br />
+            <label>Password: </label><input type="password" name="password" /><br />
+            <a class="button" onclick="submit()">Log In</a>
         </body></html>""" % locals()
     
     @cherrypy.expose
