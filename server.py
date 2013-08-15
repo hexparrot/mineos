@@ -101,6 +101,12 @@ class mc_server(object):
         from cherrypy.lib.static import serve_file
         
         return serve_file(os.path.join(os.getcwd(),'index.html'))
+
+    @cherrypy.expose
+    def servers(self):
+        from cherrypy.lib.static import serve_file
+        
+        return serve_file(os.path.join(os.getcwd(),'servers.html'))
     
     @cherrypy.expose
     def whoami(self):
