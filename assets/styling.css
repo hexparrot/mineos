@@ -1,0 +1,75 @@
+@charset "utf-8";
+/* CSS Document */
+
+article {
+	width: 70%;
+	margin: 0 auto;
+}
+body {
+	background-color: #DAE1B1;
+	font-size: 16px;
+}
+h2 {
+	font-family: 'Share Tech', sans-serif;
+}
+.green {
+	color: green;
+}
+.red {
+	color: red;
+}
+.yellow {
+	color: yellow;
+}
+.orange {
+	color: rgb(255, 100, 0);
+}
+#login {
+	margin: 0 auto;
+	display: block;
+	border: 1px solid black;
+	width: 300px;
+	padding: 30px;
+	font-size: 1.4em;
+}
+#login label {
+	width: 100px;
+	display: inline-block;
+	line-height: 2em;
+}
+#login a {
+	width: 250px;
+}
+a.button {
+	display: inline-block;
+	min-width: 60px;
+	background-color: #9CA85D;
+	color: #000;
+	text-transform: uppercase;
+	font-weight: bold;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	text-align: center;
+	margin-right: 5px;
+	padding: 5px 10px;
+	cursor: pointer;
+	position: relative;
+}
+a.button:hover {
+	background-color: #8C984D;
+}
+a.button:active {
+	top: 1px;
+	left: 1px;
+}
+a.button.disabled {
+	background-color: #999;
+}
+a.button.pressed {
+	top: 1px;
+	left: 1px;
+}
+a.nounderline {
+	text-decoration:none;
+}

@@ -365,10 +365,6 @@ class TestMineOS(unittest.TestCase):
             pc[VANILLA_PROFILE['name']:'run_as_md5'] = 'abcd'
 
         self.assertEqual(instance.profile_config[VANILLA_PROFILE['name']:'run_as_md5'], 'abcd')
-        self.assertNotEqual(instance.list_profiles_md5(instance.base)[instance.profile]['run_as_md5'], 'abcd')
-        '''profile.config has been tainted, and thus should equal 'abcd'
-           list_profiles_md5 actually checksums the file, and should always be correct
-        '''
 
     @online_test
     def test_start_home_server(self):
