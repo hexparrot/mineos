@@ -30,6 +30,37 @@ $(function() {
 });
 	
 </script>
+<style>
+*, *:before, *:after {
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+#server_list {
+	width: 250px;
+	list-style: none;
+	border: 1px solid #ccc;
+	padding: 2px;
+	float: left;
+	margin: 0;
+}
+#server_list > li {
+	padding: 15px 40px 15px 30px;
+	margin: 1px 0;
+	background: url(http://placekitten.com/g/45/45) no-repeat 0% 50%;
+	cursor: pointer;
+}
+#server_list > li:hover {
+	background-color: #ADB96E;
+}
+#server_list > li > div strong, #server_list > li > div em {
+	display: block;
+	padding-left: 30px;
+}
+#server_list > li > div > div.circle {
+	margin-left: 30px;
+}
+</style>
 </head>
 <body>
 <article id="server_status">
@@ -37,30 +68,11 @@ $(function() {
     <header>
       <h2>MineOS Host Status</h2>
     </header>
-    <table id="table_status">
-      <thead>
-        <tr>
-          <th scope="col">Name</th>
-          <th scope="col">Profile</th>
-          <th scope="col">Port</th>
-          <th scope="col">Status</th>
-          <th scope="col">Online</th>
-          <th scope="col">Memory</th>
-        </tr>
-      </thead>
-      <tbody data-bind="foreach: pings">
-        <tr>
-          <td data-bind="text: server_name"></td>
-          <td data-bind="text: profile"></td>
-          <td data-bind="text: port"></td>
-          <td data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></td>
-          <td data-bind="text: capacity"></td>
-          <td data-bind="text: mem_utilization, css: {red: overextended}"></td>
-        </tr>
-      </tbody>
-    </table>
-    <p data-bind="if: whoami().length">Logged in as: <strong class="username" data-bind="text: whoami"></strong> - <a class="nounderline" href="/auth/logout">logout</a></p>
-    <p data-bind="if: !whoami().length">Not logged in: <a class="nounderline" href="/auth/login">login</a></p>
+    <ul id="server_list" data-bind="foreach: pings">
+      <li>
+        <div><strong data-bind="text: server_name"></strong><em data-bind="text: (up ? 'online' : 'offline'), css: {green: up, red: !up, orange: parseInt($data.players_online) < 0}"></em></div>
+      </li>
+    </ul>
   </section>
 </article>
 </body>

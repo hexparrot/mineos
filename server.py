@@ -15,6 +15,75 @@ from json import dumps
 from mineos import mc
 from auth import AuthController, require
 
+class ViewModel(object):
+    def __init__(self, base_directory):
+        from functools import partial
+        
+        self.base_directory = base_directory
+        self.quick_create = partial(mc,
+                                    owner=None,
+                                    base_directory=base_directory)
+        
+    @cherrypy.expose
+    def status(self):
+        status = []
+        for i in mc.list_servers(self.base_directory):
+            instance = self.quick_create(i)
+            ping_info = instance.ping
+            srv = {
+                'server_name': i,
+                'profile': instance.profile,
+                'up': instance.up,
+                'ip_address': instance.ip_address,
+                'port': instance.port,
+                'memory': instance.memory,
+                'java_xmx': instance.server_config['java':'java_xmx':''],
+                'owner': mc.valid_owner(instance.owner.pw_name,
+                                        instance.env['cwd'])
+                }
+            srv.update(dict(instance.ping._asdict()))         
+            status.append(srv)
+        return dumps(status)
+
+    @cherrypy.expose
+    def rdiff_backups(self):
+        servers_up = set(mc.list_servers_up())
+        
+        backups = []
+        for i in mc.list_servers(self.base_directory):
+            instance = self.quick_create(i)
+            increments = instance.list_increments()
+            
+            srv = {
+                'server_name': i,
+                'up': i in servers_up,
+                'mirror_stamp': increments.current_mirror,
+                'increments': increments.increments
+                }
+            backups.append(srv)
+        return dumps(backups)
+                          
+    @cherrypy.expose
+    def profiles(self):
+        md5s = {}
+
+        for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
+            path = os.path.join(self.base_directory, 'profiles', profile)
+            md5s[profile] = {}
+            md5s[profile]['save_as'] = opt_dict['save_as']
+            md5s[profile]['run_as'] = opt_dict['run_as']
+            md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
+            md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
+            md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+            
+        return dumps(md5s)     
+
+    @cherrypy.expose
+    def increments(self, server_name):
+        instance = self.quick_create(server_name)
+        return dumps(instance.list_increments())
+
 class mc_server(object):    
     auth = AuthController()
     
@@ -25,19 +94,26 @@ class mc_server(object):
 
     def __init__(self, base_directory=None):
         self.base_directory = base_directory
+        self.vm = ViewModel(self.base_directory)
 
     @cherrypy.expose
     def index(self):
         from cherrypy.lib.static import serve_file
         
         return serve_file(os.path.join(os.getcwd(),'index.html'))
+
+    @cherrypy.expose
+    def servers(self):
+        from cherrypy.lib.static import serve_file
+        
+        return serve_file(os.path.join(os.getcwd(),'servers.html'))
     
     @cherrypy.expose
     def whoami(self):
         try:
-            return "You're logged in as %s" % cherrypy.session['_cp_username']
+            return cherrypy.session['_cp_username']
         except KeyError:
-            return "...you are nobody"
+            return ''
 
     @cherrypy.expose
     @require()
@@ -60,6 +136,8 @@ class mc_server(object):
                 reqd = inspect.getargspec(getattr(mc, method)).args
             except TypeError:
                 return dumps([])
+        except AttributeError:
+            reqd = ['server_name', 'command']
 
         if "self" in reqd:
             reqd[reqd.index("self")] = "server_name"
@@ -224,10 +302,16 @@ if __name__ == "__main__":
         'tools.auth.on': True
         })
 
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
     conf = {
         'global': { 
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port)
+            },
+        '/assets': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'assets')
             }
         }
 

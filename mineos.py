@@ -307,21 +307,20 @@ class mc(object):
 
     @server_exists(True)
     @server_up(False)
-    def restore(self, steps='now', overwrite=False):
+    def restore(self, steps='now', force=False):
         """Overwrites the /servers/ version of a server with the /backup/."""
         from subprocess import CalledProcessError
         
         self._load_config(load_backup=True)
 
         if self.server_properties or self.server_config:
-            self._rdiff_backup_steps = steps
-            self._rdiff_backup_force = '--force' if overwrite else ''
+            force = '--force' if force else ''
 
             self._make_directory(self.env['cwd'])
             try:
-                self._command_direct(self.command_restore, self.env['cwd'])
+                self._command_direct(self.command_restore(steps,force), self.env['cwd'])
             except CalledProcessError as e:
-                raise RuntimeError(e.message)
+                raise RuntimeError(e.output)
 
             self._load_config(generate_missing=True)
         else:
@@ -617,10 +616,13 @@ class mc(object):
         in the LIVE SERVER DIRECTORY (e.g., update newer than executed)
         """
         try:
-            return self.list_profiles_md5(self.base)[self.profile]['run_as_md5'] == \
+            current = self.profile
+            return self._md5sum(os.path.join(self.env['pwd'],
+                                             current,
+                                             self.profile_config[current:'run_as'])) == \
                    self._md5sum(os.path.join(self.env['cwd'],
-                                             self.profile_config[self.profile:'run_as']))
-        except KeyError:
+                                             self.profile_config[current:'run_as']))
+        except TypeError:
             raise RuntimeError('Server is not assigned a valid profile.')
 
     @property
@@ -827,14 +829,13 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(kill)s %(pid)s' % required_arguments
 
-    @property
     @sanitize
-    def command_restore(self):
+    def command_restore(self, steps, force):
         """Returns the actual command used to rdiff restore a minecraft server."""
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'force': self._rdiff_backup_force if hasattr(self, '_rdiff_backup_force') else '',
-            'steps': self._rdiff_backup_steps if hasattr(self, '_rdiff_backup_steps') else 'now',
+            'force': force,
+            'steps': steps,
             'bwd': self.env['bwd'],
             'cwd': self.env['cwd']
             }
@@ -1003,22 +1004,6 @@ class mc(object):
         pc = config_file(os.path.join(base_directory, 'profiles', 'profile.config'))
         return pc[:]
 
-    @classmethod
-    def list_profiles_md5(cls, base_directory=None):
-        """Lists all profiles' md5sums found in profile.config at the base_directory root"""
-        if base_directory is None:
-            base_directory = cls.valid_user()[1]
-
-        md5s = {}
-
-        for profile, opt_dict in cls.list_profiles(base_directory).iteritems():
-            path = os.path.join(base_directory, 'profiles', profile)
-            md5s[profile] = {}
-            md5s[profile]['save_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_md5'] = cls._md5sum(os.path.join(path,opt_dict['run_as']))
-            
-        return md5s
-
     @staticmethod
     def _md5sum(filepath):
         """Returns the md5 sum of a file at filepath"""
@@ -1027,6 +1012,15 @@ class mc(object):
             m = md5()
             m.update(infile.read())
             return m.hexdigest()
+
+    @staticmethod
+    def _mtime(filepath):
+        """Returns the mtime of a file at filepath"""
+        from time import ctime
+        try:
+            return ctime(os.path.getmtime(filepath))
+        except os.error:
+            return ''
 
 #filesystem functions
 
