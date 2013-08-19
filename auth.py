@@ -112,20 +112,11 @@ class AuthController(object):
         """Called on logout"""
     
     def get_loginform(self, username, msg="Enter Username and Password", from_page="/"):
+        import os
         from cgi import escape
+        from cherrypy.lib.static import serve_file
         
-        username=escape(username, True)
-        from_page=escape(from_page, True)
-
-        return """<html><head>
-            <link href="/assets/styling.css" rel="stylesheet" type="text/css"></head><body>
-            <form id="login" method="post" action="/auth/login">
-            <input type="hidden" name="from_page" value="%(from_page)s" />
-            %(msg)s<br />
-            <label>Username: </label><input type="text" name="username" value="%(username)s" /><br />
-            <label>Password: </label><input type="password" name="password" /><br />
-            <a class="button" onclick="submit()">Log In</a>
-        </body></html>""" % locals()
+        return serve_file(os.path.join(os.getcwd(),'login.html'))
     
     @cherrypy.expose
     def login(self, username=None, password=None, from_page="/"):
@@ -139,14 +130,14 @@ class AuthController(object):
             cherrypy.session.regenerate()
             cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
             self.on_login(username)
-            raise cherrypy.HTTPRedirect(from_page or "/")
+            raise cherrypy.HTTPRedirect("/")
     
     @cherrypy.expose
-    def logout(self, from_page="/"):
+    def logout(self):
         sess = cherrypy.session
         username = sess.get(SESSION_KEY, None)
         sess[SESSION_KEY] = None
         if username:
             cherrypy.request.login = None
             self.on_logout(username)
-        raise cherrypy.HTTPRedirect(from_page or "/")
+        raise cherrypy.HTTPRedirect("/")

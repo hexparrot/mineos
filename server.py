@@ -97,6 +97,7 @@ class mc_server(object):
         self.vm = ViewModel(self.base_directory)
 
     @cherrypy.expose
+    @require()
     def index(self):
         from cherrypy.lib.static import serve_file
         
@@ -312,6 +313,18 @@ if __name__ == "__main__":
         '/assets': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': os.path.join(current_dir, 'assets')
+            },
+        '/css': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'css')
+            },
+        '/img': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'img')
+            },
+        '/js': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'js')
             }
         }
 
