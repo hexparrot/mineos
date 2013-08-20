@@ -158,8 +158,9 @@
                             <!-- START Sidebar Menu -->
                             <nav id="nav" class="accordion">
                                 <ul id="navigation">
+
                                     <!-- START Menu Divider -->
-                                    <li class="divider">Main Menu</li>
+                                    <li class="divider">Host Settings</li>
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
@@ -171,6 +172,20 @@
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group ">
+                                        <a data-page="profiles" data-bind="click: switch_page">
+                                            <span class="icon icone-cogs"></span>
+                                            <span class="text">Profiles</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu Divider -->
+                                    <li class="divider">Server Settings</li>
+                                    <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
                                     <li data-bind="visible: selected_server" class="accordion-group ">
@@ -241,10 +256,6 @@
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
-                                    
-                                    <!-- START Menu Divider -->
-                                    <li class="divider">Other Stuff</li>
-                                    <!--/ END Menu Divider -->
                                 </ul>
                             </nav>
                             <!--/ END Sidebar Menu -->
@@ -397,13 +408,13 @@
                                         
                     <!-- START Row -->
                     <div class="row-fluid">
-                    	<button data-required="server_name" data-cmd="start" data-bind="click: command" type="button" class="btn btn-success span2">Start</button> 
+                    	<button data-required="server_name" data-cmd="start" data-bind="click: command" type="button" class="btn btn-success span2" data-refresh="3000">Start</button> 
                         <!-- Button Dropdown -->
                         <div class="btn-group">
                             <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Stop <span class="caret"></span></button>
                             <ul class="dropdown-menu">
-                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: command">Stop</a></li>
-                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: command">Kill</a></li>
+                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: command" data-refresh="2000">Stop</a></li>
+                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: command" data-refresh="2000">Kill</a></li>
                             </ul>
                         </div><!--/ Button Dropdown -->
                     </div>
@@ -446,7 +457,7 @@
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-success pull-right" data-bind="text: increments.length"></span>
@@ -468,7 +479,7 @@
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-important pull-right"></span>
@@ -528,6 +539,48 @@
                 </div>
                 <!--/ END Content -->
 
+                <!-- START Content -->
+                <div id="profiles" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>Server Profiles</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <div class="row-fluid">
+
+                        <table id="table_backup" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col">Profile</th>
+                              <th scope="col">Runnable Jar</th>
+                              <th scope="col">Downloaded</th>
+                              <th scope="col">MD5 (download)</th>
+                              <th scope="col">Timestamp (download)</th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: profiles">
+                            <tr>
+                              <td data-bind="text: profile_name"></td>
+                              <td data-bind="text: run_as"></td>
+                              <td data-bind="text: save_as"></td>
+                              <td data-bind="text: save_as_md5"></td>
+                              <td data-bind="text: save_as_mtime"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
 
                 <!-- START Content -->
                 <div id="create_server" class="container-fluid">

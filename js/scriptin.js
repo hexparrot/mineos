@@ -31,6 +31,7 @@ function viewmodel() {
 	self.current_page.extend({ notify: 'always' });
 	self.rdiffs = ko.observableArray();
 	self.tasks = ko.observableArray();
+	self.profiles = ko.observableArray();
 	
 	self.select_server = function(model) {
 		self.selected_server(model);	
@@ -89,6 +90,8 @@ function viewmodel() {
 				self.get_pings();
 				self.get_increments();
 				break;
+			case 'profiles':
+				self.get_profiles();
 			default:
 				break;			
 		}
@@ -98,6 +101,16 @@ function viewmodel() {
 		$.getJSON('/vm/rdiff_backups')
 		.success(function(data){
 			self.rdiffs(data);
+		})
+	}
+
+	self.get_profiles = function() {
+		$.getJSON('/vm/profiles')
+		.success(function(data){
+			self.profiles.removeAll();
+			$.each(data, function(i,v) {
+				self.profiles.push($.extend({profile_name: i}, v));
+			})
 		})
 	}
 	
@@ -153,10 +166,7 @@ function viewmodel() {
 				})
 				self.tasks.reverse();
 				
-				if (ret.result == 'success')
-					setTimeout(self.get_pings, 3000);
-				else
-					setTimeout(self.get_pings, 100);
+				setTimeout(data.current_page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
 			})
 			.fail(function() {
 	
@@ -172,8 +182,8 @@ function viewmodel() {
 		}
 	}
 
-	self.get_pings();
 	self.get_whoami();
+	self.get_pings();
 	self.switch_page('dashboard');
 }
 
