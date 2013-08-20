@@ -1,43 +1,5 @@
 /* webui functions */
 
-function command(data, eventobj) {
-	var cmd = $(eventobj.currentTarget).data('cmd');
-	var required = $(eventobj.currentTarget).data('required').split(',');
-	var params = {cmd: cmd};
-	
-	$.each(required, function(i,v) {
-		reqd = v.replace(/\s/g, '');
-		if (reqd in $(eventobj.currentTarget).data())
-			params[reqd] = $(eventobj.currentTarget).data(reqd);
-		else if (reqd in data)
-			params[reqd] = data[reqd];
-	})
-	
-	if (required.indexOf('force') >= 0) 
-		params['force'] = true;
-	
-	console.log(params);
-	
-	if (required.indexOf('server_name') >= 0) {
-		$.getJSON('/server', params)
-		.success(function(ret) {
-			console.log(ret);
-		})
-		.fail(function() {
-
-		})
-	} else {
-		$.getJSON('/host', params)
-		.success(function(ret) {
-			console.log(ret);
-		})
-		.fail(function() {
-			
-		})
-	}
-
-}
-
 function model_status(data) {
 	var self = this;
 	$.extend(self, data);
@@ -62,9 +24,9 @@ function model_status(data) {
 function viewmodel() {
 	var self = this;
 	self.pings = ko.observableArray();
-	self.action = command;
 	self.whoami = ko.observable();
 	self.selected_server = ko.observable('');
+	self.selected_server.extend({ notify: 'always' });
 	self.current_page = ko.observable();
 	self.current_page.extend({ notify: 'always' });
 	self.rdiffs = ko.observableArray();
@@ -90,6 +52,13 @@ function viewmodel() {
 			})
 		})
 	}
+
+	self.pings.subscribe(function() {
+		$.each(self.pings(), function(i,v){
+			if (v.server_name == self.selected_server().server_name)
+				self.selected_server(v);
+		})
+	})
 	
 	self.switch_page = function(vm,event) {
 		var page;
@@ -159,7 +128,7 @@ function viewmodel() {
 					text: '',
 					image: '',
 					sticky: false,
-					time: '4000',
+					time: '3000',
 					class_name: (ret.result == 'success' ? 'success' : 'error')
 				});
 				
@@ -175,7 +144,7 @@ function viewmodel() {
 				})
 				self.tasks.reverse();
 				
-
+				setTimeout(self.get_pings, 3000);
 			})
 			.fail(function() {
 	
