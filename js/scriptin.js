@@ -34,6 +34,7 @@ function viewmodel() {
 	
 	self.select_server = function(model) {
 		self.selected_server(model);	
+		self.switch_page('server_status');
 	}
 
 	self.clear_tasks = function() {
@@ -86,6 +87,7 @@ function viewmodel() {
 				break;	
 			case 'server_status':
 				self.get_pings();
+				self.get_increments();
 				break;
 			default:
 				break;			

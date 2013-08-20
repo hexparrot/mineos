@@ -438,6 +438,52 @@
                     </div>
                     <!--/ END Row -->
 
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Default Widget -->
+                        <div class="span6 widget" data-bind="foreach: rdiffs">
+                            <header>
+                                <h4 class="title"><span class="icon icone-bookmark"></span> Restore Points</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                                <span class="label label-success pull-right" data-bind="text: increments.length"></span>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <ul data-bind="foreach: $data.increments">
+                                        <li data-bind="text: $data"></li>
+                                    </ul>
+                                </div>
+                                <div class="footer">Last successful restore point created: <strong data-bind="text: mirror_stamp"></strong></div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+
+                        <!-- START Default Widget -->
+                        <div class="span6 widget">
+                            <header>
+                                <h4 class="title"><span class="icon icone-bookmark"></span> Archives</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                                <span class="label label-important pull-right"></span>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Lorem ipsum dolor sit amet, nam deserunt petentium splendide in. Ne altera officiis convenire sed, in vix quod malorum. Ut eos tempor delicata theophrastus, his ei homero intellegebat. Ex everti mollis sententiae vim. Cu ius posse impedit.</p>
+                                </div>
+                                <div class="footer">Footer</div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+                    </div>
+                    <!--/ END Row -->
+
                 </div>
                 <!--/ END Content -->
 
