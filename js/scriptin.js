@@ -36,6 +36,10 @@ function viewmodel() {
 		self.selected_server(model);	
 	}
 
+	self.clear_tasks = function() {
+		self.tasks.removeAll();
+	}
+
 	self.get_whoami = function() {
 		$.get('/whoami')
 		.success(function(data){
@@ -99,8 +103,9 @@ function viewmodel() {
 		var cmd = $(eventobj.currentTarget).data('cmd');
 		var required = $(eventobj.currentTarget).data('required').split(',');
 		var params = {cmd: cmd};
-		var random_number = Math.floor(Math.random()*100000)
-		
+		var id_num = vm.tasks().length;
+		var timestamp = (new Date().getTime()) / 1000;
+
 		$.each(required, function(i,v) {
 			reqd = v.replace(/\s/g, '');
 			if (reqd in $(eventobj.currentTarget).data())
@@ -114,7 +119,8 @@ function viewmodel() {
 
 		if (required.indexOf('server_name') >= 0) {
 			self.tasks.push({
-				id: random_number,
+				id: id_num,
+				timestamp: timestamp,
 				state: 'pending',
 				command: '{0} {1}'.format(cmd, self.selected_server().server_name)				
 			})
@@ -133,18 +139,22 @@ function viewmodel() {
 				});
 				
 				$.each(self.tasks(), function(i,v) {
-					if (v.id == random_number)  {
+					if (v.id == id_num)  {
 						self.tasks.splice(i,1);
 					}
 				})
 				self.tasks.push({
-					id: random_number,
+					id: id_num,
+					timestamp: timestamp,
 					state: ret.result,
 					command: '{0} {1}'.format(cmd, self.selected_server().server_name)				
 				})
 				self.tasks.reverse();
 				
-				setTimeout(self.get_pings, 3000);
+				if (ret.result == 'success')
+					setTimeout(self.get_pings, 3000);
+				else
+					setTimeout(self.get_pings, 100);
 			})
 			.fail(function() {
 	
