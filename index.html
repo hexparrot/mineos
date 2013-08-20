@@ -598,8 +598,8 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
-                            <header><h4 class="title">Form Wizard With Validation</h4></header>
+                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                            <header><h4 class="title">Create a new server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
                                     <fieldset class="step" id="step1">
@@ -612,11 +612,11 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Server Name:</label>
-                                            <div class="controls"><input type="text" name="servername" class="span12 required"></div>
+                                            <div class="controls"><input type="text" name="server_name" class="span12 required"></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Group Ownership:</label>
-                                            <div class="controls"><input type="text" name="email" class="span12"></div>
+                                            <div class="controls"><input type="text" name="group" class="span12"></div>
                                         </div>
                                     </fieldset>
                                     <fieldset id="step2" class="step">

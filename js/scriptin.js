@@ -113,6 +113,49 @@ function viewmodel() {
 			})
 		})
 	}
+
+	self.create_server = function(formelement) {
+		console.log(formelement)
+
+		var server_name = $('form').find('fieldset#step1 input[name=server_name]').val();
+
+		var step1 = $('form').find('fieldset#step1 :input').filter(function() {
+		  return ($(this).val() ? true : false);
+		})
+
+		var step2 = $('form').find('fieldset#step2 :input').filter(function() {
+		  return ($(this).val() ? true : false);
+		})
+
+		var step3 = $('form').find('fieldset#step3 :input').filter(function() {
+		  return ($(this).val() ? true : false);
+		})
+
+		var sp = {};
+		$.each($(step2).serialize().split('&'), function(i,v) {
+		  sp[v.split('=')[0]] = v.split('=')[1]
+		})
+
+		var sc = {};
+		$.each($(step3).serialize().split('&'), function(i,v) {
+		  sc[v.split('=')[0]] = v.split('=')[1]
+		})
+
+		params = {
+			'server_name': server_name,
+			'cmd': 'create',
+			'sp': JSON.stringify(sp),
+			'sc': JSON.stringify(sc)
+		}
+
+		console.log(params)
+
+		$.getJSON('/server', params)
+		.success(function() {
+			self.switch_page('dashboard');
+		})
+
+	}
 	
 	self.command = function(data, eventobj) {
 		var cmd = $(eventobj.currentTarget).data('cmd');
