@@ -83,6 +83,9 @@ function viewmodel() {
 		$('#{0}'.format(page)).show();
 		
 		switch(page) {
+			case 'dashboard':
+				self.get_pings();
+				break;
 			case 'backup_list':
 				self.get_increments();
 				break;	
@@ -100,7 +103,12 @@ function viewmodel() {
 	self.get_increments = function() {
 		$.getJSON('/vm/rdiff_backups')
 		.success(function(data){
-			self.rdiffs(data);
+			self.rdiffs.removeAll()
+			$.each(data, function(i,v) {
+				if (v.server_name == self.selected_server().server_name)
+					self.rdiffs.push(v);
+			})
+			
 		})
 	}
 
@@ -226,7 +234,6 @@ function viewmodel() {
 	}
 
 	self.get_whoami();
-	self.get_pings();
 	self.switch_page('dashboard');
 }
 
