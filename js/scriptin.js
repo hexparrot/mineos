@@ -70,6 +70,8 @@ function viewmodel() {
 	}
 
 	self.page.subscribe(function(page){
+		$('.container-fluid').hide();
+
 		switch(page) {
 			case 'dashboard':
 				self.refresh_pings();
@@ -86,13 +88,15 @@ function viewmodel() {
 			default:
 				break;			
 		}
+
+		$('#{0}'.format(page)).show();
 	})
 
 	self.refresh_pings = function() {
 		$.getJSON('/vm/status')
 		.success(function(data){
 			self.pagedata.pings.removeAll();
-			$.each(data, function(i,v) {
+			$.each(data.ascending_by('server_name'), function(i,v) {
 				self.pagedata.pings.push(new model_status(v));
 			})
 		})
@@ -178,6 +182,8 @@ function viewmodel() {
 					command: '{0} {1}'.format(cmd, self.server().server_name)				
 				})
 
+				self.tasks(self.tasks().ascending_by('timestamp').reverse());
+
 				setTimeout(data.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
 			})
 			.fail(function() {
@@ -211,7 +217,7 @@ String.prototype.format = String.prototype.f = function() {
 	return s;
 };
 
-Array.prototype.alphabetize = function(param) {
+Array.prototype.ascending_by = function(param) {
 	return this.sort(function(a, b) {return a[param] == b[param] ? 0 : (a[param] < b[param] ? -1 : 1) })
 }
 

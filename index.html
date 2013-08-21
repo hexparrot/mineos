@@ -176,7 +176,7 @@
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group ">
+                                    <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a data-bind="click: select_page" data-page="server_status">
                                             <span class="icon iconm-home-4"></span>
                                             <span class="text">Server Status</span>
@@ -186,7 +186,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="" class="accordion-group ">
+                                    <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu3">
                                             <span class="icon icone-th-list"></span>
                                             <span class="text">Restore Points</span>
@@ -203,7 +203,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="" class="accordion-group ">
+                                    <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu4">
                                             <span class="icon icone-upload-alt"></span>
                                             <span class="text">Archives</span>
@@ -220,7 +220,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="" class="accordion-group ">
+                                    <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu6">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Server Configuration</span>
@@ -236,7 +236,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="" class="accordion-group ">
+                                    <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a>
                                             <span class="icon icone-desktop"></span>
                                             <span class="text">Console</span>
@@ -333,7 +333,7 @@
                 <!--/ END Bootstrap Navbar -->
 
                 <!-- START Content -->
-                <div id="dashboard" class="container-fluid" data-bind="if: page() == 'dashboard'">
+                <div id="dashboard" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -376,7 +376,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="server_status" class="container-fluid" data-bind="if: page() == 'server_status'">
+                <div id="server_status" class="container-fluid" data-bind="if: server().server_name">
 
                     <!-- START Row -->
                     <div class="row-fluid">
@@ -481,7 +481,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="backup_list" class="container-fluid" data-bind="if: false">
+                <div id="backup_list" class="container-fluid" data-bind="if: server().server_name">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -522,7 +522,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="profiles" class="container-fluid" data-bind="if: page() == 'profiles'">
+                <div id="profiles" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -544,18 +544,18 @@
                               <th scope="col">Runnable Jar</th>
                               <th scope="col">Downloaded</th>
                               <th scope="col">MD5 (download)</th>
-                              <th scope="col">Timestamp (download)</th>
+                              <th scope="col">mtime (download)</th>
                             </tr>
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="">
+                          <tbody data-bind="foreach: pagedata.profiles">
                             <tr>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
+                              <td data-bind="text: profile_name"></td>
+                              <td data-bind="text: run_as"></td>
+                              <td data-bind="text: save_as"></td>
+                              <td data-bind="text: save_as_md5"></td>
+                              <td data-bind="text: save_as_mtime"></td>
                             </tr>
                           </tbody>
                         </table>
@@ -565,7 +565,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="create_server" class="container-fluid" data-bind="visible: page() == 'create_server'">
+                <div id="create_server" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
