@@ -29,20 +29,24 @@ class ViewModel(object):
         status = []
         for i in mc.list_servers(self.base_directory):
             instance = self.quick_create(i)
-            ping_info = instance.ping
-            srv = {
-                'server_name': i,
-                'profile': instance.profile,
-                'up': instance.up,
-                'ip_address': instance.ip_address,
-                'port': instance.port,
-                'memory': instance.memory,
-                'java_xmx': instance.server_config['java':'java_xmx':''],
-                'owner': mc.valid_owner(instance.owner.pw_name,
-                                        instance.env['cwd'])
-                }
-            srv.update(dict(instance.ping._asdict()))         
-            status.append(srv)
+            try:
+                ping_info = instance.ping
+            except KeyError:
+                continue
+            else:
+                srv = {
+                    'server_name': i,
+                    'profile': instance.profile,
+                    'up': instance.up,
+                    'ip_address': instance.ip_address,
+                    'port': instance.port,
+                    'memory': instance.memory,
+                    'java_xmx': instance.server_config['java':'java_xmx':''],
+                    'owner': mc.valid_owner(instance.owner.pw_name,
+                                            instance.env['cwd'])
+                    }
+                srv.update(dict(instance.ping._asdict()))         
+                status.append(srv)
         return dumps(status)
 
     @cherrypy.expose
@@ -242,7 +246,22 @@ class mc_server(object):
                 except OSError:
                     continue
 
-            if command in self.METHODS:
+            if command == 'create':
+                from json import loads
+                from collections import defaultdict
+
+                sp_unicode = loads(args['sp'])
+                sc_unicode = loads(args['sc'])
+
+                sp = {str(k):str(v) for k,v in sp_unicode.iteritems()}
+                
+                sc = defaultdict(dict)
+                for section in sc_unicode.keys():
+                    for key in sc_unicode[section].keys():
+                        sc[str(section)][str(key)] = str(sc_unicode[section][key])
+                
+                retval = instance.create(dict(sc),sp)                
+            elif command in self.METHODS:
                 retval = getattr(instance, command)(**args)
             elif command in self.PROPERTIES:
                 if args:

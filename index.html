@@ -580,7 +580,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
                             <header><h4 class="title">Create a new server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -655,7 +655,7 @@
                                             <label class="control-label">Generate Structures</label>
                                             <div class="controls">
                                                 <label class="checkbox">
-                                                    <input type="checkbox" value="generate_structures">
+                                                    <input type="checkbox" name="generate_structures" value="true">
                                                 </label>
                                             </div>
                                         </div>
@@ -672,27 +672,33 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">profile</label>
-                                            <div class="controls"><input type="text" name="profile" class="span12 required" placeholder="vanilla"></div>
+                                            <div class="controls">
+                                                <input type="text" data-section="minecraft" name="profile" class="span12 required" placeholder="vanilla">
+                                            </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xmx</label>
-                                            <div class="controls"><input type="text" name="javaxmx" class="span12 required" placeholder="256"></div>
+                                            <div class="controls">
+                                                <input type="text" data-section="java" name="java_xmx" class="span12 required" placeholder="256">
+                                            </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xms</label>
-                                            <div class="controls"><input type="text" name="javaxms" class="span12" placeholder="256"></div>
+                                            <div class="controls">
+                                                <input type="text" data-section="java" name="java_xms" class="span12" placeholder="256">
+                                            </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Archive Frequency</label>
                                             <div class="controls">
-                                            <select name="archive" data-bind="">
+                                            <select data-section="crontabs" name="archive" data-bind="">
                                                 <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Backup Frequency</label>
                                             <div class="controls">
-                                            <select name="backup" data-bind="">
+                                            <select data-section="crontabs" name="backup" data-bind="">
                                                 <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
@@ -701,7 +707,7 @@
                                             <label class="control-label">Start Server on Boot</label>
                                             <div class="controls">
                                                 <label class="checkbox">
-                                                    <input type="checkbox" value="start_at_boot">
+                                                    <input data-section="onreboot" type="checkbox" name="start_at_boot" value="true">
                                                 </label>
                                             </div>
                                         </div>
