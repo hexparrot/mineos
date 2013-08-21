@@ -594,11 +594,11 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Server Name:</label>
-                                            <div class="controls"><input type="text" name="server_name" class="span12 required"></div>
+                                            <div class="controls"><input type="text" name="server_name" class="span3 required" required></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Group Ownership:</label>
-                                            <div class="controls"><input type="text" name="group" class="span12"></div>
+                                            <div class="controls"><input type="text" name="group" class="span3"></div>
                                         </div>
                                     </fieldset>
                                     <fieldset id="step2" class="step">
@@ -611,43 +611,43 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">server-port</label>
-                                            <div class="controls"><input type="text" name="server-port" class="span12" placeholder="25565"></div>
+                                            <div class="controls"><input type="text" name="server-port" class="span3" placeholder="25565"></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">ip-address</label>
-                                            <div class="controls"><input type="text" name="ip-address" class="span12" placeholder="0.0.0.0"></div>
+                                            <div class="controls"><input type="text" name="ip-address" class="span3" placeholder="0.0.0.0"></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">max-players</label>
-                                            <div class="controls"><input type="text" name="max-players" class="span12" placeholder="20"></div>
+                                            <div class="controls"><input type="text" name="max-players" class="span3" placeholder="20"></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">level-name</label>
-                                            <div class="controls"><input type="text" name="level-name" class="span12" placeholder="world"></div>
+                                            <div class="controls"><input type="text" name="level-name" class="span3" placeholder="world"></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">level-seed</label>
-                                            <div class="controls"><input type="text" name="level-seed" class="span12" placeholder=""></div>
+                                            <div class="controls"><input type="text" name="level-seed" class="span3" placeholder=""></div>
                                         </div>
                                         
                                         <div class="control-group">
                                             <label class="control-label">difficulty</label>
                                             <div class="controls">
-                                            <select class="span12" name="difficulty" data-bind="">
+                                            <select class="span3" name="difficulty" data-bind="">
                                                 <option value="0">Peaceful</option><option value="1">Easy</option><option value="2">Normal</option><option value="3">Hard</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">gamemode</label>
                                             <div class="controls">
-                                            <select class="span12" name="gamemode" data-bind="">
+                                            <select class="span3" name="gamemode" data-bind="">
                                                 <option value="0">Survival</option><option value="1">Creative</option><option value="2">Adventure</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">level-type</label>
                                             <div class="controls">
-                                            <select class="span12" name="level-type" data-bind="">
+                                            <select class="span3" name="level-type" data-bind="">
                                                 <option value="DEFAULT">DEFAULT</option><option value="FLAT">FLAT</option><option value="LARGEBIOMES">LARGEBIOMES</option>
                                             </select></div>
                                         </div>
@@ -673,32 +673,34 @@
                                         <div class="control-group">
                                             <label class="control-label">profile</label>
                                             <div class="controls">
-                                                <input type="text" data-section="minecraft" name="profile" class="span12 required" placeholder="vanilla">
+                                                <select class="span3" name="profile" data-bind="foreach: pagedata.profiles" required>
+                                                    <option data-bind="text: profile_name, attr: {value: profile_name}"></option>
+                                                </select>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xmx</label>
                                             <div class="controls">
-                                                <input type="text" data-section="java" name="java_xmx" class="span12 required" placeholder="256">
+                                                <input type="text" data-section="java" name="java_xmx" class="span3 required" placeholder="256">
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xms</label>
                                             <div class="controls">
-                                                <input type="text" data-section="java" name="java_xms" class="span12" placeholder="256">
+                                                <input type="text" data-section="java" name="java_xms" class="span3" placeholder="256">
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Archive Frequency</label>
                                             <div class="controls">
-                                            <select data-section="crontabs" name="archive" data-bind="">
+                                            <select class="span3" data-section="crontabs" name="archive" data-bind="">
                                                 <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Backup Frequency</label>
                                             <div class="controls">
-                                            <select data-section="crontabs" name="backup" data-bind="">
+                                            <select class="span3" data-section="crontabs" name="backup" data-bind="">
                                                 <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
@@ -761,7 +763,7 @@
     <script src="assets/datatable/js/jquery.dataTables.min.js"></script>
     <script src="assets/datatable/js/dataTables-bootstrap.min.js"></script>
     <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
-    <script src="assets/bootstrap-fileupload/js/bootstrap-fileupload.min.js"></script>
+    <script src="assets/switch/js/bootstrapSwitch.min.js"></script>
     <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
     <script src="assets/ie-placeholder/js/jquery.placeholder.min.js"></script>
     <script src="assets/snippet/js/jquery.snippet.min.js"></script>

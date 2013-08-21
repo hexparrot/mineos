@@ -85,6 +85,10 @@ function viewmodel() {
 				break;
 			case 'profiles':
 				self.refresh_profiles();
+				break;
+			case 'create_server':
+				self.refresh_profiles();
+				break;
 			default:
 				break;			
 		}
@@ -201,8 +205,6 @@ function viewmodel() {
 	}
 
 	self.create_server = function(formelement) {
-		console.log(formelement)
-
 		var server_name = $('form').find('fieldset#step1 input[name=server_name]').val();
 
 		var step1 = $('form').find('fieldset#step1 :input').filter(function() {
@@ -231,16 +233,12 @@ function viewmodel() {
 		  sc[section][input.attr('name')] = input.val();
 		})
 
-		console.log(sc)
-
 		params = {
 			'server_name': server_name,
 			'cmd': 'create',
 			'sp': JSON.stringify(sp),
 			'sc': JSON.stringify(sc)
 		}
-
-		console.log(params)
 
 		$.getJSON('/server', params)
 		.success(function() {
