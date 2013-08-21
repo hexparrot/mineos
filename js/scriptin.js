@@ -70,8 +70,6 @@ function viewmodel() {
 	}
 
 	self.page.subscribe(function(page){
-		$('.container-fluid').hide();
-
 		switch(page) {
 			case 'dashboard':
 				self.refresh_pings();
@@ -93,6 +91,7 @@ function viewmodel() {
 				break;			
 		}
 
+		$('.container-fluid').hide();
 		$('#{0}'.format(page)).show();
 	})
 
@@ -188,7 +187,7 @@ function viewmodel() {
 
 				self.tasks(self.tasks().ascending_by('timestamp').reverse());
 
-				setTimeout(data.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
+				setTimeout(self.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
 			})
 			.fail(function() {
 	
