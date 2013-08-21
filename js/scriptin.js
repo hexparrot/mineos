@@ -23,154 +23,115 @@ function model_status(data) {
 
 function viewmodel() {
 	var self = this;
-	self.pings = ko.observableArray();
+
+	self.show_all_servers = ko.observable(false);
+
 	self.whoami = ko.observable();
-	self.selected_server = ko.observable('');
-	self.selected_server.extend({ notify: 'always' });
-	self.current_page = ko.observable();
-	self.current_page.extend({ notify: 'always' });
-	self.rdiffs = ko.observableArray();
+	self.server = ko.observableArray();
+	self.page = ko.observableArray();
 	self.tasks = ko.observableArray();
-	self.profiles = ko.observableArray();
-	
+	self.tasks_notify = ko.computed(function() {
+		return self.tasks().filter(function(i){
+		  return i.state == 'error';
+		})
+	})
+
+	self.pagedata = {
+		pings: ko.observableArray(),
+		rdiffs: ko.observableArray(),
+		profiles: ko.observableArray()
+	}
+
+	self.server.extend({ notify: 'always' });
+	self.page.extend({ notify: 'always' });
+
 	self.select_server = function(model) {
-		self.selected_server(model);	
-		self.switch_page('server_status');
+		self.server(model);
+		self.select_page('server_status');
 	}
 
-	self.clear_tasks = function() {
-		self.tasks.removeAll();
-	}
-
-	self.get_whoami = function() {
+	self.refresh_whoami = function() {
 		$.get('/whoami')
 		.success(function(data){
 			self.whoami(data);
 		})
 	}
 
-	self.get_pings = function() {
-		$.getJSON('/vm/status')
-		.success(function(data){
-			self.pings.removeAll();
-			$.each(data, function(i,v) {
-				self.pings.push(new model_status(v));
-			})
-		})
+	self.clear_tasks = function() {
+		self.tasks.removeAll();
 	}
 
-	self.pings.subscribe(function() {
-		$.each(self.pings(), function(i,v){
-			if (v.server_name == self.selected_server().server_name)
-				self.selected_server(v);
-		})
-	})
-	
-	self.switch_page = function(vm,event) {
-		var page;
-		
+	self.select_page = function(vm, event) {
 		try {
-			page = $(event.currentTarget).data('page');
+			self.page($(event.currentTarget).data('page'));
 		} catch (e) {
-			page = vm;
+			self.page(vm);
 		}
-
-		self.current_page(page);
 	}
-	
-	self.current_page.subscribe(function(page) {
-		$('.container-fluid').hide();
-		$('#{0}'.format(page)).show();
-		
+
+	self.page.subscribe(function(page){
 		switch(page) {
 			case 'dashboard':
-				self.get_pings();
+				self.refresh_pings();
 				break;
 			case 'backup_list':
-				self.get_increments();
+				self.refresh_increments();
 				break;	
 			case 'server_status':
-				self.get_pings();
-				self.get_increments();
+				self.refresh_pings();
+				self.refresh_increments();
 				break;
 			case 'profiles':
-				self.get_profiles();
+				self.refresh_profiles();
 			default:
 				break;			
 		}
-	});
-	
-	self.get_increments = function() {
+	})
+
+	self.refresh_pings = function() {
+		$.getJSON('/vm/status')
+		.success(function(data){
+			self.pagedata.pings.removeAll();
+			$.each(data, function(i,v) {
+				self.pagedata.pings.push(new model_status(v));
+			})
+		})
+	}
+
+	self.pagedata.pings.subscribe(function() {
+		$.each(self.pagedata.pings(), function(i,v){
+			if (self.server().server_name == v.server_name)
+				self.server(v);
+		})
+	})
+
+	self.refresh_increments = function() {
 		$.getJSON('/vm/rdiff_backups')
 		.success(function(data){
-			self.rdiffs.removeAll()
+			self.pagedata.rdiffs.removeAll();
 			$.each(data, function(i,v) {
-				if (v.server_name == self.selected_server().server_name)
-					self.rdiffs.push(v);
+				if (v.server_name == self.server().server_name)
+					self.pagedata.rdiffs.push(v);
 			})
-			
 		})
 	}
 
-	self.get_profiles = function() {
+	self.refresh_profiles = function() {
 		$.getJSON('/vm/profiles')
 		.success(function(data){
-			self.profiles.removeAll();
+			self.pagedata.profiles.removeAll();
 			$.each(data, function(i,v) {
-				self.profiles.push($.extend({profile_name: i}, v));
+				self.pagedata.profiles.push($.extend({profile_name: i}, v));
 			})
 		})
 	}
 
-	self.create_server = function(formelement) {
-		console.log(formelement)
-
-		var server_name = $('form').find('fieldset#step1 input[name=server_name]').val();
-
-		var step1 = $('form').find('fieldset#step1 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var step2 = $('form').find('fieldset#step2 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var step3 = $('form').find('fieldset#step3 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var sp = {};
-		$.each($(step2).serialize().split('&'), function(i,v) {
-		  sp[v.split('=')[0]] = v.split('=')[1]
-		})
-
-		var sc = {};
-		$.each($(step3).serialize().split('&'), function(i,v) {
-		  sc[v.split('=')[0]] = v.split('=')[1]
-		})
-
-		params = {
-			'server_name': server_name,
-			'cmd': 'create',
-			'sp': JSON.stringify(sp),
-			'sc': JSON.stringify(sc)
-		}
-
-		console.log(params)
-
-		$.getJSON('/server', params)
-		.success(function() {
-			self.switch_page('dashboard');
-		})
-
-	}
-	
 	self.command = function(data, eventobj) {
 		var cmd = $(eventobj.currentTarget).data('cmd');
 		var required = $(eventobj.currentTarget).data('required').split(',');
 		var params = {cmd: cmd};
-		var id_num = vm.tasks().length;
 		var timestamp = (new Date().getTime()) / 1000;
+		var id_num = timestamp;
 
 		$.each(required, function(i,v) {
 			reqd = v.replace(/\s/g, '');
@@ -179,7 +140,7 @@ function viewmodel() {
 			else if (reqd in data)
 				params[reqd] = data[reqd];
 		})
-		
+
 		if (required.indexOf('force') >= 0) 
 			params['force'] = true;
 
@@ -188,10 +149,10 @@ function viewmodel() {
 				id: id_num,
 				timestamp: timestamp,
 				state: 'pending',
-				command: '{0} {1}'.format(cmd, self.selected_server().server_name)				
+				command: '{0} {1}'.format(cmd, self.server().server_name)				
 			})
 			
-			$.extend(params, {server_name: self.selected_server().server_name});
+			$.extend(params, {server_name: self.server().server_name});
 			$.getJSON('/server', params)
 			.success(function(ret) {
 
@@ -209,15 +170,15 @@ function viewmodel() {
 						self.tasks.splice(i,1);
 					}
 				})
+
 				self.tasks.push({
 					id: id_num,
 					timestamp: timestamp,
 					state: ret.result,
-					command: '{0} {1}'.format(cmd, self.selected_server().server_name)				
+					command: '{0} {1}'.format(cmd, self.server().server_name)				
 				})
-				self.tasks.reverse();
-				
-				setTimeout(data.current_page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
+
+				setTimeout(data.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
 			})
 			.fail(function() {
 	
@@ -231,10 +192,12 @@ function viewmodel() {
 				
 			})
 		}
+
 	}
 
-	self.get_whoami();
-	self.switch_page('dashboard');
+	self.refresh_whoami();
+	self.select_page('dashboard');
+	
 }
 
 

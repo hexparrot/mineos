@@ -69,20 +69,22 @@
                     <!-- START Notification -->
                     <li class="notification">
                         <a href="#" data-toggle="dropdown">
-                            <span class="badge" data-bind="visible: tasks().length > 0, text: tasks().length"></span>
+                            <span class="badge" data-bind="visible: tasks_notify().length > 0, text: tasks_notify().length"></span>
                             <span class="icon iconm-bell-2"></span>
                         </a>
                         <!-- START Dropdown Menu -->
                         <div class="dropdown-menu" role="menu">
-                            <header>Tasks <small data-bind="text: tasks().length"></small></header>
+                            <header>Tasks <small data-bind=""></small></header>
                             <ul class="body" data-bind="foreach: tasks">
                                 <li>
-                                    <span class="icon icone-ok" data-bind="css: {'icone-ok': state == 'success', 'icone-exclamation-sign': state != 'success'}"></span>
+                                    <span class="icon" data-bind="css: {'icone-ok': state == 'success', 'icone-exclamation-sign': state != 'success'}"></span>
                                     <a href="#" class="text">
                                         <strong data-bind="text: command"></strong><br>
                                         <small data-bind="text: timestamp"></small>
                                     </a>
-                                    <span class="action show"><a href="" class="label label-important" data-bind="text: state, css: {'label-important': state == 'error', 'label-warning': state == 'pending', 'label-success': state == 'success'}"></a></span>
+                                    <span class="action show">
+                                        <a href="" class="label" data-bind="text: state, css: {'label-important': state == 'error', 'label-warning': state == 'pending', 'label-success': state == 'success'}"></a>
+                                    </span>
                                 </li>
                             </ul>
                             <footer>
@@ -97,21 +99,20 @@
                     <li class="profile">
                         <a href="#" data-toggle="dropdown">
                             <span class="avatar"><img src="img/avatar/avatar4.jpg" alt=""></span>
-                            <span class="text hidden-phone"><span data-bind="text: whoami"></span><span class="role" data-bind="text: whoami"></span></span>
+                            <span class="text hidden-phone"><span data-bind=""></span><span class="role" data-bind="text: whoami"></span></span>
                             <span class="arrow icone-caret-down"></span>
                         </a>
                         <!-- START Dropdown Menu -->
                         <div class="dropdown-menu" role="menu">
-                            <!--<header>
+                            <header>
                                 Your Profile 
                                 <ul class="toolbar">
-                                    <li><a href="#" class="btn btn-small"><span class="icon icone-pencil"></span></a></li>
                                     <li><a href="#" class="btn btn-small"><span class="icon icone-cog"></span></a></li>
                                 </ul>
-                            </header>-->
-                            <ul class="body" data-bind="foreach: pings">
+                            </header>
+                            <ul class="body" data-bind="foreach: pagedata.pings">
                                 <li>
-                                    <a href="#" class="text"><span class="icon icon-th-large"></span> <span data-bind="text: server_name, click: $root.select_server"></span></a>
+                                    <a href="#" class="text" data-bind="click: $root.select_server"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
                                     <span class="action show"><a href="" class="label label-important" data-bind="text: (up ? 'online' : 'offline')"></a></span>
                                 </li>
                             </ul>
@@ -133,8 +134,8 @@
                 <div class="sidebar-content">
                     <!-- START Sidebar Tab -->
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#tab-menu" data-toggle="tab" data-bind="click: switch_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
-                        <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: switch_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
+                        <li class="active"><a href="#tab-menu" data-toggle="tab" data-bind="click: select_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
+                        <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
                     </ul>
                     <!--/ END Sidebar Tab -->
 
@@ -152,7 +153,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group ">
-                                        <a data-bind="click: switch_page" data-page="dashboard">
+                                        <a data-bind="click: select_page" data-page="dashboard">
                                             <span class="icon icone-dashboard"></span>
                                             <span class="text">Dashboard</span>
                                             <span class=""></span>
@@ -162,7 +163,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group ">
-                                        <a data-page="profiles" data-bind="click: switch_page">
+                                        <a data-bind="click: select_page" data-page="profiles">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Profiles</span>
                                             <span class=""></span>
@@ -175,17 +176,17 @@
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="visible: selected_server" class="accordion-group ">
-                                        <a data-bind="click: switch_page" data-page="server_status">
+                                    <li class="accordion-group ">
+                                        <a data-bind="click: select_page" data-page="server_status">
                                             <span class="icon iconm-home-4"></span>
                                             <span class="text">Server Status</span>
-                                            <span class="label label-inverse" data-bind="text: selected_server().capacity"></span>
+                                            <span class="label label-inverse" data-bind="text: server().capacity"></span>
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="visible: selected_server" class="accordion-group ">
+                                    <li data-bind="" class="accordion-group ">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu3">
                                             <span class="icon icone-th-list"></span>
                                             <span class="text">Restore Points</span>
@@ -193,7 +194,7 @@
                                         </a>
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu3" class="collapse ">
-                                            <li class=""><a data-bind="click: switch_page" data-page="backup_list"><span class="icon icone-angle-right"></span> Overview</a></li>
+                                            <li class=""><a data-bind="" data-page="backup_list"><span class="icon icone-angle-right"></span> Overview</a></li>
                                             <li class=""><a><span class="icon icone-angle-right"></span> Create Restore Point</a></li>
                                             <li class=""><a><span class="icon icone-angle-right"></span> Remove Restore Points</a></li>
                                         </ul>
@@ -202,7 +203,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="visible: selected_server" class="accordion-group ">
+                                    <li data-bind="" class="accordion-group ">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu4">
                                             <span class="icon icone-upload-alt"></span>
                                             <span class="text">Archives</span>
@@ -219,7 +220,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="visible: selected_server" class="accordion-group ">
+                                    <li data-bind="" class="accordion-group ">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu6">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Server Configuration</span>
@@ -235,7 +236,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li data-bind="visible: selected_server" class="accordion-group ">
+                                    <li data-bind="" class="accordion-group ">
                                         <a>
                                             <span class="icon icone-desktop"></span>
                                             <span class="text">Console</span>
@@ -323,7 +324,7 @@
                     <div class="navbar-inner">
                         <!-- Breadcrumb -->
                         <ul class="breadcrumb">
-                            <li data-bind="visible: selected_server"><a href="#" data-bind="text: selected_server().server_name"></a> <span class="divider"></span></li>
+                            <li data-bind="if: server().server_name"><a href="#" data-bind="text: server().server_name"></a> <span class="divider"></span></li>
                             <li class="active">Dashboard</li>
                         </ul>
                         <!--/ Breadcrumb -->
@@ -332,7 +333,7 @@
                 <!--/ END Bootstrap Navbar -->
 
                 <!-- START Content -->
-                <div id="dashboard" class="container-fluid">
+                <div id="dashboard" class="container-fluid" data-bind="if: page() == 'dashboard'">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -358,7 +359,7 @@
                               <th scope="col">Memory</th>
                             </tr>
                           </thead>
-                          <tbody data-bind="foreach: pings">
+                          <tbody data-bind="foreach: pagedata.pings">
                             <tr data-bind="click: $root.select_server">
                               <td data-bind="text: server_name"></td>
                               <td data-bind="text: profile"></td>
@@ -375,42 +376,36 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="server_status" class="container-fluid">
+                <div id="server_status" class="container-fluid" data-bind="if: page() == 'server_status'">
 
-                    
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
                         <div class="span12">
                             <div class="page-header line1">
-                                <h4><span data-bind="text: selected_server().server_name"></span></h4>
+                                <h4><span data-bind=""></span></h4>
                             </div>
                         </div>
                         <!--/ END Page/Section header -->
                     </div>
                     <!--/ END Row -->
-                    
-                    
-                    
-                                        
+         
                     <!-- START Row -->
                     <div class="row-fluid">
-                    	<button data-required="server_name" data-cmd="start" data-bind="click: command" type="button" class="btn btn-success span2" data-refresh="3000">Start</button> 
+                        <button data-required="server_name" data-cmd="start" data-bind="click: $root.command" type="button" class="btn btn-success span2" data-refresh="3000">Start</button> 
                         <!-- Button Dropdown -->
                         <div class="btn-group">
                             <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Stop <span class="caret"></span></button>
                             <ul class="dropdown-menu">
-                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: command" data-refresh="2000">Stop</a></li>
-                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: command" data-refresh="2000">Kill</a></li>
+                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Stop</a></li>
+                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: $root.command" data-refresh="2000">Kill</a></li>
                             </ul>
                         </div><!--/ Button Dropdown -->
                     </div>
                     <!--/ END Row -->
 
-                    
                     <!-- START Row -->
                     <div class="row-fluid">
-
                         <table id="table_status" class="table table-hover">
                           <thead>
                             <tr>
@@ -422,7 +417,7 @@
                               <th scope="col">Memory</th>
                             </tr>
                           </thead>
-                          <tbody data-bind="with: selected_server">
+                          <tbody data-bind="with: server">
                             <tr data-bind="">
                               <td data-bind="text: server_name"></td>
                               <td data-bind="text: profile"></td>
@@ -439,7 +434,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Default Widget -->
-                        <div class="span6 widget" data-bind="foreach: rdiffs">
+                        <div class="span6 widget" data-bind="foreach: pagedata.rdiffs">
                             <header>
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
@@ -466,7 +461,7 @@
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind=""><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-important pull-right"></span>
@@ -486,13 +481,13 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="backup_list" class="container-fluid">
+                <div id="backup_list" class="container-fluid" data-bind="if: false">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
                         <div class="span12">
                             <div class="page-header line1">
-                                <h4><span data-bind="text: selected_server().server_name"></span></h4>
+                                <h4><span data-bind=""></span></h4>
                             </div>
                         </div>
                         <!--/ END Page/Section header -->
@@ -512,12 +507,12 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: rdiffs">
+                          <tbody data-bind="">
                             <tr>
-                              <td data-bind="text: server_name"></td>
-                              <td data-bind="text: (up ? 'online' : 'offline')"></td>
-                              <td data-bind="text: mirror_stamp"></td>
-                              <td data-bind="text: increments.length"></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
                             </tr>
                           </tbody>
                         </table>
@@ -527,7 +522,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="profiles" class="container-fluid">
+                <div id="profiles" class="container-fluid" data-bind="if: page() == 'profiles'">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -554,13 +549,13 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: profiles">
+                          <tbody data-bind="">
                             <tr>
-                              <td data-bind="text: profile_name"></td>
-                              <td data-bind="text: run_as"></td>
-                              <td data-bind="text: save_as"></td>
-                              <td data-bind="text: save_as_md5"></td>
-                              <td data-bind="text: save_as_mtime"></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
+                              <td data-bind=""></td>
                             </tr>
                           </tbody>
                         </table>
@@ -570,7 +565,7 @@
                 <!--/ END Content -->
 
                 <!-- START Content -->
-                <div id="create_server" class="container-fluid">
+                <div id="create_server" class="container-fluid" data-bind="visible: page() == 'create_server'">
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Page/Section header -->
@@ -585,7 +580,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                        <form data-bind="" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
                             <header><h4 class="title">Create a new server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -639,21 +634,21 @@
                                             <label class="control-label">difficulty</label>
                                             <div class="controls">
                                             <select class="span12" name="difficulty" data-bind="">
-            									<option value="0">Peaceful</option><option value="1">Easy</option><option value="2">Normal</option><option value="3">Hard</option>
+                                                <option value="0">Peaceful</option><option value="1">Easy</option><option value="2">Normal</option><option value="3">Hard</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">gamemode</label>
                                             <div class="controls">
                                             <select class="span12" name="gamemode" data-bind="">
-            									<option value="0">Survival</option><option value="1">Creative</option><option value="2">Adventure</option>
+                                                <option value="0">Survival</option><option value="1">Creative</option><option value="2">Adventure</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">level-type</label>
                                             <div class="controls">
                                             <select class="span12" name="level-type" data-bind="">
-            									<option value="DEFAULT">DEFAULT</option><option value="FLAT">FLAT</option><option value="LARGEBIOMES">LARGEBIOMES</option>
+                                                <option value="DEFAULT">DEFAULT</option><option value="FLAT">FLAT</option><option value="LARGEBIOMES">LARGEBIOMES</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
@@ -691,14 +686,14 @@
                                             <label class="control-label">Archive Frequency</label>
                                             <div class="controls">
                                             <select name="archive" data-bind="">
-            									<option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
+                                                <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Backup Frequency</label>
                                             <div class="controls">
                                             <select name="backup" data-bind="">
-            									<option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
+                                                <option value="none">none</option><option value="hourly">hourly</option><option value="daily">daily</option><option value="weekly">weekly</option>
                                             </select></div>
                                         </div>
                                         
@@ -794,12 +789,12 @@
     <!--/ Javascript (Application) -->
     
     <script type="text/javascript">
-		var vm = new viewmodel();
-		
-		$(document).ready(function() {
-			ko.applyBindings(vm);
-		});
-	</script>
+        var vm = new viewmodel();
+        
+        $(document).ready(function() {
+            ko.applyBindings(vm);
+        });
+    </script>
     <!--/ END JAVASCRIPT SECTION -->
 </body>
 </html>
