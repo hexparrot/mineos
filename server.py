@@ -88,6 +88,16 @@ class ViewModel(object):
         instance = self.quick_create(server_name)
         return dumps(instance.list_increments())
 
+    @cherrypy.expose
+    def sp(self, server_name):
+        instance = self.quick_create(server_name)
+        return dumps(instance.server_properties[:])
+
+    @cherrypy.expose
+    def sc(self, server_name):
+        instance = self.quick_create(server_name)
+        return dumps(instance.server_config[:])
+
 class mc_server(object):    
     auth = AuthController()
     

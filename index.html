@@ -29,11 +29,18 @@
     <!-- Stylesheet(Plugins) -->
     <link rel="stylesheet" href="assets/jui/css/jquery-ui-1.10.3.min.css">
     <link rel="stylesheet" href="assets/snippet/css/jquery.snippet.min.css">
+    <link rel="stylesheet" href="assets/scrollbar/css/perfect-scrollbar.min.css">
+    <link rel="stylesheet" href="assets/icheck/css/jquery.icheck.min.css">
+    <link rel="stylesheet" href="assets/select2/css/select2.min.css">
+    <link rel="stylesheet" href="assets/minicolor/css/jquery.minicolors.min.css">
     <link rel="stylesheet" href="assets/formvalidation/validationengine/css/jquery.validationEngine.min.css">
+    <link rel="stylesheet" href="assets/datatable/css/dataTables-bootstrap.min.css">
     <link rel="stylesheet" href="assets/switch/css/bootstrapSwitch.min.css">
     <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
+    <link rel="stylesheet" href="assets/themer/css/jquery.themer.min.css">
     <!--/ Stylesheet(Plugins) -->
     <!--/ END STYLESHEET SECTION -->
+
 
     <!-- START JAVASCRIPT SECTION - Load only modernizr script here -->
     <!-- Javascript(Modernizr) -->
@@ -228,7 +235,7 @@
                                         </a>
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu6" class="collapse ">
-                                            <li class=""><a><span class="icon icone-angle-right"></span> server.properties</a></li>
+                                            <li class=""><a data-bind="click: select_page" data-page="server_properties"><span class="icon icone-angle-right"></span> server.properties</a></li>
                                             <li class=""><a><span class="icon icone-angle-right"></span> server.config</a></li>
                                         </ul>
                                         <!--/ END Submenu Menu -->
@@ -731,6 +738,33 @@
                 </div>
                 <!--/ END Content -->
 
+                <!-- START Content -->
+                <div id="server_properties" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>server.properties</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <!-- ko foreach: pagedata.sp -->
+                    <div class="control-group">
+                        <label class="control-label" data-bind="text: property"></label>
+                        <div class="controls">
+                            <input type="text" data-bind="value: val" class="span3">
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+
             </section>
             <!--/ END Template Main Content -->
 
@@ -763,12 +797,21 @@
     <script src="assets/datatable/js/jquery.dataTables.min.js"></script>
     <script src="assets/datatable/js/dataTables-bootstrap.min.js"></script>
     <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
-    <script src="assets/switch/js/bootstrapSwitch.min.js"></script>
     <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
+    <script src="assets/fullcalendar/js/fullcalendar.min.js"></script>
+    <script src="assets/icheck/js/jquery.icheck.min.js"></script>
     <script src="assets/ie-placeholder/js/jquery.placeholder.min.js"></script>
-    <script src="assets/snippet/js/jquery.snippet.min.js"></script>
+    <script src="assets/inputmask/js/jquery.inputmask.min.js"></script>
+    <script src="assets/minicolor/js/jquery.minicolors.min.js"></script>
+    <script src="assets/moment/js/moment.min.js"></script>
+    <script src="assets/mousewheel/js/jquery.mousewheel.min.js"></script>
+    <script src="assets/prettyphoto/js/jquery.prettyphoto.min.js"></script>
+    <script src="assets/scrollbar/js/perfect-scrollbar.min.js"></script>
+    <script src="assets/select2/js/select2.min.js"></script>
     <script src="assets/sparkline/js/jquery.sparkline.min.js"></script>
+    <script src="assets/switch/js/bootstrapSwitch.min.js"></script>
     <script src="assets/gritter/js/jquery.gritter.min.js"></script>
+
 
     <!-- Form Validation -->
     <script src="assets/formvalidation/bassistance/js/jquery.validate.min.js"></script>

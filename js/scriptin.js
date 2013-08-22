@@ -21,6 +21,15 @@ function model_status(data) {
 	})
 }
 
+function model_property(property, value, section) {
+	var self = this;
+
+	self.property = property;
+	self.val = value;
+	self.section = section;
+	self.type = 'textbox';
+}
+
 function viewmodel() {
 	var self = this;
 
@@ -39,7 +48,8 @@ function viewmodel() {
 	self.pagedata = {
 		pings: ko.observableArray(),
 		rdiffs: ko.observableArray(),
-		profiles: ko.observableArray()
+		profiles: ko.observableArray(),
+		sp: ko.observableArray()
 	}
 
 	self.server.extend({ notify: 'always' });
@@ -86,6 +96,9 @@ function viewmodel() {
 				break;
 			case 'create_server':
 				self.refresh_profiles();
+				break;
+			case 'server_properties':
+				self.refresh_sp();
 				break;
 			default:
 				break;			
@@ -244,6 +257,17 @@ function viewmodel() {
 			self.select_page('dashboard');
 		})
 
+	}
+
+	self.refresh_sp = function() {
+		var params = {'server_name': self.server().server_name};
+		$.getJSON('/vm/sp', params)
+		.success(function(data) {
+			self.pagedata.sp.removeAll();
+			$.each(data, function(i,v){
+				self.pagedata.sp.push(new model_property(i,v));
+			})
+		})
 	}
 
 	self.refresh_whoami();
