@@ -7,7 +7,7 @@
     <!-- START META SECTION -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>MineOS</title>
+    <title>Cleanizr</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1.0">
     <!--/ END META SECTION -->
@@ -33,20 +33,37 @@
     <link rel="stylesheet" href="assets/icheck/css/jquery.icheck.min.css">
     <link rel="stylesheet" href="assets/select2/css/select2.min.css">
     <link rel="stylesheet" href="assets/minicolor/css/jquery.minicolors.min.css">
+    <link rel="stylesheet" href="assets/wysiwyg/CLEditor/css/jquery.cleditor.min.css">
     <link rel="stylesheet" href="assets/formvalidation/validationengine/css/jquery.validationEngine.min.css">
+    <link rel="stylesheet" href="assets/tagit/css/jquery.tagit.min.css">
+    <link rel="stylesheet" href="assets/fullcalendar/css/fullcalendar.min.css">
+    <link rel="stylesheet" href="assets/prettyphoto/css/prettyphoto.min.css">
     <link rel="stylesheet" href="assets/datatable/css/dataTables-bootstrap.min.css">
     <link rel="stylesheet" href="assets/switch/css/bootstrapSwitch.min.css">
+    <link rel="stylesheet" href="assets/daterangepicker/css/daterangepicker.min.css">
+    <link rel="stylesheet" href="assets/bootstrap-fileupload/css/bootstrap-fileupload.min.css">
     <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
     <link rel="stylesheet" href="assets/themer/css/jquery.themer.min.css">
     <!--/ Stylesheet(Plugins) -->
     <!--/ END STYLESHEET SECTION -->
-
 
     <!-- START JAVASCRIPT SECTION - Load only modernizr script here -->
     <!-- Javascript(Modernizr) -->
     <script src="assets/modernizr/js/modernizr-2.6.2.min.js"></script>
     <!--/ Javascript(Modernizr) -->
     <!--/ END JAVASCRIPT SECTION -->
+
+    <style type="text/css">
+        li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr  {
+            cursor: pointer;
+        }
+        .container-fluid {
+            display: none;
+        }
+        #create_server .help-block {
+            display: block !important;
+        }
+    </style>
 </head>
 <body>
     <!-- START Template Wrapper -->
@@ -354,7 +371,6 @@
                     <!--/ END Row -->
                     <!-- START Row -->
                     <div class="row-fluid">
-
                         <table id="table_status" class="table table-hover">
                           <thead>
                             <tr>
@@ -367,8 +383,8 @@
                             </tr>
                           </thead>
                           <tbody data-bind="foreach: pagedata.pings">
-                            <tr data-bind="click: $root.select_server">
-                              <td data-bind="text: server_name"></td>
+                            <tr>
+                              <td data-bind="text: server_name, click: $root.select_server"></td>
                               <td data-bind="text: profile"></td>
                               <td data-bind="text: port"></td>
                               <td data-bind="text: (up ? 'online' : 'offline')"></td>
@@ -551,17 +567,26 @@
                               <th scope="col">Downloaded</th>
                               <th scope="col">MD5 (download)</th>
                               <th scope="col">mtime (download)</th>
+                              <th scope="col"></th>
                             </tr>
                           </thead>
                           <tfoot>
                           </tfoot>
                           <tbody data-bind="foreach: pagedata.profiles">
                             <tr>
-                              <td data-bind="text: profile_name"></td>
-                              <td data-bind="text: run_as"></td>
-                              <td data-bind="text: save_as"></td>
-                              <td data-bind="text: save_as_md5"></td>
-                              <td data-bind="text: save_as_mtime"></td>
+                                <td data-bind="text: profile"></td>
+                                <td data-bind="text: run_as"></td>
+                                <td data-bind="text: save_as"></td>
+                                <td data-bind="text: save_as_md5"></td>
+                                <td data-bind="text: save_as_mtime"></td>
+                                <td><div class="btn-group">
+                                    <button class="btn btn-success dropdown-toggle btn-mini" data-toggle="dropdown">Action <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update</a></li>
+                                        <li><a href="#">Edit</a></li>
+                                    </ul>
+                                    </div>
+                                </td>
                             </tr>
                           </tbody>
                         </table>
@@ -600,11 +625,16 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Server Name:</label>
-                                            <div class="controls"><input type="text" name="server_name" class="input-medium required" required></div>
+                                            <div class="controls">
+                                                <input type="text" name="server_name" class="input-medium required" required>
+                                            </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Group Ownership:</label>
-                                            <div class="controls"><input type="text" name="group" class="input-medium"></div>
+                                            <div class="controls">
+                                                <input type="text" name="group" class="input-medium">
+                                                <span class="help-block">Other members of this group will have full control of the server</span>
+                                            </div>
                                         </div>
                                     </fieldset>
                                     <fieldset id="step2" class="step">
@@ -621,7 +651,10 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">ip-address</label>
-                                            <div class="controls"><input type="text" name="ip-address" class="input-medium" placeholder="0.0.0.0"></div>
+                                            <div class="controls">
+                                                <input type="text" name="ip-address" class="input-medium" placeholder="0.0.0.0">
+                                                <span class="help-block">The default "0.0.0.0" means the server will listen on all available network interfaces</span>
+                                            </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">max-players</label>
@@ -633,7 +666,10 @@
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">level-seed</label>
-                                            <div class="controls"><input type="text" name="level-seed" class="input-medium" placeholder=""></div>
+                                            <div class="controls">
+                                                <input type="text" name="level-seed" class="input-medium" placeholder="">
+                                                <span class="help-block">level-seed must be entered before the server is started for the first time</span>
+                                            </div>
                                         </div>
                                         
                                         <div class="control-group">
@@ -661,7 +697,7 @@
                                             <label class="control-label">Generate Structures</label>
                                             <div class="controls">
                                                 <label class="checkbox">
-                                                    <input type="checkbox" name="generate_structures" value="true">
+                                                    <input type="checkbox" name="generate_structures" value="true" checked>
                                                 </label>
                                             </div>
                                         </div>
@@ -680,7 +716,7 @@
                                             <label class="control-label">profile</label>
                                             <div class="controls">
                                                 <select class="input-medium" data-section="minecraft" name="profile" data-bind="foreach: pagedata.profiles" required>
-                                                    <option data-bind="text: profile_name, attr: {value: profile_name}"></option>
+                                                    <option data-bind="text: profile, attr: {value: profile}"></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -688,12 +724,14 @@
                                             <label class="control-label">java_xmx</label>
                                             <div class="controls">
                                                 <input type="text" data-section="java" name="java_xmx" class="input-medium required" placeholder="256">
+                                                <span class="help-block">Maximum memory heap available exclusively to Minecraft (not including overhead)</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xms</label>
                                             <div class="controls">
                                                 <input type="text" data-section="java" name="java_xms" class="input-medium" placeholder="256">
+                                                <span class="help-block">Minimum heapsize Minecraft will allocate (recommended same as java_xmx)</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
@@ -768,7 +806,7 @@
                                 <div class="control-group">
                                     <div class="controls">
                                        <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
-                                       <input type="text" data-bind="visible: $data.type == 'truefalse', value: val" class="input-small">
+                                       <input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-small truefalse">
                                     </div>
                                 </div>
                               </td>
@@ -779,7 +817,6 @@
                     <!--/ END Row -->
                 </div>
                 <!--/ END Content -->
-
 
             </section>
             <!--/ END Template Main Content -->
@@ -798,7 +835,7 @@
     </div>
     <!--/ END Template Wrapper -->
 
-    <!-- IMPORTANT! : This is for demo purpose only. All the available plugin will be loaded at once -->
+<!-- IMPORTANT! : This is for demo purpose only. All the available plugin will be loaded at once -->
     <!-- START JAVASCRIPT SECTION - Include at the bottom of the page to reduce load time -->
     <!-- Javascript(Vendors) -->
     <script src="assets/jquery/js/jquery-1.10.1.min.js"></script>
@@ -812,7 +849,9 @@
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/datatable/js/jquery.dataTables.min.js"></script>
     <script src="assets/datatable/js/dataTables-bootstrap.min.js"></script>
+    <script src="assets/daterangepicker/js/daterangepicker.min.js"></script>
     <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
+    <script src="assets/bootstrap-fileupload/js/bootstrap-fileupload.min.js"></script>
     <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
     <script src="assets/fullcalendar/js/fullcalendar.min.js"></script>
     <script src="assets/icheck/js/jquery.icheck.min.js"></script>
@@ -824,10 +863,18 @@
     <script src="assets/prettyphoto/js/jquery.prettyphoto.min.js"></script>
     <script src="assets/scrollbar/js/perfect-scrollbar.min.js"></script>
     <script src="assets/select2/js/select2.min.js"></script>
+    <script src="assets/shuffle/js/jquery.shuffle.min.js"></script>
+    <script src="assets/snippet/js/jquery.snippet.min.js"></script>
     <script src="assets/sparkline/js/jquery.sparkline.min.js"></script>
     <script src="assets/switch/js/bootstrapSwitch.min.js"></script>
+    <script src="assets/tagit/js/tag-it.min.js"></script>
+    <script src="assets/timepicker/js/jquery-ui-timepicker.min.js"></script>
+    <script src="assets/touchpunch/js/jquery.ui.touch-punch.min.js"></script>
+    <script src="assets/wysiwyg/ckeditor/ckeditor.js"></script>
+    <script src="assets/wysiwyg/CLEditor/js/jquery.cleditor.min.js"></script>
     <script src="assets/gritter/js/jquery.gritter.min.js"></script>
-
+    <script src="assets/themer/js/jquery.themer.min.js"></script>
+    <script src="assets/resize/js/jquery.ba-resize.min.js"></script>
 
     <!-- Form Validation -->
     <script src="assets/formvalidation/bassistance/js/jquery.validate.min.js"></script>
@@ -843,16 +890,15 @@
     <script src="assets/flot/excanvas.min.js"></script>
     <!--/ Javascript(Plugins) -->
 
-
     <!-- Javascript (Application) -->
     <script src="js/plugins.js"></script>
     <script src="js/application.js"></script>
     <script src="js/flot.sample.js"></script>
     <script src="js/sparkline.sample.js"></script>
     <script src="js/easypiechart.sample.js"></script>
-    <script src="/js/knockout-min.js"></script>
-    <script src="/js/scriptin.js"></script>
-
+    <script src="js/knockout-min.js"></script>
+    <script src="js/scriptin.js"></script>
+    
     <!--/ Javascript (Application) -->
     
     <script type="text/javascript">

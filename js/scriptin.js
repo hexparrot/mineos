@@ -41,6 +41,13 @@ function model_property(property, value, section) {
 			self.val(false);
 	} else
 		self.type = 'textbox';
+
+	self.toggle = function() {
+		if (self.val() == true)
+			self.val(false)
+		else if (self.val() == false)
+			self.val(true)
+	}
 }
 
 function viewmodel() {
@@ -154,7 +161,7 @@ function viewmodel() {
 		.success(function(data){
 			self.pagedata.profiles.removeAll();
 			$.each(data, function(i,v) {
-				self.pagedata.profiles.push($.extend({profile_name: i}, v));
+				self.pagedata.profiles.push($.extend({profile: i}, v));
 			})
 		})
 	}
@@ -195,7 +202,7 @@ function viewmodel() {
 					image: '',
 					sticky: false,
 					time: '3000',
-					class_name: (ret.result == 'success' ? 'success' : 'error')
+					class_name: ret.result
 				});
 				
 				$.each(self.tasks(), function(i,v) {
@@ -219,9 +226,35 @@ function viewmodel() {
 	
 			})
 		} else {
+			var param_text = '';
+				$.each(required, function(i,v){
+				  param_text += "{0}: {1}<br>".format(v,params[v])
+				})
+
+			$.gritter.add({
+				title: '{0}'.format(cmd),
+				text: param_text,
+				image: '',
+				sticky: false,
+				time: '2000',
+				class_name: 'pending'
+			});
+
 			$.getJSON('/host', params)
 			.success(function(ret) {
-				console.log(ret);
+				var param_text = '';
+				$.each(required, function(i,v){
+				  param_text += "{0}: {1}<br>".format(v,params[v])
+				})
+
+				$.gritter.add({
+					title: '{0}: {1}'.format(ret.cmd, ret.result),
+					text: param_text + ret.payload,
+					image: '',
+					sticky: false,
+					time: '3000',
+					class_name: ret.result
+				});
 			})
 			.fail(function() {
 				
