@@ -168,8 +168,6 @@ function viewmodel() {
 
 
 	self.define_profile = function(formelement) {
-		var expected_md5 = $('form#formwizard2').find('input[name=expected_md5]').val();
-
 		var step1 = $('form#formwizard2').find('fieldset :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
@@ -190,10 +188,7 @@ function viewmodel() {
 		params = {
 			'cmd': 'define_profile',
 			'profile': JSON.stringify(properties),
-			'expected_md5': expected_md5
 		}
-
-		console.log(params)
 
 		$.getJSON('/host', params)
 		.success(function() {
