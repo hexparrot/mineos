@@ -160,6 +160,7 @@
                     <ul class="nav nav-tabs">
                         <li class="active"><a href="#tab-menu" data-toggle="tab" data-bind="click: select_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
                         <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
+                        <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: select_page" data-page="define_profile"><span class="icon icone-tasks"></span></a></li>
                     </ul>
                     <!--/ END Sidebar Tab -->
 
@@ -611,7 +612,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard1">
                             <header><h4 class="title">Create a new server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -817,6 +818,113 @@
                     <!--/ END Row -->
                 </div>
                 <!--/ END Content -->
+
+
+                <!-- START Content -->
+                <div id="define_profile" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>Create <small>new profile</small></h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Form Wizard With Validation -->
+                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                            <header><h4 class="title">Create a new profile</h4></header>
+                            <section class="body">
+                                <div class="body-inner">
+
+                                    <fieldset id="step1" class="step">
+                                        <div class="step-title">
+                                            <span class="icon icone-lightbulb yellow"></span>
+                                            <h5>
+                                                STEP 1<br/>
+                                                <small></small>
+                                            </h5>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">profile name</label>
+                                            <div class="controls">
+                                                <input type="text" name="name" class="input-medium required" placeholder="vanilla162">
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">type</label>
+                                            <div class="controls">
+                                                <select class="input-xlarge" name="type" data-bind="">
+                                                    <option value="standard_jar">Standalone, runnable JAR</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Download URL</label>
+                                            <div class="controls">
+                                                <input type="text" name="url" class="input-xlarge" placeholder="http://dl.bukkit.org/latest-rb/craftbukkit.jar">
+                                                <span class="help-block">Preferably enter a direct URL rather than a server-side redirected URL</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Download Expected MD5</label>
+                                            <div class="controls">
+                                                <input type="text" name="expected_md5" class="input-xlarge" placeholder="">
+                                                <span class="help-block">Optional MD5 here will ensure proper download</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Save download as</label>
+                                            <div class="controls">
+                                                <input type="text" name="save_as" class="input-xlarge" placeholder="craftbukkit.jar">
+                                                <span class="help-block">Be sure <em>only</em> the filename is here</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Jarfile to run</label>
+                                            <div class="controls">
+                                            <input type="text" name="run_as" class="input-xlarge" placeholder="craftbukkit.jar">
+                                                <span class="help-block">In many cases, this will match the above line (when not a zip, for example)</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Tags -->
+                                        <div class="control-group">
+                                            <label class="control-label">Files to not process</label>
+                                            <div class="controls">
+                                                <ul class="input-xlarge" id="tags">
+                                                    <li>Tag1</li>
+                                                    <li>Tag2</li>
+                                                </ul>
+                                                <span class="help-block">This is only required for downloaded archives (e.g., zipfile)</span>
+                                            </div>
+                                        </div><!--/ Tags -->
+                                    </fieldset>
+
+                                    <div class="form-actions">
+                                        <input type="submit" class="btn btn-primary" id="next-1" value="Next">
+                                    </div>
+                                </div>
+                            </section>
+                        </form>
+                        <!--/ END Form Wizard With Validation -->
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+
+
+
+
+
+
+
+
 
             </section>
             <!--/ END Template Main Content -->

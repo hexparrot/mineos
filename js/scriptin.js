@@ -166,6 +166,42 @@ function viewmodel() {
 		})
 	}
 
+
+	self.define_profile = function(formelement) {
+		var expected_md5 = $('form#formwizard2').find('input[name=expected_md5]').val();
+
+		var step1 = $('form#formwizard2').find('fieldset :input').filter(function() {
+		  return ($(this).val() ? true : false);
+		})
+
+		var properties = {};
+		$.each($(step1).serialize().split('&'), function(i,v) {
+		  properties[v.split('=')[0]] = v.split('=')[1]
+		})
+
+		var ignored_files = [];
+		$('input[name="tags"]').each(function(i,v) {
+		  ignored_files.push($(v).val())
+		})
+		properties.ignore = ignored_files.join(' ')
+
+		delete properties.tags;
+
+		params = {
+			'cmd': 'define_profile',
+			'profile': JSON.stringify(properties),
+			'expected_md5': expected_md5
+		}
+
+		console.log(params)
+
+		$.getJSON('/host', params)
+		.success(function() {
+			self.select_page('profiles');
+		})
+
+	}
+
 	self.command = function(data, eventobj) {
 		var cmd = $(eventobj.currentTarget).data('cmd');
 		var required = $(eventobj.currentTarget).data('required').split(',');
@@ -227,9 +263,9 @@ function viewmodel() {
 			})
 		} else {
 			var param_text = '';
-				$.each(required, function(i,v){
-				  param_text += "{0}: {1}<br>".format(v,params[v])
-				})
+			$.each(required, function(i,v){
+			  param_text += "{0}: {1}<br>".format(v,params[v])
+			})
 
 			$.gritter.add({
 				title: '{0}'.format(cmd),
@@ -263,17 +299,17 @@ function viewmodel() {
 	}
 
 	self.create_server = function(formelement) {
-		var server_name = $('form').find('fieldset#step1 input[name=server_name]').val();
+		var server_name = $('form#formwizard1').find('fieldset#step1 input[name=server_name]').val();
 
-		var step1 = $('form').find('fieldset#step1 :input').filter(function() {
+		var step1 = $('form#formwizard1').find('fieldset#step1 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
-		var step2 = $('form').find('fieldset#step2 :input').filter(function() {
+		var step2 = $('form#formwizard1').find('fieldset#step2 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
-		var step3 = $('form').find('fieldset#step3 :input').filter(function() {
+		var step3 = $('form#formwizard1').find('fieldset#step3 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
@@ -297,6 +333,8 @@ function viewmodel() {
 			'sp': JSON.stringify(sp),
 			'sc': JSON.stringify(sc)
 		}
+
+		console.log(params)
 
 		$.getJSON('/server', params)
 		.success(function() {

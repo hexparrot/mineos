@@ -76,10 +76,19 @@ class ViewModel(object):
             md5s[profile] = {}
             md5s[profile]['save_as'] = opt_dict['save_as']
             md5s[profile]['run_as'] = opt_dict['run_as']
-            md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
-            md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+            try:
+                md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
+                md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
+            except IOError:
+                md5s[profile]['save_as_md5'] = ''
+                md5s[profile]['save_as_mtime'] = ''
+
+            try:
+                md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+                md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
+            except IOError:
+                md5s[profile]['run_as_mtime'] = ''
+                md5s[profile]['run_as_md5'] = ''
             
         return dumps(md5s)     
 
@@ -182,6 +191,17 @@ class mc_server(object):
             }
 
         try:
+            if command == 'define_profile':
+                from json import loads
+                from urllib import unquote
+
+                definition_unicode = loads(args['profile'])
+                definition = {str(k):str(v) for k,v in definition_unicode.iteritems()}
+
+                definition['url'] = unquote(definition['url'])
+
+                instance = mc('throwaway', **init_args)
+                retval = instance.define_profile(definition)      
             if command == 'update_profile':
                 instance = mc('throwaway', **init_args)
                 retval = instance.update_profile(**args)
