@@ -25,9 +25,22 @@ function model_property(property, value, section) {
 	var self = this;
 
 	self.property = property;
-	self.val = value;
+	self.val = ko.observable(value);
 	self.section = section;
-	self.type = 'textbox';
+
+	var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
+					  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
+					  'spawn-monsters', 'force-gamemode', 'spawn-npcs', 'snooper-enabled',
+					  'white-list','enable-rcon'];
+
+	if (true_false.indexOf(property) >= 0) {
+		self.type = 'truefalse';
+		if (self.val().toLowerCase() == 'true')
+			self.val(true);
+		else
+			self.val(false);
+	} else
+		self.type = 'textbox';
 }
 
 function viewmodel() {
