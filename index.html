@@ -7,7 +7,7 @@
     <!-- START META SECTION -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Cleanizr</title>
+    <title>MineOS - Web User Interface</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1.0">
     <!--/ END META SECTION -->
@@ -28,22 +28,11 @@
 
     <!-- Stylesheet(Plugins) -->
     <link rel="stylesheet" href="assets/jui/css/jquery-ui-1.10.3.min.css">
-    <link rel="stylesheet" href="assets/snippet/css/jquery.snippet.min.css">
-    <link rel="stylesheet" href="assets/scrollbar/css/perfect-scrollbar.min.css">
     <link rel="stylesheet" href="assets/icheck/css/jquery.icheck.min.css">
-    <link rel="stylesheet" href="assets/select2/css/select2.min.css">
-    <link rel="stylesheet" href="assets/minicolor/css/jquery.minicolors.min.css">
-    <link rel="stylesheet" href="assets/wysiwyg/CLEditor/css/jquery.cleditor.min.css">
+
     <link rel="stylesheet" href="assets/formvalidation/validationengine/css/jquery.validationEngine.min.css">
     <link rel="stylesheet" href="assets/tagit/css/jquery.tagit.min.css">
-    <link rel="stylesheet" href="assets/fullcalendar/css/fullcalendar.min.css">
-    <link rel="stylesheet" href="assets/prettyphoto/css/prettyphoto.min.css">
-    <link rel="stylesheet" href="assets/datatable/css/dataTables-bootstrap.min.css">
-    <link rel="stylesheet" href="assets/switch/css/bootstrapSwitch.min.css">
-    <link rel="stylesheet" href="assets/daterangepicker/css/daterangepicker.min.css">
-    <link rel="stylesheet" href="assets/bootstrap-fileupload/css/bootstrap-fileupload.min.css">
     <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
-    <link rel="stylesheet" href="assets/themer/css/jquery.themer.min.css">
     <!--/ Stylesheet(Plugins) -->
     <!--/ END STYLESHEET SECTION -->
 
@@ -52,24 +41,6 @@
     <script src="assets/modernizr/js/modernizr-2.6.2.min.js"></script>
     <!--/ Javascript(Modernizr) -->
     <!--/ END JAVASCRIPT SECTION -->
-
-    <style type="text/css">
-        li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr, ul.nav  {
-            cursor: pointer;
-        }
-        .container-fluid {
-            display: none;
-        }
-        #create_server .help-block {
-            display: block !important;
-        }
-        .dropdown-toggle {
-            cursor: default;
-        }
-        .dropdown-menu li {
-            cursor: pointer !important;
-        }
-    </style>
 </head>
 <body>
     <!-- START Template Wrapper -->
@@ -79,7 +50,6 @@
     <div id="wrapper" class="boxed-layout fixed-sidebar fixed-header">
         <!-- START Template Canvas -->
         <div id="canvas">
-
 
             <!-- START Template Header -->
             <header id="header">
@@ -96,15 +66,15 @@
 
                 <!-- START Toolbar -->
                 <ul class="toolbar" id="toolbar">
-                    <!-- START Notification -->
-                    <li class="notification">
+                    <!-- START Task -->
+                    <li class="task">
                         <a href="#" data-toggle="dropdown">
                             <span class="badge" data-bind="visible: tasks_notify().length > 0, text: tasks_notify().length"></span>
-                            <span class="icon iconm-bell-2"></span>
+                            <span class="icon iconm-flag-5"></span>
                         </a>
                         <!-- START Dropdown Menu -->
                         <div class="dropdown-menu" role="menu">
-                            <header>Tasks <small data-bind=""></small></header>
+                            <header>Tasks</header>
                             <ul class="body" data-bind="foreach: tasks">
                                 <li>
                                     <span class="icon" data-bind="css: {'icone-ok': state == 'success', 'icone-exclamation-sign': state != 'success'}"></span>
@@ -118,18 +88,18 @@
                                 </li>
                             </ul>
                             <footer>
-                                <a href="#" data-bind="click: clear_tasks">Clear Tasks</a>
+                                <a href="#" class="text" data-bind="click: clear_tasks">Clear</a>
                             </footer>
                         </div>
                         <!--/ END Dropdown Menu -->
                     </li>
-                    <!--/ END Notification -->
+                    <!--/ END Task -->
 
                     <!-- START Profile -->
                     <li class="profile">
                         <a href="#" data-toggle="dropdown">
                             <span class="avatar"><img src="img/avatar/avatar4.jpg" alt=""></span>
-                            <span class="text hidden-phone"><span data-bind=""></span><span class="role" data-bind="text: dashboard.whoami"></span></span>
+                            <span class="text hidden-phone"><span class="role" data-bind="text: dashboard.whoami"></span></span>
                             <span class="arrow icone-caret-down"></span>
                         </a>
                         <!-- START Dropdown Menu -->
@@ -137,6 +107,7 @@
                             <header>
                                 Your Profile 
                                 <ul class="toolbar">
+                                    <li><a href="#" class="btn btn-small"><span class="icon icone-pencil"></span></a></li>
                                     <li><a href="#" class="btn btn-small"><span class="icon icone-cog"></span></a></li>
                                 </ul>
                             </header>
@@ -177,7 +148,6 @@
                             <!-- START Sidebar Menu -->
                             <nav id="nav" class="accordion">
                                 <ul id="navigation">
-
                                     <!-- START Menu Divider -->
                                     <li class="divider">Host Settings</li>
                                     <!--/ END Menu Divider -->
@@ -294,7 +264,7 @@
                     <div class="navbar-inner">
                         <!-- Breadcrumb -->
                         <ul class="breadcrumb">
-                            <li data-bind="if: server().server_name"><a href="#" data-bind="text: server().server_name"></a> <span class="divider"></span></li>
+                            <li data-bind="if: server().server_name"><a data-page="server_status" data-bind="text: server().server_name, click: select_page"></a> <span class="divider"></span></li>
                             <li class="active">Dashboard</li>
                         </ul>
                         <!--/ Breadcrumb -->
@@ -479,7 +449,7 @@
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind=""><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-important pull-right"></span>
@@ -595,7 +565,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard1">
+                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="createnewserver">
                             <header><h4 class="title">Create a New Server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -808,7 +778,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
+                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="definenewprofile">
                             <header><h4 class="title">Create a New Server Profile</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -861,7 +831,7 @@
                                         <div class="control-group">
                                             <label class="control-label">Files to not process</label>
                                             <div class="controls">
-                                                <ul class="input-xlarge" id="tags">
+                                                <ul class="input-xlarge" id="ignore_files">
                                                 </ul>
                                                 <span class="help-block">This is only required for downloaded archives (e.g., zipfile)</span>
                                             </div>
@@ -880,15 +850,6 @@
                 </div>
                 <!--/ END Content -->
 
-
-
-
-
-
-
-
-
-
             </section>
             <!--/ END Template Main Content -->
 
@@ -906,7 +867,7 @@
     </div>
     <!--/ END Template Wrapper -->
 
-<!-- IMPORTANT! : This is for demo purpose only. All the available plugin will be loaded at once -->
+    <!-- IMPORTANT! : This is for demo purpose only. All the available plugin will be loaded at once -->
     <!-- START JAVASCRIPT SECTION - Include at the bottom of the page to reduce load time -->
     <!-- Javascript(Vendors) -->
     <script src="assets/jquery/js/jquery-1.10.1.min.js"></script>
@@ -918,34 +879,18 @@
     <!--[if IE 8]><script src="/assets/respond/js/respond.min.js"></script><![endif]-->
     <script src="assets/autosize/js/jquery.autosize.min.js"></script>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="assets/datatable/js/jquery.dataTables.min.js"></script>
-    <script src="assets/datatable/js/dataTables-bootstrap.min.js"></script>
-    <script src="assets/daterangepicker/js/daterangepicker.min.js"></script>
+    
     <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
-    <script src="assets/bootstrap-fileupload/js/bootstrap-fileupload.min.js"></script>
     <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
-    <script src="assets/fullcalendar/js/fullcalendar.min.js"></script>
+
     <script src="assets/icheck/js/jquery.icheck.min.js"></script>
     <script src="assets/ie-placeholder/js/jquery.placeholder.min.js"></script>
     <script src="assets/inputmask/js/jquery.inputmask.min.js"></script>
-    <script src="assets/minicolor/js/jquery.minicolors.min.js"></script>
     <script src="assets/moment/js/moment.min.js"></script>
     <script src="assets/mousewheel/js/jquery.mousewheel.min.js"></script>
-    <script src="assets/prettyphoto/js/jquery.prettyphoto.min.js"></script>
-    <script src="assets/scrollbar/js/perfect-scrollbar.min.js"></script>
-    <script src="assets/select2/js/select2.min.js"></script>
-    <script src="assets/shuffle/js/jquery.shuffle.min.js"></script>
-    <script src="assets/snippet/js/jquery.snippet.min.js"></script>
-    <script src="assets/sparkline/js/jquery.sparkline.min.js"></script>
-    <script src="assets/switch/js/bootstrapSwitch.min.js"></script>
+
     <script src="assets/tagit/js/tag-it.min.js"></script>
-    <script src="assets/timepicker/js/jquery-ui-timepicker.min.js"></script>
-    <script src="assets/touchpunch/js/jquery.ui.touch-punch.min.js"></script>
-    <script src="assets/wysiwyg/ckeditor/ckeditor.js"></script>
-    <script src="assets/wysiwyg/CLEditor/js/jquery.cleditor.min.js"></script>
     <script src="assets/gritter/js/jquery.gritter.min.js"></script>
-    <script src="assets/themer/js/jquery.themer.min.js"></script>
-    <script src="assets/resize/js/jquery.ba-resize.min.js"></script>
 
     <!-- Form Validation -->
     <script src="assets/formvalidation/bassistance/js/jquery.validate.min.js"></script>
@@ -964,12 +909,9 @@
     <!-- Javascript (Application) -->
     <script src="js/plugins.js"></script>
     <script src="js/application.js"></script>
-    <script src="js/flot.sample.js"></script>
-    <script src="js/sparkline.sample.js"></script>
-    <script src="js/easypiechart.sample.js"></script>
+
     <script src="js/knockout-min.js"></script>
     <script src="js/scriptin.js"></script>
-    
     <!--/ Javascript (Application) -->
     
     <script type="text/javascript">
