@@ -158,9 +158,9 @@
                 <div class="sidebar-content">
                     <!-- START Sidebar Tab -->
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#tab-menu" data-toggle="tab" data-bind="click: select_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
-                        <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
-                        <li class=""><a href="#tab-overview" data-toggle="tab" data-bind="click: select_page" data-page="define_profile"><span class="icon icone-tasks"></span></a></li>
+                        <li class="active"><a data-bind="click: select_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
+                        <li class=""><a data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
+                        <li class=""><a data-bind="click: select_page" data-page="define_profile"><span class="icon icone-tasks"></span></a></li>
                     </ul>
                     <!--/ END Sidebar Tab -->
 
@@ -265,7 +265,7 @@
                                         <a>
                                             <span class="icon icone-desktop"></span>
                                             <span class="text">Console</span>
-                                            <span class="label label-inverse">122</span>
+                                            <span class="label label-inverse">0</span>
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
@@ -274,67 +274,6 @@
                             <!--/ END Sidebar Menu -->
                         </div>
                         <!--/ END Tab Pane(menu) -->
-
-                        <!-- START Tab Pane(overview) -->
-                        <div class="tab-pane" id="tab-overview">
-                            <!-- START Accound Status -->
-                            <div class="divider">Server Status</div>
-                            <!-- START sparkline 1 -->
-                            <figure class="stats sparkline">
-                                <span class="chart sparkline-bar" sparkBarColor="#dc143c">5,6,7,2,9,2,1,4,8</span>
-                                <figcaption>
-                                    <h4><small>My Balance</small>$16,763</h4>
-                                </figcaption>
-                            </figure><!--/ END sparkline 1 -->
-
-                            <!-- START sparkline 2 -->
-                            <figure class="stats sparkline">
-                                <span class="chart sparkline-bar" sparkBarColor="#2E8DEF">2,7,3,8,3,2,1,2,4</span>
-                                <figcaption>
-                                    <h4><small>Impression</small>125k+</h4>
-                                </figcaption>
-                            </figure><!--/ END sparkline 2 -->
-                            <!--/ END Accound Status -->
-
-                            <!-- START sparkline 2 -->
-                            <figure class="stats sparkline">
-                                <span class="chart sparkline-bar" sparkBarColor="#8CBF26">5,2,8,8,2,1,1,6,4</span>
-                                <figcaption>
-                                    <h4><small>Subscribers</small>5,212</h4>
-                                </figcaption>
-                            </figure><!--/ END sparkline 2 -->
-                            <!--/ END Accound Status -->
-
-                            <!-- START Other Stuff -->
-                            <div class="divider">Other Stuff</div>
-                            <!-- START Summary 1 -->
-                            <figure class="stats summary stacked">
-                                <div class="up"><span class="icon icone-caret-up"></span></div>
-                                <div class="icon circle red"><span class="icone-ticket"></span></div>
-                                <figcaption>
-                                    <h3>+230<small>Open tickets</small></h3>
-                                </figcaption>
-                            </figure><!--/ END Summary 1 -->
-
-                            <!-- START Summary 2 -->
-                            <figure class="stats summary stacked">
-                                <div class="down"><span class="icon icone-caret-down"></span></div>
-                                <div class="icon circle lime"><span class="icone-bug"></span></div>
-                                <figcaption>
-                                    <h3>-20<small>Bug Killed</small></h3>
-                                </figcaption>
-                            </figure><!--/ END Summary 2 -->
-                            
-                            <!-- START Summary 3 -->
-                            <figure class="stats summary stacked">
-                                <div class="icon circle teal"><span class="icone-trophy"></span></div>
-                                <figcaption>
-                                    <h3>1,432<small>Trophy Won</small></h3>
-                                </figcaption>
-                            </figure><!--/ END Summary 3 -->
-                            <!--/ END Other Stuff -->
-                        </div>
-                        <!--/ END Tab Pane(overview) -->
                     </div>
                     <!--/ END Tab Content -->
                 </div>
@@ -361,22 +300,10 @@
                 <div id="dashboard" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <!-- START Page/Section header -->
-                        <div class="span12">
-                            <div class="page-header line1">
-                                <h4>MineOS Dashboard <small>overview of all servers</small></h4>
-                            </div>
-                        </div>
-                        <!--/ END Page/Section header -->
-                    </div>
-                    <!--/ END Row -->
-
-                    <!-- START Row -->
-                    <div class="row-fluid">
                         <!-- START Line Chart - Filled -->
                         <div class="span12 widget">
                             <header>
-                                <h4 class="title">Load Averages</h4>
+                                <h4 class="title">Host Status</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
                                     <li>
@@ -409,7 +336,7 @@
                                         <figure class="stats summary pull-left">
                                             <div class="icon circle teal"><span class="icone-ticket"></span></div>
                                             <figcaption>
-                                                <h3><span data-bind="text: dashboard.memfree"></span><small>MB Free</small></h3>
+                                                <h3><span data-bind="text: dashboard.memfree"></span><small>MB RAM Free</small></h3>
                                             </figcaption>
                                         </figure><!--/ END Summary -->
                                     </div>
@@ -553,9 +480,9 @@
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <p>Lorem ipsum dolor sit amet, nam deserunt petentium splendide in. Ne altera officiis convenire sed, in vix quod malorum. Ut eos tempor delicata theophrastus, his ei homero intellegebat. Ex everti mollis sententiae vim. Cu ius posse impedit.</p>
+                                    <p></p>
                                 </div>
-                                <div class="footer">Footer</div>
+                                <div class="footer"></div>
                             </section>
                         </div>
                         <!--/ END Default Widget -->

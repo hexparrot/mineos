@@ -225,6 +225,38 @@ function viewmodel() {
 		var timestamp = (new Date().getTime()) / 1000;
 		var id_num = timestamp;
 
+		function pending_gritter(required) {
+			var param_text = '';
+			$.each(required, function(i,v){
+			  param_text += "{0}: {1}<br>".format(v,params[v])
+			})
+
+			$.gritter.add({
+				title: '{0}'.format(cmd),
+				text: param_text,
+				image: '',
+				sticky: false,
+				time: '2000',
+				class_name: 'pending'
+			});
+		}
+
+		function success_gritter(required, ret) {
+			var param_text = '';
+			$.each(required, function(i,v){
+			  param_text += "{0}: {1}<br>".format(v,params[v])
+			})
+
+			$.gritter.add({
+				title: '{0}: {1}'.format(ret.cmd, ret.result),
+				text: param_text + ret.payload,
+				image: '',
+				sticky: false,
+				time: '3000',
+				class_name: ret.result
+			});
+		}
+
 		$.each(required, function(i,v) {
 			reqd = v.replace(/\s/g, '');
 			if (reqd in $(eventobj.currentTarget).data())
@@ -245,17 +277,13 @@ function viewmodel() {
 			})
 			
 			$.extend(params, {server_name: self.server().server_name});
+
+			pending_gritter(required);
+
 			$.getJSON('/server', params)
 			.success(function(ret) {
 
-				$.gritter.add({
-					title: '{0} {1}: {2}'.format(ret.cmd, ret.server_name, ret.result),
-					text: '',
-					image: '',
-					sticky: false,
-					time: '3000',
-					class_name: ret.result
-				});
+				success_gritter(required, ret)
 				
 				$.each(self.tasks(), function(i,v) {
 					if (v.id == id_num)  {
@@ -270,46 +298,22 @@ function viewmodel() {
 					command: '{0} {1}'.format(cmd, self.server().server_name)				
 				})
 
+				if (ret.result != 'success')
+					console.log(ret)
+
 				self.tasks(self.tasks().ascending_by('timestamp').reverse());
 
 				setTimeout(self.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
 			})
-			.fail(function() {
-	
-			})
 		} else {
-			var param_text = '';
-			$.each(required, function(i,v){
-			  param_text += "{0}: {1}<br>".format(v,params[v])
-			})
-
-			$.gritter.add({
-				title: '{0}'.format(cmd),
-				text: param_text,
-				image: '',
-				sticky: false,
-				time: '2000',
-				class_name: 'pending'
-			});
+			pending_gritter(required)
 
 			$.getJSON('/host', params)
 			.success(function(ret) {
-				var param_text = '';
-				$.each(required, function(i,v){
-				  param_text += "{0}: {1}<br>".format(v,params[v])
-				})
+				success_gritter(required, ret)
 
-				$.gritter.add({
-					title: '{0}: {1}'.format(ret.cmd, ret.result),
-					text: param_text + ret.payload,
-					image: '',
-					sticky: false,
-					time: '3000',
-					class_name: ret.result
-				});
-			})
-			.fail(function() {
-				
+				if (ret.result != 'success')
+					console.log(ret)
 			})
 		}
 	}
@@ -446,8 +450,8 @@ function viewmodel() {
 		}
 	}
 
-	self.refresh_dashboard();
 	self.select_page('dashboard');
+	setTimeout(self.refresh_dashboard, 1500)
 }
 
 
