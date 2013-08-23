@@ -143,12 +143,6 @@ class mc_server(object):
         from cherrypy.lib.static import serve_file
         
         return serve_file(os.path.join(os.getcwd(),'index.html'))
-
-    @cherrypy.expose
-    def servers(self):
-        from cherrypy.lib.static import serve_file
-        
-        return serve_file(os.path.join(os.getcwd(),'servers.html'))
     
     @cherrypy.expose
     def whoami(self):
@@ -157,17 +151,14 @@ class mc_server(object):
         except KeyError:
             return ''
 
-    @cherrypy.expose
     @require()
     def methods(self):
         return dumps(self.METHODS)
 
-    @cherrypy.expose
     @require()
     def properties(self):
         return dumps(self.PROPERTIES)
 
-    @cherrypy.expose
     @require()
     def inspect_method(self, method):
         try:
