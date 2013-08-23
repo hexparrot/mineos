@@ -65,7 +65,8 @@ function viewmodel() {
 	self.dashboard = {
 		whoami: ko.observable(),
 		memfree: ko.observable(),
-		uptime: ko.observable()
+		uptime: ko.observable(),
+		servers_up: ko.observable()
 	}
 
 	self.load_averages = {
@@ -95,8 +96,14 @@ function viewmodel() {
 		.success(function(data){
 			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
 			self.dashboard.memfree(data.memfree);
-			self.dashboard.whoami(data.whoami)
+			self.dashboard.whoami(data.whoami);
 		})
+
+		try {
+			self.dashboard.servers_up(vm.pagedata.pings().filter(function(i) {return i.up}).length);
+		} catch (e) {
+			self.dashboard.servers_up(0)
+		}
 	}
 
 	self.clear_tasks = function() {
