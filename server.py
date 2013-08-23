@@ -107,6 +107,11 @@ class ViewModel(object):
         instance = self.quick_create(server_name)
         return dumps(instance.server_config[:])
 
+    @cherrypy.expose
+    def loadavg(self):
+        from procfs_reader import proc_loadavg
+        return dumps(proc_loadavg())
+
 class mc_server(object):    
     auth = AuthController()
     

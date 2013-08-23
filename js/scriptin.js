@@ -53,8 +53,6 @@ function model_property(property, value, section) {
 function viewmodel() {
 	var self = this;
 
-	self.show_all_servers = ko.observable(false);
-
 	self.whoami = ko.observable();
 	self.server = ko.observableArray();
 	self.page = ko.observableArray();
@@ -64,6 +62,12 @@ function viewmodel() {
 		  return i.state == 'error';
 		})
 	})
+
+	self.load_averages = {
+		one: [0],
+		five: [0],
+		fifteen: [0]
+	}
 
 	self.pagedata = {
 		pings: ko.observableArray(),
@@ -103,6 +107,7 @@ function viewmodel() {
 		switch(page) {
 			case 'dashboard':
 				self.refresh_pings();
+				self.redraw_chart();
 				break;
 			case 'backup_list':
 				self.refresh_increments();
@@ -329,8 +334,6 @@ function viewmodel() {
 			'sc': JSON.stringify(sc)
 		}
 
-		console.log(params)
-
 		$.getJSON('/server', params)
 		.success(function() {
 			self.select_page('dashboard');
@@ -349,6 +352,73 @@ function viewmodel() {
 		})
 	}
 
+	self.refresh_loadavg = function(keep_count) {
+		$.getJSON('/vm/loadavg')
+		.success(function(data){
+			self.load_averages.one.push(data[0])
+			self.load_averages.five.push(data[1])
+			self.load_averages.fifteen.push(data[2])
+
+			while (self.load_averages.one.length > (keep_count + 1)){
+				self.load_averages.one.splice(0,1)
+				self.load_averages.five.splice(0,1)
+				self.load_averages.fifteen.splice(0,1)
+			}
+		})
+	}
+
+	self.redraw_chart = function() {
+		var options = {
+	        series: { 
+	            lines: {
+	                show: true,
+	                fill: .3
+	            },
+	            shadowSize: 0 
+	        },
+	        yaxis: { min: 0, max: 1 },
+	        xaxis: { min: 0, max: 20, show: false },
+	        grid: {
+	            borderWidth: 0, 
+	            hoverable: true 
+	        }
+	    }
+
+        function get_avg(interval) {
+            self.refresh_loadavg(options.xaxis.max)
+            data = self.load_averages[interval];
+
+            var res = [];
+            for (var i = 0; i < data.length; ++i)
+                res.push([i, data[i]])
+                return res;
+        }
+
+        var plot = $.plot($("#load_averages"), [ get_avg('one') ], options);
+    
+        function update() {
+        	//colors http://www.jqueryflottutorial.com/tester-4.html
+        	var dataset = [
+			    { label: "fifteen", data: get_avg('fifteen'), color: "#0077FF" },
+			    { label: "five", data: get_avg('five'), color: "#ED7B00" },
+			    { label: "one", data: get_avg('one'), color: "#E8E800" }
+        	]
+
+        	options.yaxis.max = Math.max(
+				self.load_averages.one.max(),
+				self.load_averages.five.max(),
+				self.load_averages.fifteen.max()) || 1;
+
+        	var plot = $.plot($("#load_averages"), [ get_avg('one') ], options);
+
+            plot.setData(dataset);
+            plot.draw();
+            if (self.page() == 'dashboard')
+            	setTimeout(update, 1000);
+        }   
+        update();
+	}
+
 	self.refresh_whoami();
 	self.select_page('dashboard');
 	
@@ -363,6 +433,10 @@ String.prototype.format = String.prototype.f = function() {
 
 	while (i--) { s = s.replace(new RegExp('\\{' + i + '\\}', 'gm'), arguments[i]);}
 	return s;
+};
+
+Array.prototype.max = function () {
+    return Math.max.apply(Math, this);
 };
 
 Array.prototype.ascending_by = function(param) {

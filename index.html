@@ -370,6 +370,46 @@
                         <!--/ END Page/Section header -->
                     </div>
                     <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget stacked">
+                            <header>
+                                <h4 class="title">Rich Chart</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li><a href="#" class="link" data-widget="refresh"><span class="icon icone-refresh"></span></a></li>
+                                    <li>
+                                        <a href="#" class="link" data-toggle="dropdown"><span class="icon icone-ellipsis-vertical"></span></a>
+                                        <ul class="dropdown-menu pull-right">
+                                            <li><a href="#"><span class="icon icone-pencil"></span> Edit</a></li>
+                                            <li><a href="#"><span class="icon icone-trash"></span> Delete</a></li>
+                                            <li><a href="#"><span class="icon icone-cog"></span> Setting</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <!-- START Auto Update Chart -->
+                                    <div class="span4 widget">
+                                        <section class="body">
+                                            <div class="body-inner">
+                                                <div class="flot" id="load_averages"></div>
+                                            </div>
+                                        </section>
+                                    </div>
+                                    <!--/ END Auto Update Chart -->
+
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
                     <!-- START Row -->
                     <div class="row-fluid">
                         <table id="table_status" class="table table-hover">
@@ -1008,6 +1048,7 @@
         $(document).ready(function() {
             ko.applyBindings(vm);
         });
+
     </script>
     <!--/ END JAVASCRIPT SECTION -->
 </body>
