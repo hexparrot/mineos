@@ -112,6 +112,19 @@ class ViewModel(object):
         from procfs_reader import proc_loadavg
         return dumps(proc_loadavg())
 
+    @cherrypy.expose
+    def dashboard(self):
+        from procfs_reader import entries, proc_uptime
+        
+        kb_free = dict(entries('', 'meminfo'))['MemFree']
+        mb_free = str(round(float(kb_free.split()[0])/1000, 2))
+    
+        return dumps({
+            'uptime': str(proc_uptime()[0]),
+            'memfree': mb_free,
+            'whoami': cherrypy.session['_cp_username']
+            })
+
 class mc_server(object):    
     auth = AuthController()
     

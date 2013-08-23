@@ -123,7 +123,7 @@
                     <li class="profile">
                         <a href="#" data-toggle="dropdown">
                             <span class="avatar"><img src="img/avatar/avatar4.jpg" alt=""></span>
-                            <span class="text hidden-phone"><span data-bind=""></span><span class="role" data-bind="text: whoami"></span></span>
+                            <span class="text hidden-phone"><span data-bind=""></span><span class="role" data-bind="text: dashboard.whoami"></span></span>
                             <span class="arrow icone-caret-down"></span>
                         </a>
                         <!-- START Dropdown Menu -->
@@ -374,7 +374,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Line Chart - Filled -->
-                        <div class="span12 widget stacked">
+                        <div class="span12 widget">
                             <header>
                                 <h4 class="title">Load Averages</h4>
                                 <!-- START Toolbar -->
@@ -389,8 +389,33 @@
                             </header>
                             <section class="body">
                                 <div class="body-inner">
+                                    <div class="span3 pull-left">
+                                        <figure class="stats summary pull-left">
+                                            <div class="icon circle green"><span class="icone-ok"></span></div>
+                                            <figcaption>
+                                                <h3>2<small>Running Servers</small></h3>
+                                            </figcaption>
+                                        </figure><!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary pull-left">
+                                            <div class="icon circle teal"><span class="icone-time"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: dashboard.uptime"></span><small>Uptime</small></h3>
+                                            </figcaption>
+                                        </figure><!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary pull-left">
+                                            <div class="icon circle teal"><span class="icone-ticket"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: dashboard.memfree"></span><small>MB Free</small></h3>
+                                            </figcaption>
+                                        </figure><!--/ END Summary -->
+                                    </div>
+
                                     <!-- START Auto Update Chart -->
-                                    <div class="span8 widget pull-right">
+                                    <div class="span9 widget pull-right">
                                         <section class="body">
                                             <div class="body-inner">
                                                 <div class="flot" id="load_averages"></div>

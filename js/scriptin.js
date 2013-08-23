@@ -53,7 +53,6 @@ function model_property(property, value, section) {
 function viewmodel() {
 	var self = this;
 
-	self.whoami = ko.observable();
 	self.server = ko.observableArray();
 	self.page = ko.observableArray();
 	self.tasks = ko.observableArray();
@@ -63,11 +62,17 @@ function viewmodel() {
 		})
 	})
 
+	self.dashboard = {
+		whoami: ko.observable(),
+		memfree: ko.observable(),
+		uptime: ko.observable()
+	}
+
 	self.load_averages = {
 		one: [0],
 		five: [0],
 		fifteen: [0],
-		autorefresh: ko.observable(true)
+		autorefresh: ko.observable(false)
 	}
 
 	self.pagedata = {
@@ -85,10 +90,12 @@ function viewmodel() {
 		self.select_page('server_status');
 	}
 
-	self.refresh_whoami = function() {
-		$.get('/whoami')
+	self.refresh_dashboard = function() {
+		$.getJSON('/vm/dashboard')
 		.success(function(data){
-			self.whoami(data);
+			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
+			self.dashboard.memfree(data.memfree);
+			self.dashboard.whoami(data.whoami)
 		})
 	}
 
@@ -108,6 +115,7 @@ function viewmodel() {
 		switch(page) {
 			case 'dashboard':
 				self.refresh_pings();
+				self.refresh_dashboard();
 				self.redraw_chart();
 				break;
 			case 'backup_list':
@@ -431,7 +439,7 @@ function viewmodel() {
 		}
 	}
 
-	self.refresh_whoami();
+	self.refresh_dashboard();
 	self.select_page('dashboard');
 }
 
