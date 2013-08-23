@@ -54,7 +54,7 @@
     <!--/ END JAVASCRIPT SECTION -->
 
     <style type="text/css">
-        li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr  {
+        li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr, ul.nav  {
             cursor: pointer;
         }
         .container-fluid {
@@ -62,6 +62,12 @@
         }
         #create_server .help-block {
             display: block !important;
+        }
+        .dropdown-toggle {
+            cursor: default;
+        }
+        .dropdown-menu li {
+            cursor: pointer !important;
         }
     </style>
 </head>
@@ -158,9 +164,9 @@
                 <div class="sidebar-content">
                     <!-- START Sidebar Tab -->
                     <ul class="nav nav-tabs">
-                        <li class="active"><a data-bind="click: select_page" data-page="dashboard"><span class="icon icone-file"></span></a></li>
-                        <li class=""><a data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
-                        <li class=""><a data-bind="click: select_page" data-page="define_profile"><span class="icon icone-tasks"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'dashboard'}"><a data-bind="click: select_page" data-page="dashboard"><span class="icon icone-bar-chart"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'create_server'}"><a data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'define_profile'}"><a data-bind="click: select_page" data-page="define_profile"><span class="icon icone-book"></span></a></li>
                     </ul>
                     <!--/ END Sidebar Tab -->
 
@@ -177,7 +183,7 @@
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group ">
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'dashboard'}">
                                         <a data-bind="click: select_page" data-page="dashboard">
                                             <span class="icon icone-dashboard"></span>
                                             <span class="text">Dashboard</span>
@@ -187,7 +193,7 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group ">
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'profiles'}">
                                         <a data-bind="click: select_page" data-page="profiles">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Profiles</span>
@@ -201,7 +207,7 @@
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="visible: server().server_name">
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_status'}">
                                         <a data-bind="click: select_page" data-page="server_status">
                                             <span class="icon iconm-home-4"></span>
                                             <span class="text">Server Status</span>
@@ -253,15 +259,15 @@
                                         </a>
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu6" class="collapse ">
-                                            <li class=""><a data-bind="click: select_page" data-page="server_properties"><span class="icon icone-angle-right"></span> server.properties</a></li>
-                                            <li class=""><a><span class="icon icone-angle-right"></span> server.config</a></li>
+                                            <li data-bind="css: {'active': page() == 'server_properties'}"><a data-bind="click: select_page" data-page="server_properties"><span class="icon icone-angle-right"></span> server.properties</a></li>
+                                            <li data-bind="css: {'active': page() == 'server_config'}"><a><span class="icon icone-angle-right"></span> server.config</a></li>
                                         </ul>
                                         <!--/ END Submenu Menu -->
                                     </li>
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="visible: server().server_name">
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'console'}">
                                         <a>
                                             <span class="icon icone-desktop"></span>
                                             <span class="text">Console</span>
@@ -588,20 +594,9 @@
                 <div id="create_server" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <!-- START Page/Section header -->
-                        <div class="span12">
-                            <div class="page-header line1">
-                                <h4>Create <small>new server</small></h4>
-                            </div>
-                        </div>
-                        <!--/ END Page/Section header -->
-                    </div>
-                    <!--/ END Row -->
-                    <!-- START Row -->
-                    <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
                         <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard1">
-                            <header><h4 class="title">Create a new server</h4></header>
+                            <header><h4 class="title">Create a New Server</h4></header>
                             <section class="body">
                                 <div class="body-inner">
                                     <fieldset class="step" id="step1">
@@ -812,20 +807,9 @@
                 <div id="define_profile" class="container-fluid">
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <!-- START Page/Section header -->
-                        <div class="span12">
-                            <div class="page-header line1">
-                                <h4>Create <small>new profile</small></h4>
-                            </div>
-                        </div>
-                        <!--/ END Page/Section header -->
-                    </div>
-                    <!--/ END Row -->
-                    <!-- START Row -->
-                    <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
                         <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="formwizard2">
-                            <header><h4 class="title">Create a new profile</h4></header>
+                            <header><h4 class="title">Create a New Server Profile</h4></header>
                             <section class="body">
                                 <div class="body-inner">
 
@@ -878,8 +862,6 @@
                                             <label class="control-label">Files to not process</label>
                                             <div class="controls">
                                                 <ul class="input-xlarge" id="tags">
-                                                    <li>Tag1</li>
-                                                    <li>Tag2</li>
                                                 </ul>
                                                 <span class="help-block">This is only required for downloaded archives (e.g., zipfile)</span>
                                             </div>
