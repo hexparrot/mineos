@@ -615,15 +615,23 @@ class mc(object):
         """Checks that the expected md5 of a server jar matches the one
         in the LIVE SERVER DIRECTORY (e.g., update newer than executed)
         """
-        try:
-            current = self.profile
+        def compare(profile):
             return self._md5sum(os.path.join(self.env['pwd'],
-                                             current,
+                                             profile,
                                              self.profile_config[current:'run_as'])) == \
                    self._md5sum(os.path.join(self.env['cwd'],
                                              self.profile_config[current:'run_as']))
+        
+        try:
+            current = self.profile
+            return compare(current)
         except TypeError:
             raise RuntimeError('Server is not assigned a valid profile.')
+        except IOError as e:
+            from errno import ENOENT
+            if e.errno == ENOENT:
+                self.profile = current
+            return compare(current)
 
     @property
     def port(self):
@@ -754,7 +762,7 @@ class mc(object):
             'java': self.BINARY_PATHS['java'],
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
-            'java_tweaks': self.server_config['java':'java_tweaks'],
+            'java_tweaks': self.server_config['java':'java_tweaks':''],
             'jar_args': '-nogui'
             }
 
