@@ -376,17 +376,13 @@
                         <!-- START Line Chart - Filled -->
                         <div class="span12 widget stacked">
                             <header>
-                                <h4 class="title">Rich Chart</h4>
+                                <h4 class="title">Load Averages</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh"><span class="icon icone-refresh"></span></a></li>
                                     <li>
-                                        <a href="#" class="link" data-toggle="dropdown"><span class="icon icone-ellipsis-vertical"></span></a>
-                                        <ul class="dropdown-menu pull-right">
-                                            <li><a href="#"><span class="icon icone-pencil"></span> Edit</a></li>
-                                            <li><a href="#"><span class="icon icone-trash"></span> Delete</a></li>
-                                            <li><a href="#"><span class="icon icone-cog"></span> Setting</a></li>
-                                        </ul>
+                                        <a href="#" class="link" data-toggle="dropdown">
+                                            <span data-bind="click: toggle_loadaverages, css: {'icon-pause': load_averages.autorefresh(), 'icon-play': !load_averages.autorefresh()}" class="icon"></span>
+                                        </a>
                                     </li>
                                 </ul>
                                 <!--/ END Toolbar -->
@@ -394,7 +390,7 @@
                             <section class="body">
                                 <div class="body-inner">
                                     <!-- START Auto Update Chart -->
-                                    <div class="span4 widget">
+                                    <div class="span8 widget pull-right">
                                         <section class="body">
                                             <div class="body-inner">
                                                 <div class="flot" id="load_averages"></div>

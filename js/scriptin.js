@@ -66,7 +66,8 @@ function viewmodel() {
 	self.load_averages = {
 		one: [0],
 		five: [0],
-		fifteen: [0]
+		fifteen: [0],
+		autorefresh: ko.observable(true)
 	}
 
 	self.pagedata = {
@@ -377,7 +378,7 @@ function viewmodel() {
 	            shadowSize: 0 
 	        },
 	        yaxis: { min: 0, max: 1 },
-	        xaxis: { min: 0, max: 20, show: false },
+	        xaxis: { min: 0, max: 30, show: false },
 	        grid: {
 	            borderWidth: 0, 
 	            hoverable: true 
@@ -394,10 +395,12 @@ function viewmodel() {
                 return res;
         }
 
-        var plot = $.plot($("#load_averages"), [ get_avg('one') ], options);
-    
         function update() {
         	//colors http://www.jqueryflottutorial.com/tester-4.html
+
+        	if (self.page() != 'dashboard' || !self.load_averages.autorefresh())
+        		return
+
         	var dataset = [
 			    { label: "fifteen", data: get_avg('fifteen'), color: "#0077FF" },
 			    { label: "five", data: get_avg('five'), color: "#ED7B00" },
@@ -413,15 +416,23 @@ function viewmodel() {
 
             plot.setData(dataset);
             plot.draw();
-            if (self.page() == 'dashboard')
-            	setTimeout(update, 1000);
+            setTimeout(update, 1000);
         }   
+
         update();
+	}
+
+	self.toggle_loadaverages = function() {
+		if (self.load_averages.autorefresh())
+			self.load_averages.autorefresh(false);
+		else {
+			self.load_averages.autorefresh(true);
+			self.redraw_chart();
+		}
 	}
 
 	self.refresh_whoami();
 	self.select_page('dashboard');
-	
 }
 
 
