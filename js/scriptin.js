@@ -189,7 +189,8 @@ function viewmodel() {
 
 
 	self.define_profile = function(formelement) {
-		var step1 = $('form#formwizard2').find('fieldset :input').filter(function() {
+		var form = $('form#definenewprofile');
+		var step1 = $(form).find('fieldset :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
@@ -319,17 +320,18 @@ function viewmodel() {
 	}
 
 	self.create_server = function(formelement) {
-		var server_name = $('form#formwizard1').find('fieldset#step1 input[name=server_name]').val();
+		var form = $('form#createnewserver');
+		var server_name = $(form).find('fieldset#step1 input[name=server_name]').val();
 
-		var step1 = $('form#formwizard1').find('fieldset#step1 :input').filter(function() {
+		var step1 = $(form).find('fieldset#step1 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
-		var step2 = $('form#formwizard1').find('fieldset#step2 :input').filter(function() {
+		var step2 = $(form).find('fieldset#step2 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
-		var step3 = $('form#formwizard1').find('fieldset#step3 :input').filter(function() {
+		var step3 = $(form).find('fieldset#step3 :input').filter(function() {
 		  return ($(this).val() ? true : false);
 		})
 
