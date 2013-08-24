@@ -2,18 +2,13 @@
 /*  Template Version
 /*----------------------------------------------------*/
 $(function () {
-	var $version = '1.2.2';
+	var $version = '0.1.0';
 	$('.version').text($version);
 });
 
 /*----------------------------------------------------*/
 /*  Sidebar Scrollable
 /*----------------------------------------------------*/
-$(function () {
-    if(jQuery().perfectScrollbar) {
-    	$('#sidebar').perfectScrollbar();
-    }
-});
 
 /*----------------------------------------------------*/
 /*  Sidebar toggler

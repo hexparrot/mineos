@@ -62,7 +62,6 @@ function model_property(server_name, option, value, section) {
 	}
 
 	self.val.subscribe(function(value) {
-		console.log(this);
 		var params = {
 			server_name: server_name,
 			cmd: 'modify_config',
@@ -80,7 +79,6 @@ function model_property(server_name, option, value, section) {
 			} else {
 				self.success(false);
 			}
-			
 		})
 
 	}, self)
