@@ -21,19 +21,20 @@ function model_status(data) {
 	})
 }
 
-function model_property(property, value, section) {
+function model_property(server_name, option, value, section) {
 	var self = this;
 
-	self.property = property;
+	self.option = option;
 	self.val = ko.observable(value);
 	self.section = section;
+	self.success = ko.observable(null);
 
 	var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
 					  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
 					  'spawn-monsters', 'force-gamemode', 'spawn-npcs', 'snooper-enabled',
 					  'white-list','enable-rcon'];
 
-	if (true_false.indexOf(property) >= 0) {
+	if (true_false.indexOf(option) >= 0) {
 		self.type = 'truefalse';
 		if (self.val().toLowerCase() == 'true')
 			self.val(true);
@@ -53,12 +54,36 @@ function model_property(property, value, section) {
 			$(target).iCheck({
 	            checkboxClass: 'icheckbox_minimal-grey',
 	            radioClass: 'iradio_minimal-grey',
-	            increaseArea: '20%' // optional
+	            increaseArea: '40%' // optional
 	        });
 			$(target).iCheck('check');
 			self.val(true);
 		}
 	}
+
+	self.val.subscribe(function(value) {
+		console.log(this);
+		var params = {
+			server_name: server_name,
+			cmd: 'modify_config',
+			option: self.option,
+			value: self.val(),
+			section: self.section
+		}
+		$.getJSON('/server', params)
+		.success(function(data) {
+			if (data.result == 'success') {
+				self.success(true);
+				setTimeout(function() {
+					self.success(null);
+				}, 5000)
+			} else {
+				self.success(false);
+			}
+			
+		})
+
+	}, self)
 }
 
 function model_increment(enumeration, inc_data) {
@@ -433,13 +458,13 @@ function viewmodel() {
 		.success(function(data) {
 			self.pagedata.sp.removeAll();
 			$.each(data.payload, function(i,v){
-				self.pagedata.sp.push(new model_property(i,v));
+				self.pagedata.sp.push(new model_property(params.server_name, i,v));
 			})
 
 			$('#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
 	            checkboxClass: 'icheckbox_minimal-grey',
 	            radioClass: 'iradio_minimal-grey',
-	            increaseArea: '20%' // optional
+	            increaseArea: '40%' // optional
 	        });
 		})
 	}

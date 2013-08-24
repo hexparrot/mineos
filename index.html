@@ -764,7 +764,7 @@
                         <table id="table_properties" class="table table-hover">
                           <thead>
                             <tr>
-                              <th scope="col">Property</th>
+                              <th scope="col">Option</th>
                               <th scope="col">Value</th>
                             </tr>
                           </thead>
@@ -772,9 +772,9 @@
                           </tfoot>
                           <tbody data-bind="foreach: pagedata.sp">
                             <tr>
-                              <td data-bind="text: property"></td>
+                              <td data-bind="text: option" class="span4"></td>
                               <td>
-                                <div class="control-group">
+                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
                                     <div class="controls">
                                         <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
                                         <!--<input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-large truefalse">-->

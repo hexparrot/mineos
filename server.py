@@ -88,16 +88,6 @@ class ViewModel(object):
         return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
 
     @cherrypy.expose
-    def sp(self, server_name):
-        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
-        return dumps(instance.server_properties[:])
-
-    @cherrypy.expose
-    def sc(self, server_name):
-        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
-        return dumps(instance.server_config[:])
-
-    @cherrypy.expose
     def loadavg(self):
         from procfs_reader import proc_loadavg
         return dumps(proc_loadavg())

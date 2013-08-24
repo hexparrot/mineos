@@ -258,6 +258,16 @@ class mc(object):
         self._load_config()
 
     @server_exists(True)
+    def modify_config(self, option, value, section=None):
+        """Modifies a value in server.properties or server.config"""
+        if section:
+            with self.server_config as sc:
+                sc[section:option] = value
+        else:
+            with self.server_properties as sp:
+                sp[option] = value
+
+    @server_exists(True)
     @server_up(False)
     def start(self):
         """Checks if a server is running on its bound IP:PORT
