@@ -94,6 +94,12 @@ function viewmodel() {
 		sp: ko.observableArray()
 	}
 
+	self.prune = {
+		steps: ko.observable(),
+		to_remove: ko.observable(0),
+		space_reclaimed: ko.observable(0.0)
+	}
+
 	self.server.extend({ notify: 'always' });
 	self.page.extend({ notify: 'always' });
 
@@ -138,7 +144,6 @@ function viewmodel() {
 				break;
 			case 'backup_list':
 				self.refresh_increments();
-				$('#prune_intervals').datepicker();
 				break;	
 			case 'server_status':
 				self.refresh_pings();
@@ -178,10 +183,48 @@ function viewmodel() {
 		})
 	})
 
+	self.prune_preview = function(vm, eventobj) {
+		var removal_string = $('#prune_intervals').val();
+
+		var clone = self.pagedata.rdiffs().slice(0).reverse();
+		var match;
+		var reclaimed = 0.0;
+
+		$.each(clone, function(i,v) {
+			if (v.timestamp == removal_string || v.step == removal_string) {
+				match = i;
+				self.prune.steps(v.step);
+				return false;
+			}
+
+			if (v.increment_size.slice(-2) == 'KB')
+				reclaimed += parseFloat(v.increment_size) / 1000;
+			else
+				reclaimed += parseFloat(v.increment_size);
+		})
+
+		if (!match){
+			self.prune.to_remove(0);
+			self.prune.space_reclaimed(0);
+		} else {
+			self.prune.to_remove(clone.slice(0,match).length);
+			self.prune.space_reclaimed(reclaimed);
+			$('#go_prune').data('steps', self.prune.steps())
+		}
+	}
+
 	self.refresh_increments = function() {
 		$.getJSON('/vm/increments', {server_name: self.server().server_name})
 		.success(function(data){
 			self.pagedata.rdiffs(data)
+
+			var available_tags = vm.pagedata.rdiffs().map(function(i) {
+			  return i.timestamp
+			})
+
+			$("#prune_intervals").autocomplete({
+	            source: available_tags
+	        });
 		})
 	}
 
@@ -285,7 +328,6 @@ function viewmodel() {
 			})
 			
 			$.extend(params, {server_name: self.server().server_name});
-
 			pending_gritter(required);
 
 			$.getJSON('/server', params)
