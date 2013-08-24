@@ -29,7 +29,7 @@
     <!-- Stylesheet(Plugins) -->
     <link rel="stylesheet" href="assets/jui/css/jquery-ui-1.10.3.min.css">
     <link rel="stylesheet" href="assets/icheck/css/jquery.icheck.min.css">
-
+    <link rel="stylesheet" href="assets/daterangepicker/css/daterangepicker.min.css">
     <link rel="stylesheet" href="assets/formvalidation/validationengine/css/jquery.validationEngine.min.css">
     <link rel="stylesheet" href="assets/tagit/css/jquery.tagit.min.css">
     <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
@@ -190,31 +190,14 @@
                                     <li class="accordion-group" data-bind="visible: server().server_name">
                                         <a data-toggle="collapse" data-parent="#navigation" href="#submenu3">
                                             <span class="icon icone-th-list"></span>
-                                            <span class="text">Restore Points</span>
+                                            <span class="text">Backup &amp; Restore</span>
                                             <span class="arrow icone-caret-down"></span>
                                         </a>
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu3" class="collapse ">
-                                            <li class=""><a data-bind="" data-page="backup_list"><span class="icon icone-angle-right"></span> Overview</a></li>
-                                            <li class=""><a><span class="icon icone-angle-right"></span> Create Restore Point</a></li>
-                                            <li class=""><a><span class="icon icone-angle-right"></span> Remove Restore Points</a></li>
-                                        </ul>
-                                        <!--/ END Submenu Menu -->
-                                    </li>
-                                    <!--/ END Menu -->
-
-                                    <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="visible: server().server_name">
-                                        <a data-toggle="collapse" data-parent="#navigation" href="#submenu4">
-                                            <span class="icon icone-upload-alt"></span>
-                                            <span class="text">Archives</span>
-                                            <span class="arrow icone-caret-down"></span>
-                                        </a>
-                                        <!-- START Submenu Menu -->
-                                        <ul id="submenu4" class="collapse ">
-                                            <li class=""><a><span class="icon icone-angle-right"></span> Overview</a></li>
-                                            <li class=""><a><span class="icon icone-angle-right"></span> Create Archive</a></li>
-                                            <li class=""><a><span class="icon icone-angle-right"></span> Remove Archives</a></li>
+                                            <li><a data-bind="click: select_page" data-page="backup_list"><span class="icon icone-angle-right"></span> Overview</a></li>
+                                            <li data-bind="css: {'active': page() == 'backup_list'}"><a><span class="icon icone-angle-right"></span> Restore Points</a></li>
+                                            <li><a><span class="icon icone-angle-right"></span> Archives</a></li>
                                         </ul>
                                         <!--/ END Submenu Menu -->
                                     </li>
@@ -422,7 +405,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Default Widget -->
-                        <div class="span6 widget" data-bind="foreach: pagedata.rdiffs">
+                        <div class="span6 widget" data-bind="">
                             <header>
                                 <h4 class="title"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
@@ -430,15 +413,12 @@
                                     <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="500" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
-                                <span class="label label-success pull-right" data-bind="text: increments.length"></span>
+                                <span class="label label-success pull-right" data-bind="text: pagedata.rdiffs().length"></span>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <ul data-bind="foreach: $data.increments">
-                                        <li data-bind="text: $data"></li>
-                                    </ul>
                                 </div>
-                                <div class="footer">Last successful restore point created: <strong data-bind="text: mirror_stamp"></strong></div>
+                                <div class="footer">Last successful restore point created: <strong data-bind=""></strong></div>
                             </section>
                         </div>
                         <!--/ END Default Widget -->
@@ -472,35 +452,34 @@
                 <div id="backup_list" class="container-fluid" data-bind="if: server().server_name">
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <!-- START Page/Section header -->
-                        <div class="span12">
-                            <div class="page-header line1">
-                                <h4><span data-bind=""></span></h4>
+                        <div class="control-group">
+                            <label class="control-label">Remove restore points older than:</label>
+                            <div class="controls">
+                                <input type="text" id="prune_intervals" placeholder="Pick a date">
                             </div>
                         </div>
-                        <!--/ END Page/Section header -->
+
                     </div>
                     <!--/ END Row -->
                     <!-- START Row -->
                     <div class="row-fluid">
-
-                        <table id="table_backup" class="table table-hover">
+                        <table id="table_backup" class="table table-hover" data-bind="">
                           <thead>
                             <tr>
-                              <th scope="col">Name</th>
-                              <th scope="col">Status</th>
-                              <th scope="col">Most recent restore point</th>
-                              <th scope="col">Restore Count</th>
+                              <th scope="col">Step</th>
+                              <th scope="col">Timestamp</th>
+                              <th scope="col">Increment Size</th>
+                              <th scope="col">Cumulative Size</th>
                             </tr>
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="">
+                          <tbody data-bind="foreach: pagedata.rdiffs">
                             <tr>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
-                              <td data-bind=""></td>
+                              <td data-bind="text: $data.step"></td>
+                              <td data-bind="text: $data.timestamp"></td>
+                              <td data-bind="text: $data.increment_size"></td>
+                              <td data-bind="text: $data.cumulative_size"></td>
                             </tr>
                           </tbody>
                         </table>
@@ -879,16 +858,14 @@
     <!--[if IE 8]><script src="/assets/respond/js/respond.min.js"></script><![endif]-->
     <script src="assets/autosize/js/jquery.autosize.min.js"></script>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    
     <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
     <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
-
     <script src="assets/icheck/js/jquery.icheck.min.js"></script>
     <script src="assets/ie-placeholder/js/jquery.placeholder.min.js"></script>
     <script src="assets/inputmask/js/jquery.inputmask.min.js"></script>
     <script src="assets/moment/js/moment.min.js"></script>
     <script src="assets/mousewheel/js/jquery.mousewheel.min.js"></script>
-
+    <script src="assets/daterangepicker/js/daterangepicker.min.js"></script>
     <script src="assets/tagit/js/tag-it.min.js"></script>
     <script src="assets/gritter/js/jquery.gritter.min.js"></script>
 

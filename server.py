@@ -58,22 +58,16 @@ class ViewModel(object):
         return dumps(status)
 
     @cherrypy.expose
-    def rdiff_backups(self):
+    def rdiff_backups(self, server_name):
         servers_up = set(mc.list_servers_up())
         
-        backups = []
-        for i in self.server_list():
-            instance = self.quick_create(i, cherrypy.session['_cp_username'])
-            increments = instance.list_increments()
-            
-            srv = {
-                'server_name': i,
-                'up': i in servers_up,
-                'mirror_stamp': increments.current_mirror,
-                'increments': increments.increments
-                }
-            backups.append(srv)
-        return dumps(backups)
+        instance = self.quick_create(server_name, cherrypy.session['_cp_username'])
+        increments = instance.list_increments()
+        
+        return dumps({
+            'mirror_stamp': increments.current_mirror,
+            'increments': increments.increments
+            })
                           
     @cherrypy.expose
     def profiles(self):
@@ -103,7 +97,7 @@ class ViewModel(object):
     @cherrypy.expose
     def increments(self, server_name):
         instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
-        return dumps(instance.list_increments())
+        return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
 
     @cherrypy.expose
     def sp(self, server_name):

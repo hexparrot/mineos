@@ -50,6 +50,17 @@ function model_property(property, value, section) {
 	}
 }
 
+function model_increment(enumeration, inc_data) {
+	var self = this;
+	self.step = '{0}B'.format(enumeration);
+
+	console.log(inc_data)
+
+	self.timestamp = inc_data[0];
+	self.increment_size = inc_data[1];
+	self.cumulative_size = inc_data[2];
+}
+
 function viewmodel() {
 	var self = this;
 
@@ -127,6 +138,7 @@ function viewmodel() {
 				break;
 			case 'backup_list':
 				self.refresh_increments();
+				$('#prune_intervals').datepicker();
 				break;	
 			case 'server_status':
 				self.refresh_pings();
@@ -167,13 +179,9 @@ function viewmodel() {
 	})
 
 	self.refresh_increments = function() {
-		$.getJSON('/vm/rdiff_backups')
+		$.getJSON('/vm/increments', {server_name: self.server().server_name})
 		.success(function(data){
-			self.pagedata.rdiffs.removeAll();
-			$.each(data, function(i,v) {
-				if (v.server_name == self.server().server_name)
-					self.pagedata.rdiffs.push(v);
-			})
+			self.pagedata.rdiffs(data)
 		})
 	}
 
@@ -186,7 +194,6 @@ function viewmodel() {
 			})
 		})
 	}
-
 
 	self.define_profile = function(formelement) {
 		var form = $('form#definenewprofile');
