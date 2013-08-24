@@ -112,9 +112,9 @@
                                 </ul>
                             </header>
                             <ul class="body" data-bind="foreach: pagedata.pings">
-                                <li>
-                                    <a href="#" class="text" data-bind="click: $root.select_server"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
-                                    <span class="action show"><a href="" class="label label-important" data-bind="text: (up ? 'online' : 'offline')"></a></span>
+                                <li data-bind="click: $root.select_server">
+                                    <a class="text"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
+                                    <span class="action show"><a href="" class="label" data-bind="text: (up ? capacity() : 'offline'), css: {'label-success': up, 'label-important': !up}"></a></span>
                                 </li>
                             </ul>
                             <footer>
