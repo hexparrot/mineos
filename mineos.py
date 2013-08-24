@@ -535,8 +535,6 @@ class mc(object):
             return actual_owner
         elif username in getgrgid(gid).gr_mem:
             return actual_owner
-        elif os.geteuid() == 0:
-            return actual_owner
         else:
             raise OSError("user '%s' does not have permissions on %s" % (username,
                                                                          directory))

@@ -21,14 +21,24 @@ class ViewModel(object):
         
         self.base_directory = base_directory
         self.quick_create = partial(mc,
-                                    owner=None,
                                     base_directory=base_directory)
+
+    def server_list(self):
+        for i in mc.list_servers(self.base_directory):
+            try:
+                mc.valid_owner(cherrypy.session['_cp_username'],
+                               os.path.join(self.base_directory, 'servers', i))
+            except OSError:
+                continue
+            else:
+                yield i
         
     @cherrypy.expose
     def status(self):
         status = []
-        for i in mc.list_servers(self.base_directory):
-            instance = self.quick_create(i)
+        for i in self.server_list():
+            instance = self.quick_create(i, owner=cherrypy.session['_cp_username'])
+
             try:
                 ping_info = instance.ping
             except KeyError:
@@ -41,9 +51,7 @@ class ViewModel(object):
                     'ip_address': instance.ip_address,
                     'port': instance.port,
                     'memory': instance.memory,
-                    'java_xmx': instance.server_config['java':'java_xmx':''],
-                    'owner': mc.valid_owner(instance.owner.pw_name,
-                                            instance.env['cwd'])
+                    'java_xmx': instance.server_config['java':'java_xmx':'']
                     }
                 srv.update(dict(instance.ping._asdict()))         
                 status.append(srv)
@@ -54,8 +62,8 @@ class ViewModel(object):
         servers_up = set(mc.list_servers_up())
         
         backups = []
-        for i in mc.list_servers(self.base_directory):
-            instance = self.quick_create(i)
+        for i in self.server_list():
+            instance = self.quick_create(i, cherrypy.session['_cp_username'])
             increments = instance.list_increments()
             
             srv = {
@@ -94,17 +102,17 @@ class ViewModel(object):
 
     @cherrypy.expose
     def increments(self, server_name):
-        instance = self.quick_create(server_name)
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
         return dumps(instance.list_increments())
 
     @cherrypy.expose
     def sp(self, server_name):
-        instance = self.quick_create(server_name)
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
         return dumps(instance.server_properties[:])
 
     @cherrypy.expose
     def sc(self, server_name):
-        instance = self.quick_create(server_name)
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
         return dumps(instance.server_config[:])
 
     @cherrypy.expose
@@ -268,22 +276,12 @@ class mc_server(object):
             'payload': None
             }
 
-        init_args = {
-            'owner': cherrypy.session['_cp_username'],
-            'base_directory': self.base_directory
-            }
-
         try:
-            instance = mc(server_name, **init_args)
-                                  
-            for d in ['cwd', 'bwd']:
-                try:
-                    instance = mc(server_name,
-                                  owner=mc.valid_owner(init_args['owner'], instance.env[d]),
-                                  base_directory=init_args['base_directory'])
-                    break
-                except OSError:
-                    continue
+            path_ = os.path.join(self.base_directory, 'servers', server_name)
+            mc.valid_owner(cherrypy.session['_cp_username'], path_)
+            instance = mc(server_name,
+                          cherrypy.session['_cp_username'],
+                          base_directory=self.base_directory) 
 
             if command == 'create':
                 from json import loads
@@ -311,7 +309,7 @@ class mc_server(object):
             else:
                 instance._command_stuff(command)
                 retval = '"%s" successfully sent to server.' % command
-        except (RuntimeError, KeyError) as ex:
+        except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except RuntimeWarning as ex:
