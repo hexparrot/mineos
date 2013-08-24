@@ -1,0 +1,22 @@
+/* Cleanizr v.1.2.2 - custom.css
+ *
+ * @note : Any enhancement should be done in this file
+ * @author : you
+ * @author URL : your url
+ *
+ */
+
+
+li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr, ul.nav  {
+    cursor: pointer;
+}
+
+#create_server .help-block {
+    display: block !important;
+}
+.dropdown-toggle {
+    cursor: default;
+}
+.dropdown-menu li {
+    cursor: pointer;
+}

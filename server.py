@@ -21,47 +21,53 @@ class ViewModel(object):
         
         self.base_directory = base_directory
         self.quick_create = partial(mc,
-                                    owner=None,
                                     base_directory=base_directory)
+
+    def server_list(self):
+        for i in mc.list_servers(self.base_directory):
+            try:
+                mc.valid_owner(cherrypy.session['_cp_username'],
+                               os.path.join(self.base_directory, 'servers', i))
+            except OSError:
+                continue
+            else:
+                yield i
         
     @cherrypy.expose
     def status(self):
         status = []
-        for i in mc.list_servers(self.base_directory):
-            instance = self.quick_create(i)
-            ping_info = instance.ping
-            srv = {
-                'server_name': i,
-                'profile': instance.profile,
-                'up': instance.up,
-                'ip_address': instance.ip_address,
-                'port': instance.port,
-                'memory': instance.memory,
-                'java_xmx': instance.server_config['java':'java_xmx':''],
-                'owner': mc.valid_owner(instance.owner.pw_name,
-                                        instance.env['cwd'])
-                }
-            srv.update(dict(instance.ping._asdict()))         
-            status.append(srv)
+        for i in self.server_list():
+            instance = self.quick_create(i, owner=cherrypy.session['_cp_username'])
+
+            try:
+                ping_info = instance.ping
+            except KeyError:
+                continue
+            else:
+                srv = {
+                    'server_name': i,
+                    'profile': instance.profile,
+                    'up': instance.up,
+                    'ip_address': instance.ip_address,
+                    'port': instance.port,
+                    'memory': instance.memory,
+                    'java_xmx': instance.server_config['java':'java_xmx':'']
+                    }
+                srv.update(dict(instance.ping._asdict()))         
+                status.append(srv)
         return dumps(status)
 
     @cherrypy.expose
-    def rdiff_backups(self):
+    def rdiff_backups(self, server_name):
         servers_up = set(mc.list_servers_up())
         
-        backups = []
-        for i in mc.list_servers(self.base_directory):
-            instance = self.quick_create(i)
-            increments = instance.list_increments()
-            
-            srv = {
-                'server_name': i,
-                'up': i in servers_up,
-                'mirror_stamp': increments.current_mirror,
-                'increments': increments.increments
-                }
-            backups.append(srv)
-        return dumps(backups)
+        instance = self.quick_create(server_name, cherrypy.session['_cp_username'])
+        increments = instance.list_increments()
+        
+        return dumps({
+            'mirror_stamp': increments.current_mirror,
+            'increments': increments.increments
+            })
                           
     @cherrypy.expose
     def profiles(self):
@@ -72,17 +78,54 @@ class ViewModel(object):
             md5s[profile] = {}
             md5s[profile]['save_as'] = opt_dict['save_as']
             md5s[profile]['run_as'] = opt_dict['run_as']
-            md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
-            md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
-            md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+            try:
+                md5s[profile]['save_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['save_as']))
+                md5s[profile]['save_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['save_as']))
+            except IOError:
+                md5s[profile]['save_as_md5'] = ''
+                md5s[profile]['save_as_mtime'] = ''
+
+            try:
+                md5s[profile]['run_as_mtime'] = mc._mtime(os.path.join(path,opt_dict['run_as']))
+                md5s[profile]['run_as_md5'] = mc._md5sum(os.path.join(path,opt_dict['run_as']))
+            except IOError:
+                md5s[profile]['run_as_mtime'] = ''
+                md5s[profile]['run_as_md5'] = ''
             
         return dumps(md5s)     
 
     @cherrypy.expose
     def increments(self, server_name):
-        instance = self.quick_create(server_name)
-        return dumps(instance.list_increments())
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
+        return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
+
+    @cherrypy.expose
+    def sp(self, server_name):
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
+        return dumps(instance.server_properties[:])
+
+    @cherrypy.expose
+    def sc(self, server_name):
+        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
+        return dumps(instance.server_config[:])
+
+    @cherrypy.expose
+    def loadavg(self):
+        from procfs_reader import proc_loadavg
+        return dumps(proc_loadavg())
+
+    @cherrypy.expose
+    def dashboard(self):
+        from procfs_reader import entries, proc_uptime
+        
+        kb_free = dict(entries('', 'meminfo'))['MemFree']
+        mb_free = str(round(float(kb_free.split()[0])/1000, 2))
+    
+        return dumps({
+            'uptime': str(proc_uptime()[0]),
+            'memfree': mb_free,
+            'whoami': cherrypy.session['_cp_username']
+            })
 
 class mc_server(object):    
     auth = AuthController()
@@ -97,16 +140,11 @@ class mc_server(object):
         self.vm = ViewModel(self.base_directory)
 
     @cherrypy.expose
+    @require()
     def index(self):
         from cherrypy.lib.static import serve_file
         
         return serve_file(os.path.join(os.getcwd(),'index.html'))
-
-    @cherrypy.expose
-    def servers(self):
-        from cherrypy.lib.static import serve_file
-        
-        return serve_file(os.path.join(os.getcwd(),'servers.html'))
     
     @cherrypy.expose
     def whoami(self):
@@ -115,17 +153,14 @@ class mc_server(object):
         except KeyError:
             return ''
 
-    @cherrypy.expose
     @require()
     def methods(self):
         return dumps(self.METHODS)
 
-    @cherrypy.expose
     @require()
     def properties(self):
         return dumps(self.PROPERTIES)
 
-    @cherrypy.expose
     @require()
     def inspect_method(self, method):
         try:
@@ -167,6 +202,17 @@ class mc_server(object):
             }
 
         try:
+            if command == 'define_profile':
+                from json import loads
+                from urllib import unquote
+
+                definition_unicode = loads(args['profile'])
+                definition = {str(k):str(v) for k,v in definition_unicode.iteritems()}
+
+                definition['url'] = unquote(definition['url'])
+
+                instance = mc('throwaway', **init_args)
+                retval = instance.define_profile(definition)      
             if command == 'update_profile':
                 instance = mc('throwaway', **init_args)
                 retval = instance.update_profile(**args)
@@ -224,24 +270,29 @@ class mc_server(object):
             'payload': None
             }
 
-        init_args = {
-            'owner': cherrypy.session['_cp_username'],
-            'base_directory': self.base_directory
-            }
-
         try:
-            instance = mc(server_name, **init_args)
-                                  
-            for d in ['cwd', 'bwd']:
-                try:
-                    instance = mc(server_name,
-                                  owner=mc.valid_owner(init_args['owner'], instance.env[d]),
-                                  base_directory=init_args['base_directory'])
-                    break
-                except OSError:
-                    continue
+            path_ = os.path.join(self.base_directory, 'servers', server_name)
+            mc.valid_owner(cherrypy.session['_cp_username'], path_)
+            instance = mc(server_name,
+                          cherrypy.session['_cp_username'],
+                          base_directory=self.base_directory) 
 
-            if command in self.METHODS:
+            if command == 'create':
+                from json import loads
+                from collections import defaultdict
+
+                sp_unicode = loads(args['sp'])
+                sc_unicode = loads(args['sc'])
+
+                sp = {str(k):str(v) for k,v in sp_unicode.iteritems()}
+                
+                sc = defaultdict(dict)
+                for section in sc_unicode.keys():
+                    for key in sc_unicode[section].keys():
+                        sc[str(section)][str(key)] = str(sc_unicode[section][key])
+                
+                retval = instance.create(dict(sc),sp)                
+            elif command in self.METHODS:
                 retval = getattr(instance, command)(**args)
             elif command in self.PROPERTIES:
                 if args:
@@ -252,7 +303,7 @@ class mc_server(object):
             else:
                 instance._command_stuff(command)
                 retval = '"%s" successfully sent to server.' % command
-        except (RuntimeError, KeyError) as ex:
+        except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except RuntimeWarning as ex:
@@ -312,6 +363,18 @@ if __name__ == "__main__":
         '/assets': {
             'tools.staticdir.on': True,
             'tools.staticdir.dir': os.path.join(current_dir, 'assets')
+            },
+        '/css': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'css')
+            },
+        '/img': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'img')
+            },
+        '/js': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'js')
             }
         }
 
