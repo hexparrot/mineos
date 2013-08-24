@@ -535,8 +535,6 @@ class mc(object):
             return actual_owner
         elif username in getgrgid(gid).gr_mem:
             return actual_owner
-        elif os.geteuid() == 0:
-            return actual_owner
         else:
             raise OSError("user '%s' does not have permissions on %s" % (username,
                                                                          directory))
@@ -615,15 +613,23 @@ class mc(object):
         """Checks that the expected md5 of a server jar matches the one
         in the LIVE SERVER DIRECTORY (e.g., update newer than executed)
         """
-        try:
-            current = self.profile
+        def compare(profile):
             return self._md5sum(os.path.join(self.env['pwd'],
-                                             current,
+                                             profile,
                                              self.profile_config[current:'run_as'])) == \
                    self._md5sum(os.path.join(self.env['cwd'],
                                              self.profile_config[current:'run_as']))
+        
+        try:
+            current = self.profile
+            return compare(current)
         except TypeError:
             raise RuntimeError('Server is not assigned a valid profile.')
+        except IOError as e:
+            from errno import ENOENT
+            if e.errno == ENOENT:
+                self.profile = current
+            return compare(current)
 
     @property
     def port(self):
@@ -754,7 +760,7 @@ class mc(object):
             'java': self.BINARY_PATHS['java'],
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
-            'java_tweaks': self.server_config['java':'java_tweaks'],
+            'java_tweaks': self.server_config['java':'java_tweaks':''],
             'jar_args': '-nogui'
             }
 
@@ -871,6 +877,18 @@ class mc(object):
         self._previous_arguments = required_arguments
         return '%(rdiff)s --list-increments %(bwd)s' % required_arguments
 
+    @property
+    @sanitize
+    def command_list_increment_sizes(self):
+        """Returns the increment sizes found at the backup dir"""
+        required_arguments = {
+            'rdiff': self.BINARY_PATHS['rdiff-backup'],
+            'bwd': self.env['bwd']
+            }
+
+        self._previous_arguments = required_arguments
+        return '%(rdiff)s --list-increment-sizes %(bwd)s' % required_arguments
+
     @sanitize
     def command_wget_profile(self, profile):
         """Returns the command to download a new file"""
@@ -959,6 +977,31 @@ class mc(object):
         timestamp = current_string.partition(':')[-1].strip()
         
         return incs(timestamp, [d.strip() for d in output_list])
+
+    def list_increment_sizes(self):
+        """Returns a list of the timestamps/sizes of all the increment files found.
+        """
+        from subprocess import CalledProcessError
+        import re
+
+        incs = namedtuple('increments', 'step timestamp increment_size cumulative_size')
+        
+        try:
+            output = self._command_direct(self.command_list_increment_sizes, self.env['bwd'])
+            assert output is not None
+        except (CalledProcessError, AssertionError):
+            raise StopIteration
+
+        regex = re.compile(r'^(\w.*?) {2,}(.*?) {2,}([^ ]+ \w*)')
+        count = 0
+
+        for line in output.split('\n'):
+            hits = regex.match(line)
+            try:
+                yield incs('%sB' % count, hits.group(1), hits.group(2), hits.group(3))
+                count += 1
+            except AttributeError:
+                continue
 
     @classmethod
     def list_servers_up(cls):
