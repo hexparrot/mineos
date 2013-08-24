@@ -42,11 +42,22 @@ function model_property(property, value, section) {
 	} else
 		self.type = 'textbox';
 
-	self.toggle = function() {
-		if (self.val() == true)
-			self.val(false)
-		else if (self.val() == false)
-			self.val(true)
+	self.toggle = function(model, eventobj) {
+		$(eventobj.currentTarget).find('input').iCheck('destroy');
+
+		if (self.val() == true) {
+			$(eventobj.currentTarget).find('input').iCheck('uncheck');
+			self.val(false);
+		} else if (self.val() == false) {
+			var target = $(eventobj.currentTarget).find('input');
+			$(target).iCheck({
+	            checkboxClass: 'icheckbox_minimal-grey',
+	            radioClass: 'iradio_minimal-grey',
+	            increaseArea: '20%' // optional
+	        });
+			$(target).iCheck('check');
+			self.val(true);
+		}
 	}
 }
 
@@ -91,7 +102,8 @@ function viewmodel() {
 		pings: ko.observableArray(),
 		rdiffs: ko.observableArray(),
 		profiles: ko.observableArray(),
-		sp: ko.observableArray()
+		sp: ko.observableArray(),
+		sc: ko.observableArray()
 	}
 
 	self.prune = {
@@ -413,12 +425,37 @@ function viewmodel() {
 	}
 
 	self.refresh_sp = function() {
-		var params = {'server_name': self.server().server_name};
-		$.getJSON('/vm/sp', params)
+		var params = {
+			'server_name': self.server().server_name,
+			'cmd': 'sp'
+		};
+		$.getJSON('/server', params)
 		.success(function(data) {
 			self.pagedata.sp.removeAll();
-			$.each(data, function(i,v){
+			$.each(data.payload, function(i,v){
 				self.pagedata.sp.push(new model_property(i,v));
+			})
+
+			$('#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
+	            checkboxClass: 'icheckbox_minimal-grey',
+	            radioClass: 'iradio_minimal-grey',
+	            increaseArea: '20%' // optional
+	        });
+		})
+	}
+
+	self.refresh_sc = function() {
+		var params = {
+			'server_name': self.server().server_name,
+			'cmd': 'sc'
+		};
+		$.getJSON('/server', params)
+		.success(function(data) {
+			self.pagedata.sc.removeAll();
+			$.each(data.payload, function(i,v){
+				$.each(v, function(a,b){
+					self.pagedata.sc.push(new model_property(a,b,i));
+				})
 			})
 		})
 	}

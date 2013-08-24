@@ -776,8 +776,11 @@
                               <td>
                                 <div class="control-group">
                                     <div class="controls">
-                                       <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
-                                       <input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-small truefalse">
+                                        <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
+                                        <!--<input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-large truefalse">-->
+                                        <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
+                                            <input type="checkbox" data-bind="checked: val" class="truefalse">
+                                        </span>
                                     </div>
                                 </div>
                               </td>

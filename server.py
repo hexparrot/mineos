@@ -56,19 +56,7 @@ class ViewModel(object):
                 srv.update(dict(instance.ping._asdict()))         
                 status.append(srv)
         return dumps(status)
-
-    @cherrypy.expose
-    def rdiff_backups(self, server_name):
-        servers_up = set(mc.list_servers_up())
-        
-        instance = self.quick_create(server_name, cherrypy.session['_cp_username'])
-        increments = instance.list_increments()
-        
-        return dumps({
-            'mirror_stamp': increments.current_mirror,
-            'increments': increments.increments
-            })
-                          
+           
     @cherrypy.expose
     def profiles(self):
         md5s = {}
@@ -145,13 +133,6 @@ class mc_server(object):
         from cherrypy.lib.static import serve_file
         
         return serve_file(os.path.join(os.getcwd(),'index.html'))
-    
-    @cherrypy.expose
-    def whoami(self):
-        try:
-            return cherrypy.session['_cp_username']
-        except KeyError:
-            return ''
 
     @require()
     def methods(self):
