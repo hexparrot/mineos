@@ -5,7 +5,7 @@ function model_status(data) {
 	$.extend(self, data);
 	
 	self.mem_utilization = ko.computed(function() {
-		return '{0} / {1}'.format(self.memory, self.java_xmx);
+		return '{0} / {1}'.format(parseInt(self.memory), self.java_xmx);
 	})
 	
 	self.capacity = ko.computed(function() {
@@ -18,6 +18,14 @@ function model_status(data) {
 		} catch (err) {
 			return false;
 		}
+	})
+
+	self.online_pct = ko.computed(function() {
+		return parseInt((self.players_online / self.max_players) * 100)
+	})
+
+	self.memory_pct = ko.computed(function() {
+		return parseInt((parseInt(self.memory) / parseInt(self.java_xmx)) * 100)
 	})
 }
 
@@ -202,6 +210,7 @@ function viewmodel() {
 			case 'server_status':
 				self.refresh_pings();
 				self.refresh_increments();
+				setTimeout(self.redraw_gauges, 500);
 				break;
 			case 'profiles':
 				self.refresh_profiles();
@@ -221,6 +230,7 @@ function viewmodel() {
 
 		$('.container-fluid').hide();
 		$('#{0}'.format(page)).show();
+
 	})
 
 	self.refresh_pings = function() {
@@ -241,7 +251,6 @@ function viewmodel() {
 	})
 
 	self.prune.user_input.subscribe(function(new_value) {
-		console.log(new_value)
 		var clone = self.pagedata.rdiffs().slice(0).reverse();
 		var match;
 		var reclaimed = 0.0;
@@ -523,6 +532,44 @@ function viewmodel() {
 				self.load_averages.fifteen.splice(0,1)
 			}
 		})
+	}
+
+	self.redraw_gauges = function() {
+		function judge_color(percent, colors, thresholds) {
+			var gauge_color = colors[0];
+			for (var i=0; i < colors.length; i++) {
+				gauge_color = (parseInt(percent) >= thresholds[i] ? colors[i] : gauge_color)
+			}
+			return gauge_color;
+		}
+
+		var colors = ['green', 'yellow', 'orange', 'red'];
+		
+		var capacity = $('.gauge-capacity').data('percent');
+		var capacity_thresholds = [0, 60, 75, 90];
+
+		var utilization = $('.gauge-utilization').data('percent');
+		var utilization_thresholds = [0, 60, 75, 90];
+
+        $('.gauge-capacity').easyPieChart({
+            barColor: $color[judge_color(capacity, colors, capacity_thresholds)],
+            scaleColor: false,
+            trackColor: '#999',
+            lineCap: 'butt',
+            lineWidth: 4,
+            size: 50,
+            animate: 1000
+        });
+
+		$('.gauge-utilization').easyPieChart({
+            barColor: $color[judge_color(utilization, colors, utilization_thresholds)],
+            scaleColor: false,
+            trackColor: '#999',
+            lineCap: 'butt',
+            lineWidth: 4,
+            size: 50,
+            animate: 1000
+        });
 	}
 
 	self.redraw_chart = function() {

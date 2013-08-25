@@ -7,10 +7,12 @@
  */
 
 
-li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr, ul.nav  {
+li.accordion-group a, ul.nav  {
     cursor: pointer;
 }
-
+#table_status tr td:first-child {
+    cursor: pointer;
+}
 #create_server .help-block {
     display: block !important;
 }

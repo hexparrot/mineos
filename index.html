@@ -276,12 +276,14 @@
                             <section class="body">
                                 <div class="body-inner">
                                     <div class="span3 pull-left">
+                                        <!-- START Summary -->
                                         <figure class="stats summary pull-left">
                                             <div class="icon circle green"><span class="icone-ok"></span></div>
                                             <figcaption>
                                                 <h3><span data-bind="text: dashboard.servers_up"></span><small>Running Servers</small></h3>
                                             </figcaption>
-                                        </figure><!--/ END Summary -->
+                                        </figure>
+                                        <!--/ END Summary -->
 
                                         <!-- START Summary -->
                                         <figure class="stats summary pull-left">
@@ -335,7 +337,7 @@
                               <td data-bind="text: server_name, click: $root.select_server"></td>
                               <td data-bind="text: profile"></td>
                               <td data-bind="text: port"></td>
-                              <td data-bind="text: (up ? 'online' : 'offline')"></td>
+                              <td data-bind=""><span class="label" data-bind="text: (up ? 'online' : 'offline'), css: {'label-success': up, 'label-important': !up}"></span></td>
                               <td data-bind="text: capacity"></td>
                               <td data-bind="text: mem_utilization"></td>
                             </tr>
@@ -354,10 +356,53 @@
                         <!-- START Page/Section header -->
                         <div class="span12">
                             <div class="page-header line1">
-                                <h4><span data-bind=""></span></h4>
+                                <h4><span data-bind="text: server().server_name"></span></h4>
                             </div>
                         </div>
                         <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Circular Summary -->
+                        <div class="span12 widget">
+                            <header><h4 class="title">Server at a Glance</h4></header>
+                            <section class="body">
+                                <div class="body-inner" data-bind="with: server()">
+                                    <!-- START Summary -->
+                                    <figure class="stats summary pull-left">
+                                        <div data-bind="css: {'green': up, 'red': !up}" class="icon circle"><span data-bind="css: {'icone-ok': up, 'icone-off': !up}"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: (up ? 'online' : 'offline')"></span><small>&nbsp;</small></h3>
+                                        </figcaption>
+                                    </figure>
+                                    <!--/ END Summary -->
+
+                                    <!-- START Circular 1 -->
+                                    <figure class="stats circular stacked">
+                                        <div class="gauge gauge-capacity" data-bind="attr: {'data-percent': online_pct}" data-percent="">
+                                            <span><span class="text" data-bind="text: online_pct"></span>%</span>
+                                        </div>
+                                        <figcaption>
+                                            <h4><span data-bind="text: capacity"></span><small>Players Online</small></h4>
+                                        </figcaption>
+                                    </figure><!--/ END Circular 1 -->
+
+                                    <!-- START Circular 2 -->
+                                    <figure class="stats circular stacked">
+                                        <div class="gauge gauge-utilization" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
+                                            <span><span class="text" data-bind="text: memory_pct"></span>%</span>
+                                        </div>
+                                        <figcaption>
+                                            <h4><span data-bind="text: mem_utilization"></span><small>Heap Usage</small></h4>
+                                        </figcaption>
+                                    </figure><!--/ END Circular 2 -->
+
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Circular Summary -->
                     </div>
                     <!--/ END Row -->
          
@@ -368,7 +413,7 @@
                         <div class="btn-group">
                             <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Stop <span class="caret"></span></button>
                             <ul class="dropdown-menu">
-                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Stop</a></li>
+                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Stop</a></li> 
                                 <li><a data-required="server_name" data-cmd="kill" data-bind="click: $root.command" data-refresh="2000">Kill</a></li>
                             </ul>
                         </div><!--/ Button Dropdown -->
