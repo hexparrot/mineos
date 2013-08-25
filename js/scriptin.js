@@ -609,10 +609,7 @@ function viewmodel() {
 	        }
 	    }
 
-        function get_avg(interval) {
-            self.refresh_loadavg(options.xaxis.max)
-            data = self.load_averages[interval];
-
+        function enumerate(data) {
             var res = [];
             for (var i = 0; i < data.length; ++i)
                 res.push([i, data[i]])
@@ -625,10 +622,12 @@ function viewmodel() {
         	if (self.page() != 'dashboard' || !self.load_averages.autorefresh())
         		return
 
+        	self.refresh_loadavg(options.xaxis.max)
+
         	var dataset = [
-			    { label: "fifteen", data: get_avg('fifteen'), color: "#0077FF" },
-			    { label: "five", data: get_avg('five'), color: "#ED7B00" },
-			    { label: "one", data: get_avg('one'), color: "#E8E800" }
+			    { label: "fifteen", data: enumerate(self.load_averages['fifteen']), color: "#0077FF" },
+			    { label: "five", data: enumerate(self.load_averages['five']), color: "#ED7B00" },
+			    { label: "one", data: enumerate(self.load_averages['one']), color: "#E8E800" }
         	]
 
         	options.yaxis.max = Math.max(
@@ -636,7 +635,7 @@ function viewmodel() {
 				self.load_averages.five.max(),
 				self.load_averages.fifteen.max()) || 1;
 
-        	var plot = $.plot($("#load_averages"), [ get_avg('one') ], options);
+        	var plot = $.plot($("#load_averages"), [0], options);
 
             plot.setData(dataset);
             plot.draw();
