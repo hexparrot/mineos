@@ -455,7 +455,7 @@
                         <div class="control-group">
                             <label class="control-label">Remove restore points older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_intervals" placeholder="Pick a date or step"> <button data-bind="click: prune_preview" type="button" class="btn btn-warning"><span class="icone-eye-open"></span> Preview Removal</button>
+                                <input type="text" id="prune_intervals" data-bind="value: prune.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button id="go_prune" data-bind="visible: prune.to_remove() > 0, click: command" data-cmd="prune" data-required="server_name,steps" data-steps="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
                             </div>
                         </div>
 
@@ -465,13 +465,13 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Icon Statistic - Circle -->
-                        <div class="span10 widget">
+                        <div class="span12 widget">
                             <header><h4 class="title">Removal Summary</h4></header>
                             <section class="body">
-                                <div class="body-inner" style="text-align:center;">
+                                <div class="body-inner" style="">
                                     <!-- START Summary 1 -->
                                     <figure class="stats summary shadowed">
-                                        <div class="icon circle lime"><span class="icone-ticket"></span></div>
+                                        <div class="icon circle lime"><span class="icone-folder-close"></span></div>
                                         <figcaption>
                                             <h3><span data-bind="text: prune.to_remove"></span><small>Restore Points</small></h3>
                                         </figcaption>
@@ -484,13 +484,6 @@
                                             <h3><span data-bind="text: prune.space_reclaimed"></span><small>MB Reclaimed</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
-
-                                    <!-- START Summary 3 -->
-                                    <div class="stats summary shadowed">
-                                        <button id="go_prune" data-bind="visible: prune.to_remove() > 0, click: command" data-cmd="prune" data-required="server_name,steps" data-steps="" type="button" class="btn btn-danger"><span class="icone-eye-open"></span> Prune Restore Points</button>
-                                    </div><!--/ END Summary 3 -->
-                                    
-
                                 </div>
                             </section>
                         </div>
@@ -777,7 +770,6 @@
                                 <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
                                     <div class="controls">
                                         <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
-                                        <!--<input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-large truefalse">-->
                                         <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
                                             <input type="checkbox" data-bind="checked: val" class="truefalse">
                                         </span>
@@ -825,7 +817,6 @@
                                 <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
                                     <div class="controls">
                                         <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
-                                        <!--<input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-large truefalse">-->
                                         <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
                                             <input type="checkbox" data-bind="checked: val" class="truefalse">
                                         </span>

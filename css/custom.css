@@ -20,3 +20,6 @@ li.accordion-group a, input.truefalse, #table_status tr, #table_backup tr, ul.na
 .dropdown-menu li {
     cursor: pointer;
 }
+#prune_intervals {
+	margin-bottom: 0px;
+}

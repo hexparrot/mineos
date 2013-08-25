@@ -148,6 +148,7 @@ function viewmodel() {
 	}
 
 	self.prune = {
+		user_input: ko.observable(),
 		steps: ko.observable(),
 		to_remove: ko.observable(0),
 		space_reclaimed: ko.observable(0.0)
@@ -239,15 +240,14 @@ function viewmodel() {
 		})
 	})
 
-	self.prune_preview = function(vm, eventobj) {
-		var removal_string = $('#prune_intervals').val();
-
+	self.prune.user_input.subscribe(function(new_value) {
+		console.log(new_value)
 		var clone = self.pagedata.rdiffs().slice(0).reverse();
 		var match;
 		var reclaimed = 0.0;
 
 		$.each(clone, function(i,v) {
-			if (v.timestamp == removal_string || v.step == removal_string) {
+			if (v.timestamp == new_value || v.step == new_value) {
 				match = i;
 				self.prune.steps(v.step);
 				return false;
@@ -267,7 +267,7 @@ function viewmodel() {
 			self.prune.space_reclaimed(reclaimed);
 			$('#go_prune').data('steps', self.prune.steps())
 		}
-	}
+	})
 
 	self.refresh_increments = function() {
 		$.getJSON('/vm/increments', {server_name: self.server().server_name})
