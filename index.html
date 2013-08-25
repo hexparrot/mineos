@@ -303,7 +303,7 @@
                                         <!--/ END Summary -->
 
                                         <!-- START Circular 1 -->
-                                        <figure class="stats circular stacked">
+                                        <figure class="stats circular">
                                             <div class="gauge" data-bind="attr: {'data-percent': dashboard.df_pct}" data-percent="">
                                                 <span><span class="text" data-bind="text: dashboard.df_pct"></span>%</span>
                                             </div>
@@ -316,12 +316,8 @@
                                     </div>
 
                                     <!-- START Auto Update Chart -->
-                                    <div class="span11 widget pull-left">
-                                        <section class="body">
-                                            <div class="body-inner">
-                                                <div class="flot" id="load_averages"></div>
-                                            </div>
-                                        </section>
+                                    <div class="span11 pull-left widget">
+                                        <div class="flot" id="load_averages"></div>
                                     </div>
                                     <!--/ END Auto Update Chart -->
 

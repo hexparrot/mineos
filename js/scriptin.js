@@ -601,12 +601,24 @@ function viewmodel() {
 	            },
 	            shadowSize: 0 
 	        },
-	        yaxis: { min: 0, max: 1 },
-	        xaxis: { min: 0, max: 30, show: true },
+	        yaxis: { 
+	        	min: 0, 
+	        	max: 1,
+	        	axisLabel: "Load Average for last minute",
+		        axisLabelUseCanvas: true,
+		        axisLabelFontSizePixels: 12,
+		        axisLabelFontFamily: 'Verdana, Arial',
+		        axisLabelPadding: 3
+	        },
+	        xaxis: { min: 0, max: 30, show: false },
 	        grid: {
 	            borderWidth: 0, 
-	            hoverable: true 
-	        }
+	            hoverable: false 
+	        },
+	        legend: {
+		        labelBoxBorderColor: "#858585",
+		        position: "ne"
+		    }
 	    }
 
         function enumerate(data) {
@@ -619,8 +631,12 @@ function viewmodel() {
         function update() {
         	//colors http://www.jqueryflottutorial.com/tester-4.html
 
-        	if (self.page() != 'dashboard' || !self.load_averages.autorefresh())
+        	if (self.page() != 'dashboard' || !self.load_averages.autorefresh()) {
+				self.load_averages.one.push.apply(self.load_averages.one, [0,0,0])
+				self.load_averages.five.push.apply(self.load_averages.five, [0,0,0])
+				self.load_averages.fifteen.push.apply(self.load_averages.fifteen, [0,0,0])
         		return
+        	}
 
         	self.refresh_loadavg(options.xaxis.max)
 
