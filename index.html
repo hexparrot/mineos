@@ -213,7 +213,7 @@
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu6" class="collapse ">
                                             <li data-bind="css: {'active': page() == 'server_properties'}"><a data-bind="click: select_page" data-page="server_properties"><span class="icon icone-angle-right"></span> server.properties</a></li>
-                                            <li data-bind="css: {'active': page() == 'server_config'}"><a><span class="icon icone-angle-right"></span> server.config</a></li>
+                                            <li data-bind="css: {'active': page() == 'server_config'}"><a data-bind="click: select_page" data-page="server_config"><span class="icon icone-angle-right"></span> server.config</a></li>
                                         </ul>
                                         <!--/ END Submenu Menu -->
                                     </li>
@@ -792,6 +792,53 @@
                 </div>
                 <!--/ END Content -->
 
+                <!-- START Content -->
+                <div id="server_config" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>server.config</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_config" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col">Section</th>
+                              <th scope="col">Option</th>
+                              <th scope="col">Value</th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: pagedata.sc">
+                            <tr>
+                              <td data-bind="text: section" class="span2"></td>
+                              <td data-bind="text: option" class="span4"></td>
+                              <td>
+                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
+                                    <div class="controls">
+                                        <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
+                                        <!--<input type="text" data-bind="visible: $data.type == 'truefalse', value: val, click: $data.toggle" class="input-large truefalse">-->
+                                        <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
+                                            <input type="checkbox" data-bind="checked: val" class="truefalse">
+                                        </span>
+                                    </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
 
                 <!-- START Content -->
                 <div id="define_profile" class="container-fluid">

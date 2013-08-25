@@ -29,19 +29,39 @@ function model_property(server_name, option, value, section) {
 	self.section = section;
 	self.success = ko.observable(null);
 
-	var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
-					  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
-					  'spawn-monsters', 'force-gamemode', 'spawn-npcs', 'snooper-enabled',
-					  'white-list','enable-rcon'];
+	if (section) {
+		var true_false = [
+			['onreboot', 'restore'],
+			['onreboot', 'start']
+		];
 
-	if (true_false.indexOf(option) >= 0) {
-		self.type = 'truefalse';
-		if (self.val().toLowerCase() == 'true')
-			self.val(true);
-		else
-			self.val(false);
-	} else
-		self.type = 'textbox';
+		$.each(true_false, function(i,v) {
+			if (self.section == v[0] && self.option == v[1]) {
+				self.type = 'truefalse';
+				if (self.val().toLowerCase() == 'true')
+					self.val(true);
+				else
+					self.val(false);
+				return false;
+			} else {
+				self.type = 'textbox';
+			}
+		})
+	} else {
+		var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
+						  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
+						  'spawn-monsters', 'force-gamemode', 'spawn-npcs', 'snooper-enabled',
+						  'white-list','enable-rcon'];
+
+		if (true_false.indexOf(option) >= 0) {
+			self.type = 'truefalse';
+			if (self.val().toLowerCase() == 'true')
+				self.val(true);
+			else
+				self.val(false);
+		} else
+			self.type = 'textbox';
+	}
 
 	self.toggle = function(model, eventobj) {
 		$(eventobj.currentTarget).find('input').iCheck('destroy');
@@ -87,8 +107,6 @@ function model_property(server_name, option, value, section) {
 function model_increment(enumeration, inc_data) {
 	var self = this;
 	self.step = '{0}B'.format(enumeration);
-
-	console.log(inc_data)
 
 	self.timestamp = inc_data[0];
 	self.increment_size = inc_data[1];
@@ -192,6 +210,9 @@ function viewmodel() {
 				break;
 			case 'server_properties':
 				self.refresh_sp();
+				break;
+			case 'server_config':
+				self.refresh_sc();
 				break;
 			default:
 				break;			
@@ -477,9 +498,15 @@ function viewmodel() {
 			self.pagedata.sc.removeAll();
 			$.each(data.payload, function(i,v){
 				$.each(v, function(a,b){
-					self.pagedata.sc.push(new model_property(a,b,i));
+					self.pagedata.sc.push(new model_property(params.server_name,a,b,i));
 				})
 			})
+
+			$('#table_config input[type="checkbox"]').not('.nostyle').iCheck({
+	            checkboxClass: 'icheckbox_minimal-grey',
+	            radioClass: 'iradio_minimal-grey',
+	            increaseArea: '40%' // optional
+	        });
 		})
 	}
 
