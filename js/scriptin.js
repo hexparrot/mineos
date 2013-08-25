@@ -137,8 +137,17 @@ function viewmodel() {
 		whoami: ko.observable(),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
-		servers_up: ko.observable()
+		servers_up: ko.observable(),
+		df: ko.observable()
 	}
+
+	self.dashboard['df_pct'] = ko.computed(function() {
+		try {
+			return Math.round(parseFloat(self.dashboard.df().used) / parseFloat(self.dashboard.df().total) * 100);
+		} catch (e) {
+			return '-';
+		}
+	})
 
 	self.load_averages = {
 		one: [0],
@@ -200,6 +209,7 @@ function viewmodel() {
 			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
 			self.dashboard.memfree(data.memfree);
 			self.dashboard.whoami(data.whoami);
+			self.dashboard.df(data.df);
 		})
 
 		try {
@@ -227,6 +237,7 @@ function viewmodel() {
 				self.refresh_pings();
 				self.refresh_dashboard();
 				self.redraw_chart();
+				setTimeout(self.redraw_gauges, 500);
 				break;
 			case 'backup_list':
 				self.refresh_increments();
@@ -543,6 +554,29 @@ function viewmodel() {
 		})
 	}
 
+	self.redraw_gauges = function() {
+		function judge_color(percent, colors, thresholds) {
+			var gauge_color = colors[0];
+			for (var i=0; i < colors.length; i++) {
+				gauge_color = (parseInt(percent) >= thresholds[i] ? colors[i] : gauge_color)
+			}
+			return gauge_color;
+		}
+
+		var colors = ['green', 'yellow', 'orange', 'red'];
+		var thresholds = [0, 60, 75, 90];
+
+		$('#{0} .gauge'.format(vm.page())).easyPieChart({
+            barColor: $color[judge_color($(this).data('percent'), colors, thresholds)],
+            scaleColor: false,
+            trackColor: '#999',
+            lineCap: 'butt',
+            lineWidth: 4,
+            size: 50,
+            animate: 1000
+        });
+	}
+
 	self.refresh_loadavg = function(keep_count) {
 		$.getJSON('/vm/loadavg')
 		.success(function(data){
@@ -558,44 +592,6 @@ function viewmodel() {
 		})
 	}
 
-	self.redraw_gauges = function() {
-		function judge_color(percent, colors, thresholds) {
-			var gauge_color = colors[0];
-			for (var i=0; i < colors.length; i++) {
-				gauge_color = (parseInt(percent) >= thresholds[i] ? colors[i] : gauge_color)
-			}
-			return gauge_color;
-		}
-
-		var colors = ['green', 'yellow', 'orange', 'red'];
-		
-		var capacity = $('.gauge-capacity').data('percent');
-		var capacity_thresholds = [0, 60, 75, 90];
-
-		var utilization = $('.gauge-utilization').data('percent');
-		var utilization_thresholds = [0, 60, 75, 90];
-
-        $('.gauge-capacity').easyPieChart({
-            barColor: $color[judge_color(capacity, colors, capacity_thresholds)],
-            scaleColor: false,
-            trackColor: '#999',
-            lineCap: 'butt',
-            lineWidth: 4,
-            size: 50,
-            animate: 1000
-        });
-
-		$('.gauge-utilization').easyPieChart({
-            barColor: $color[judge_color(utilization, colors, utilization_thresholds)],
-            scaleColor: false,
-            trackColor: '#999',
-            lineCap: 'butt',
-            lineWidth: 4,
-            size: 50,
-            animate: 1000
-        });
-	}
-
 	self.redraw_chart = function() {
 		var options = {
 	        series: { 
@@ -606,7 +602,7 @@ function viewmodel() {
 	            shadowSize: 0 
 	        },
 	        yaxis: { min: 0, max: 1 },
-	        xaxis: { min: 0, max: 30, show: false },
+	        xaxis: { min: 0, max: 30, show: true },
 	        grid: {
 	            borderWidth: 0, 
 	            hoverable: true 
@@ -644,7 +640,7 @@ function viewmodel() {
 
             plot.setData(dataset);
             plot.draw();
-            setTimeout(update, 1000);
+            setTimeout(update, 2000);
         }   
 
         update();

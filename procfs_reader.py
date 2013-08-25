@@ -74,3 +74,38 @@ def proc_uptime():
 def proc_loadavg():
     raw = entries('', 'loadavg').next()[0]
     return tuple(float(v) for v in raw.split()[:3])
+
+def disk_usage(path):
+    """
+    Disk usage stats of filesystem.
+    Keyword Arguments:
+    path -- path to filesystem to poll
+    
+    Returns:
+    namedtuple (total, used, free)
+    
+    Thank you, Giampaolo Rodola
+    http://code.activestate.com/recipes/577972-disk-usage/
+    
+    """
+    import collections
+
+    def human_readable(n):
+        symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+        prefix = {}
+        for i, s in enumerate(symbols):
+            prefix[s] = 1 << (i+1)*10
+        for s in reversed(symbols):
+            if n >= prefix[s]:
+                value = float(n) / prefix[s]
+                return '%.1f%s' % (value, s)
+        return "%sB" % n
+    
+    _ntuple_diskusage = collections.namedtuple('usage', 'total used free')
+    st = os.statvfs(path)
+    free = st.f_bavail * st.f_frsize
+    total = st.f_blocks * st.f_frsize
+    used = (st.f_blocks - st.f_bfree) * st.f_frsize
+    return _ntuple_diskusage(human_readable(total),
+                             human_readable(used),
+                             human_readable(free))

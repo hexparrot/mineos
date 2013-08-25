@@ -94,7 +94,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     def dashboard(self):
-        from procfs_reader import entries, proc_uptime
+        from procfs_reader import entries, proc_uptime, disk_usage
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
@@ -102,7 +102,8 @@ class ViewModel(object):
         return dumps({
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
-            'whoami': cherrypy.session['_cp_username']
+            'whoami': cherrypy.session['_cp_username'],
+            'df': dict(disk_usage('/')._asdict())
             })
 
 class mc_server(object):    

@@ -274,9 +274,9 @@
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <div class="span3 pull-left">
+                                    <div class="span12 pull-left">
                                         <!-- START Summary -->
-                                        <figure class="stats summary pull-left">
+                                        <figure class="stats summary">
                                             <div class="icon circle green"><span class="icone-ok"></span></div>
                                             <figcaption>
                                                 <h3><span data-bind="text: dashboard.servers_up"></span><small>Running Servers</small></h3>
@@ -285,24 +285,38 @@
                                         <!--/ END Summary -->
 
                                         <!-- START Summary -->
-                                        <figure class="stats summary pull-left">
+                                        <figure class="stats summary">
                                             <div class="icon circle lime"><span class="icone-time"></span></div>
                                             <figcaption>
                                                 <h3><span data-bind="text: dashboard.uptime"></span><small>Uptime</small></h3>
                                             </figcaption>
-                                        </figure><!--/ END Summary -->
+                                        </figure>
+                                        <!--/ END Summary -->
 
                                         <!-- START Summary -->
-                                        <figure class="stats summary pull-left">
+                                        <figure class="stats summary">
                                             <div class="icon circle teal"><span class="icone-ticket"></span></div>
                                             <figcaption>
                                                 <h3><span data-bind="text: dashboard.memfree"></span><small>MB RAM Free</small></h3>
                                             </figcaption>
-                                        </figure><!--/ END Summary -->
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Circular 1 -->
+                                        <figure class="stats circular stacked">
+                                            <div class="gauge" data-bind="attr: {'data-percent': dashboard.df_pct}" data-percent="">
+                                                <span><span class="text" data-bind="text: dashboard.df_pct"></span>%</span>
+                                            </div>
+                                            <figcaption>
+                                                <h4><span data-bind="text: dashboard.df_pct"></span></span>%</span><small>HDD Used</small></h4>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Circular 1 -->
+
                                     </div>
 
                                     <!-- START Auto Update Chart -->
-                                    <div class="span9 widget pull-right">
+                                    <div class="span11 widget pull-left">
                                         <section class="body">
                                             <div class="body-inner">
                                                 <div class="flot" id="load_averages"></div>
@@ -380,7 +394,7 @@
 
                                     <!-- START Circular 1 -->
                                     <figure class="stats circular stacked">
-                                        <div class="gauge gauge-capacity" data-bind="attr: {'data-percent': online_pct}" data-percent="">
+                                        <div class="gauge" data-bind="attr: {'data-percent': online_pct}" data-percent="">
                                             <span><span class="text" data-bind="text: online_pct"></span>%</span>
                                         </div>
                                         <figcaption>
@@ -390,7 +404,7 @@
 
                                     <!-- START Circular 2 -->
                                     <figure class="stats circular stacked">
-                                        <div class="gauge gauge-utilization" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
+                                        <div class="gauge" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
                                             <span><span class="text" data-bind="text: memory_pct"></span>%</span>
                                         </div>
                                         <figcaption>
