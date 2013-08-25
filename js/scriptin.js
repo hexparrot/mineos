@@ -155,6 +155,30 @@ function viewmodel() {
 		sc: ko.observableArray()
 	}
 
+	self.backup_summary = {
+		last_backup: ko.computed(function() {
+			try {
+				return self.pagedata.rdiffs()[0].timestamp;
+			} catch (e) {
+				return 'None';
+			}
+		}),
+		cumulative_size: ko.computed(function() {
+			try {
+				return self.pagedata.rdiffs()[0].cumulative_size;
+			} catch (e) {
+				return '0 MB';
+			}
+		}),
+		frequency: ko.computed(function() {
+			try {
+				return self.pagedata.rdiffs()[0].cumulative_size;
+			} catch (e) {
+				return '0 MB';
+			}
+		})
+	}
+
 	self.prune = {
 		user_input: ko.observable(),
 		steps: ko.observable(),

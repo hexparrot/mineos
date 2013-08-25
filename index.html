@@ -195,7 +195,6 @@
                                         </a>
                                         <!-- START Submenu Menu -->
                                         <ul id="submenu3" class="collapse ">
-                                            <li><a><span class="icon icone-angle-right"></span> Overview</a></li>
                                             <li data-bind="css: {'active': page() == 'backup_list'}, click: select_page" data-page="backup_list"><a><span class="icon icone-angle-right"></span> Restore Points</a></li>
                                             <li><a><span class="icon icone-angle-right"></span> Archives</a></li>
                                         </ul>
@@ -356,7 +355,7 @@
                         <!-- START Page/Section header -->
                         <div class="span12">
                             <div class="page-header line1">
-                                <h4><span data-bind="text: server().server_name"></span></h4>
+                                <h4><span data-bind="text: server().server_name"></span><small data-bind="text: server().profile"></small></h4>
                             </div>
                         </div>
                         <!--/ END Page/Section header -->
@@ -374,7 +373,7 @@
                                     <figure class="stats summary pull-left">
                                         <div data-bind="css: {'green': up, 'red': !up}" class="icon circle"><span data-bind="css: {'icone-ok': up, 'icone-off': !up}"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: (up ? 'online' : 'offline')"></span><small>&nbsp;</small></h3>
+                                            <h3><span data-bind="text: (up ? 'online' : 'offline')"></span><small data-bind="text: port"></small></h3>
                                         </figcaption>
                                     </figure>
                                     <!--/ END Summary -->
@@ -422,33 +421,6 @@
 
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <table id="table_status" class="table table-hover">
-                          <thead>
-                            <tr>
-                              <th scope="col">Name</th>
-                              <th scope="col">Profile</th>
-                              <th scope="col">Port</th>
-                              <th scope="col">Status</th>
-                              <th scope="col">Online</th>
-                              <th scope="col">Memory</th>
-                            </tr>
-                          </thead>
-                          <tbody data-bind="with: server">
-                            <tr data-bind="">
-                              <td data-bind="text: server_name"></td>
-                              <td data-bind="text: profile"></td>
-                              <td data-bind="text: port"></td>
-                              <td data-bind="text: (up ? 'online' : 'offline')"></td>
-                              <td data-bind="text: capacity"></td>
-                              <td data-bind="text: mem_utilization"></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                    </div>
-                    <!--/ END Row -->
-
-                    <!-- START Row -->
-                    <div class="row-fluid">
                         <!-- START Default Widget -->
                         <div class="span6 widget" data-bind="">
                             <header>
@@ -462,8 +434,9 @@
                             </header>
                             <section class="body">
                                 <div class="body-inner">
+                                    <p>Last successful restore point created: <strong data-bind="text: backup_summary.last_backup"></strong></p>
+                                    <p>Space used by backups: <strong data-bind="text: backup_summary.cumulative_size"></strong></p>
                                 </div>
-                                <div class="footer">Last successful restore point created: <strong data-bind=""></strong></div>
                             </section>
                         </div>
                         <!--/ END Default Widget -->
