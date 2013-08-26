@@ -100,18 +100,8 @@ if __name__=="__main__":
             except RuntimeWarning as ex:
                 print ex.message
         elif args.cmd == 'stock_profile':
-            if arguments[0] == 'vanilla':
-                profile = {
-                    'name': 'vanilla',
-                    'type': 'standard_jar',
-                    'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-                    'save_as': 'minecraft_server.jar',
-                    'run_as': 'minecraft_server.jar',
-                    'ignore': '',
-                    }
-                mc(**init_args).define_profile(profile)
-            else:
-                raise NotImplementedError
+            from stock_profiles import STOCK_PROFILES
+            mc(**init_args).define_profile(STOCK_PROFILES[arguments[0]])
         elif args.cmd == 'define_profile':
             from collections import OrderedDict
             profile = OrderedDict([(k,None) for k in ('name', 'type', 'url',
