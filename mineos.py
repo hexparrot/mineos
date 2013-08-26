@@ -341,6 +341,11 @@ class mc(object):
         """Removes old rdiff-backup data/metadata."""
         self._command_direct(self.command_prune(steps), self.env['bwd'])
 
+    def remove_profile(self, profile):
+        """Accepts a profile name and deletes the corresponding section"""
+        with self.profile_config as pc:
+            pc.remove_section(profile)
+
     def define_profile(self, profile_dict):
         """Accepts a dictionary defining how to download and run a piece
         of Minecraft server software.

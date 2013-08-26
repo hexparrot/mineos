@@ -185,9 +185,12 @@ class mc_server(object):
 
                 instance = mc('throwaway', **init_args)
                 retval = instance.define_profile(definition)      
-            if command == 'update_profile':
+            elif command == 'update_profile':
                 instance = mc('throwaway', **init_args)
                 retval = instance.update_profile(**args)
+            elif command == 'remove_profile':
+                instance = mc('throwaway', **init_args)
+                retval = instance.remove_profile(**args)
             elif command == 'stock_profile':
                 from stock_profiles import STOCK_PROFILES
                 

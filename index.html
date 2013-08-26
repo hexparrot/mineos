@@ -584,6 +584,7 @@
                                 <td data-bind="text: save_as_mtime"></td>
                                 <td>
                                 	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
+                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.removal_confirmation" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
                                 </td>
                             </tr>
                           </tbody>
@@ -593,10 +594,10 @@
                               	<div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Create Stock Profile <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
-                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="vanilla162">vanilla162</a></li>
-                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-recommended">bukkit-recommended</a></li>
-                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-beta">bukkit-beta</a></li>
-                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-dev">bukkit-dev</a></li>
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="vanilla162">vanilla162</a></li>
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-recommended">bukkit-recommended</a></li>
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-beta">bukkit-beta</a></li>
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-dev">bukkit-dev</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -605,6 +606,18 @@
                         </table>
                     </div>
                     <!--/ END Row -->
+                    <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                        <div class="modal-header">
+                            <h4 id="myModalLabel">You are about to delete <span data-bind="text: confirm_removal"></span>!</h4>
+                        </div>
+                        <div class="modal-body">
+                            <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                            <button data-bind="click: $root.command, attr: {'data-profile': $root.confirm_removal}" data-dismiss="modal" class="btn btn-danger" data-required="profile" data-cmd="remove_profile">Remove Profile</button>
+                        </div>
+                    </div>
                 </div>
                 <!--/ END Content -->
 

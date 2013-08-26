@@ -133,6 +133,7 @@ function viewmodel() {
 		  return i.state == 'error';
 		})
 	})
+	self.confirm_removal = ko.observable();
 
 	self.dashboard = {
 		whoami: ko.observable(),
@@ -202,6 +203,14 @@ function viewmodel() {
 	self.select_server = function(model) {
 		self.server(model);
 		self.select_page('server_status');
+	}
+
+	self.removal_confirmation = function(vm, event) {
+		try {
+			self.confirm_removal(vm.profile);
+		} catch (e) {
+			self.confirm_removal(null);
+		}
 	}
 
 	self.refresh_dashboard = function() {
@@ -336,6 +345,7 @@ function viewmodel() {
 			$.each(data, function(i,v) {
 				self.pagedata.profiles.push($.extend({profile: i}, v));
 			})
+			self.pagedata.profiles(self.pagedata.profiles().ascending_by('profile'))
 		})
 	}
 
@@ -453,7 +463,7 @@ function viewmodel() {
 					console.log(ret)
 
 				self.tasks(self.tasks().ascending_by('timestamp').reverse());
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 500)
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 50)
 			})
 		} else {
 			pending_gritter(required)
@@ -465,7 +475,7 @@ function viewmodel() {
 				if (ret.result != 'success')
 					console.log(ret)
 
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 500)
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 50)
 			})
 		}
 	}
