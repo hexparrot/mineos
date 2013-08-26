@@ -43,18 +43,19 @@ function model_property(server_name, option, value, section) {
 			['onreboot', 'start']
 		];
 
-		$.each(true_false, function(i,v) {
-			if (self.section == v[0] && self.option == v[1]) {
-				self.type = 'truefalse';
-				if (self.val().toLowerCase() == 'true')
-					self.val(true);
-				else
-					self.val(false);
-				return false;
-			} else {
-				self.type = 'textbox';
-			}
+		var match = true_false.filter(function(v) {
+		  return self.section == v[0] && self.option == v[1]
 		})
+
+		if (match.length) {
+			self.type = 'truefalse';
+			if (self.val().toLowerCase() == 'true')
+				self.val(true);
+			else
+				self.val(false);
+		} else {
+			self.type = 'textbox';
+		}
 	} else {
 		var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
 						  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
