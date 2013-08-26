@@ -262,7 +262,7 @@ class TestMineOS(unittest.TestCase):
         self.assertTrue(os.path.exists(instance.env['cwd']))
 
         time.sleep(1)
-        instance.restore(overwrite=True)
+        instance.restore(force=True)
 
     def test_prune(self):
         instance = mc('one', **self.instance_arguments)
