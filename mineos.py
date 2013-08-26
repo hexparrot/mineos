@@ -342,10 +342,30 @@ class mc(object):
         self._command_direct(self.command_prune(steps), self.env['bwd'])
 
     def remove_profile(self, profile):
-        """Accepts a profile name and deletes the corresponding section"""
-        with self.profile_config as pc:
-            pc.remove_section(profile)
+        """Removes a profile found in profile.config at the base_directory root"""
+        for server in self.list_servers_up():
+            if self.__class__(server.server_name,
+                              base_directory=server.base_dir).profile == profile:
+                raise RuntimeError('Ignoring command {remove_profile}; Profile in use by a LIVE server')
 
+        profile_path = os.path.join(self.env['pwd'], profile)
+
+        try:
+            if self.valid_owner(self._owner.pw_name, profile_path):
+                from shutil import rmtree
+                rmtree(profile_path)
+
+                with self.profile_config as pc:
+                    pc.remove_section(profile)
+        except OSError as e:
+            from errno import ENOENT
+            
+            if e.errno == ENOENT:
+                with self.profile_config as pc:
+                    pc.remove_section(profile)
+            else:
+                raise RuntimeError('Ignoring command {remove_profile}; User does not have permissions on this profile')
+            
     def define_profile(self, profile_dict):
         """Accepts a dictionary defining how to download and run a piece
         of Minecraft server software.
@@ -402,9 +422,10 @@ class mc(object):
                 if expected_md5 and old_file_md5 == expected_md5:
                     raise RuntimeWarning('Did not download; expected md5 == existing md5')
 
-            new_file_path = os.path.join(self.env['pwd'], profile_dict['save_as'])
+            new_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'] + '.new')
             
-            self._command_direct(self.command_wget_profile(profile), self.env['pwd'])
+            self._command_direct(self.command_wget_profile(profile),
+                                 os.path.join(self.env['pwd'], profile))
 
             new_file_md5 = self._md5sum(new_file_path)
 
@@ -910,7 +931,8 @@ class mc(object):
         required_arguments = {
             'wget': self.BINARY_PATHS['wget'],
             'newfile': os.path.join(self.env['pwd'],
-                                    self.profile_config[profile:'save_as']),
+                                    profile,
+                                    self.profile_config[profile:'save_as'] + '.new'),
             'url': self.profile_config[profile:'url']
             }
 

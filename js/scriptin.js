@@ -144,10 +144,19 @@ function viewmodel() {
 	}
 
 	self.dashboard['df_pct'] = ko.computed(function() {
+		function expand(size) {
+			if (size.substr(-1) == 'G')
+				return parseFloat(size) * 1000;
+			else if (size.substr(-1) == 'M')
+				return parseFloat(size)
+			else if (size.substr(-1) == 'K')
+				return parseFloat(size) / 1000.0; 
+		}
+
 		try {
-			return Math.round(parseFloat(self.dashboard.df().used) / parseFloat(self.dashboard.df().total) * 100);
+			return Math.round(expand(self.dashboard.df().used) / expand(self.dashboard.df().total) * 100);
 		} catch (e) {
-			return '-';
+			return '--';
 		}
 	})
 
