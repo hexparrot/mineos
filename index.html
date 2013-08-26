@@ -582,16 +582,26 @@
                                 <td data-bind="text: save_as"></td>
                                 <td data-bind="text: save_as_md5"></td>
                                 <td data-bind="text: save_as_mtime"></td>
-                                <td><div class="btn-group">
-                                    <button class="btn btn-success dropdown-toggle btn-mini" data-toggle="dropdown">Action <span class="caret"></span></button>
-                                    <ul class="dropdown-menu">
-                                        <li><a data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update</a></li>
-                                        <li><a href="#">Edit</a></li>
-                                    </ul>
-                                    </div>
+                                <td>
+                                	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
                                 </td>
                             </tr>
                           </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="6">
+                              	<div class="btn-group">
+                                    <button class="btn dropdown-toggle" data-toggle="dropdown">Create Stock Profile <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="vanilla162">vanilla162</a></li>
+                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-recommended">bukkit-recommended</a></li>
+                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-beta">bukkit-beta</a></li>
+                                        <li><a data-required="profile" data-refresh="10" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-dev">bukkit-dev</a></li>
+                                    </ul>
+                                </div>
+                              </td>
+                            </tr>
+                          </tfoot>
                         </table>
                     </div>
                     <!--/ END Row -->

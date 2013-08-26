@@ -452,8 +452,7 @@ function viewmodel() {
 					console.log(ret)
 
 				self.tasks(self.tasks().ascending_by('timestamp').reverse());
-
-				setTimeout(self.page.valueHasMutated, $(eventobj.currentTarget).data('refresh') | 500)
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 500)
 			})
 		} else {
 			pending_gritter(required)
@@ -464,6 +463,8 @@ function viewmodel() {
 
 				if (ret.result != 'success')
 					console.log(ret)
+
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 500)
 			})
 		}
 	}

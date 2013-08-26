@@ -114,6 +114,41 @@ class mc_server(object):
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
 
+    STOCK_PROFILES = {
+        'vanilla162': {
+            'name': 'vanilla162',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'ignore': '',
+            }, 
+        'bukkit-recommended': {
+            'name': 'bukkit-recommended',
+            'type': 'standard_jar',
+            'url': 'http://dl.bukkit.org/latest-rb/craftbukkit.jar',
+            'save_as': 'craftbukkit.jar',
+            'run_as': 'craftbukkit.jar',
+            'ignore': '',
+            }, 
+        'bukkit-beta': {
+            'name': 'bukkit-beta',
+            'type': 'standard_jar',
+            'url': 'http://dl.bukkit.org/latest-beta/craftbukkit.jar',
+            'save_as': 'craftbukkit.jar',
+            'run_as': 'craftbukkit.jar',
+            'ignore': '',
+            }, 
+        'bukkit-dev': {
+            'name': 'bukkit-dev',
+            'type': 'standard_jar',
+            'url': 'http://dl.bukkit.org/latest-dev/craftbukkit.jar',
+            'save_as': 'craftbukkit.jar',
+            'run_as': 'craftbukkit.jar',
+            'ignore': '',
+            }
+        }
+
     def __init__(self, base_directory=None):
         self.base_directory = base_directory
         self.vm = ViewModel(self.base_directory)
@@ -189,16 +224,9 @@ class mc_server(object):
                 instance = mc('throwaway', **init_args)
                 retval = instance.update_profile(**args)
             elif command == 'stock_profile':
-                profile = {
-                    'name': 'vanilla',
-                    'type': 'standard_jar',
-                    'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-                    'save_as': 'minecraft_server.jar',
-                    'run_as': 'minecraft_server.jar',
-                    'ignore': '',
-                    }
+                profile = self.STOCK_PROFILES[args['profile']]
                 mc('throwaway', **init_args).define_profile(profile)
-                retval = 'vanilla profile created'
+                retval = '%s profile created' % profile['name']
             elif command in self.METHODS:                
                 try:
                     if 'base_directory' in inspect.getargspec(getattr(mc, command)).args:
@@ -244,7 +272,12 @@ class mc_server(object):
 
         try:
             path_ = os.path.join(self.base_directory, 'servers', server_name)
-            mc.valid_owner(cherrypy.session['_cp_username'], path_)
+            
+            if command not in ['create']:
+                mc.valid_owner(cherrypy.session['_cp_username'], path_)
+                '''valid_owner will fail on nonexistent path_,
+                which will only occur on create'''
+ 
             instance = mc(server_name,
                           cherrypy.session['_cp_username'],
                           base_directory=self.base_directory) 
