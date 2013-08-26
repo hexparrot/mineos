@@ -348,23 +348,15 @@ class mc(object):
                               base_directory=server.base_dir).profile == profile:
                 raise RuntimeError('Ignoring command {remove_profile}; Profile in use by a LIVE server')
 
-        profile_path = os.path.join(self.env['pwd'], profile)
-
         try:
-            if self.valid_owner(self._owner.pw_name, profile_path):
+            if self.valid_owner(self._owner.pw_name, self.env['pc']):
                 from shutil import rmtree
-                rmtree(profile_path)
+                rmtree(os.path.join(self.env['pwd'], profile))
 
                 with self.profile_config as pc:
                     pc.remove_section(profile)
         except OSError as e:
-            from errno import ENOENT
-            
-            if e.errno == ENOENT:
-                with self.profile_config as pc:
-                    pc.remove_section(profile)
-            else:
-                raise RuntimeError('Ignoring command {remove_profile}; User does not have permissions on this profile')
+            raise RuntimeError('Ignoring command {remove_profile}; User does not have permissions on this profile')
             
     def define_profile(self, profile_dict):
         """Accepts a dictionary defining how to download and run a piece
