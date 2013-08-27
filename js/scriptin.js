@@ -164,7 +164,34 @@ function viewmodel() {
 		one: [0],
 		five: [0],
 		fifteen: [0],
-		autorefresh: ko.observable(false)
+		autorefresh: ko.observable(true),
+		options: {
+	        series: { 
+	            lines: {
+	                show: true,
+	                fill: .3
+	            },
+	            shadowSize: 0 
+	        },
+	        yaxis: { 
+	        	min: 0, 
+	        	max: 1,
+	        	axisLabel: "Load Average for last minute",
+		        axisLabelUseCanvas: true,
+		        axisLabelFontSizePixels: 12,
+		        axisLabelFontFamily: 'Verdana, Arial',
+		        axisLabelPadding: 3
+	        },
+	        xaxis: { min: 0, max: 30, show: false },
+	        grid: {
+	            borderWidth: 0, 
+	            hoverable: false 
+	        },
+	        legend: {
+		        labelBoxBorderColor: "#858585",
+		        position: "ne"
+		    }
+	    }
 	}
 
 	self.pagedata = {
@@ -632,60 +659,43 @@ function viewmodel() {
         });
 	}
 
-	self.refresh_loadavg = function(keep_count) {
-		$.getJSON('/vm/loadavg')
-		.success(function(data){
-			self.load_averages.one.push(data[0])
+	self.redraw_chart = function() {
+
+		function rerender(data) {
+			function enumerate(arr) {
+	            var res = [];
+	            for (var i = 0; i < arr.length; ++i)
+	                res.push([i, arr[i]])
+	                return res;
+	        }
+
+	        self.load_averages.one.push(data[0])
 			self.load_averages.five.push(data[1])
 			self.load_averages.fifteen.push(data[2])
 
-			while (self.load_averages.one.length > (keep_count + 1)){
+			while (self.load_averages.one.length > (self.load_averages.options.xaxis.max + 1)){
 				self.load_averages.one.splice(0,1)
 				self.load_averages.five.splice(0,1)
 				self.load_averages.fifteen.splice(0,1)
 			}
-		})
-	}
 
-	self.redraw_chart = function() {
-		var options = {
-	        series: { 
-	            lines: {
-	                show: true,
-	                fill: .3
-	            },
-	            shadowSize: 0 
-	        },
-	        yaxis: { 
-	        	min: 0, 
-	        	max: 1,
-	        	axisLabel: "Load Average for last minute",
-		        axisLabelUseCanvas: true,
-		        axisLabelFontSizePixels: 12,
-		        axisLabelFontFamily: 'Verdana, Arial',
-		        axisLabelPadding: 3
-	        },
-	        xaxis: { min: 0, max: 30, show: false },
-	        grid: {
-	            borderWidth: 0, 
-	            hoverable: false 
-	        },
-	        legend: {
-		        labelBoxBorderColor: "#858585",
-		        position: "ne"
-		    }
-	    }
+			//colors http://www.jqueryflottutorial.com/tester-4.html
+	        var dataset = [
+			    { label: "fifteen", data: enumerate(self.load_averages['fifteen']), color: "#0077FF" },
+			    { label: "five", data: enumerate(self.load_averages['five']), color: "#ED7B00" },
+			    { label: "one", data: enumerate(self.load_averages['one']), color: "#E8E800" }
+        	]
 
-        function enumerate(data) {
-            var res = [];
-            for (var i = 0; i < data.length; ++i)
-                res.push([i, data[i]])
-                return res;
-        }
+        	self.load_averages.options.yaxis.max = Math.max(
+				self.load_averages.one.max(),
+				self.load_averages.five.max(),
+				self.load_averages.fifteen.max()) || 1;
+
+        	var plot = $.plot($("#load_averages"), dataset, self.load_averages.options);
+            plot.draw();
+		}
 
         function update() {
-        	//colors http://www.jqueryflottutorial.com/tester-4.html
-
         	if (self.page() != 'dashboard' || !self.load_averages.autorefresh()) {
 				self.load_averages.one.push.apply(self.load_averages.one, [0,0,0])
 				self.load_averages.five.push.apply(self.load_averages.five, [0,0,0])
@@ -693,24 +703,8 @@ function viewmodel() {
         		return
         	}
 
-        	self.refresh_loadavg(options.xaxis.max)
-
-        	var dataset = [
-			    { label: "fifteen", data: enumerate(self.load_averages['fifteen']), color: "#0077FF" },
-			    { label: "five", data: enumerate(self.load_averages['five']), color: "#ED7B00" },
-			    { label: "one", data: enumerate(self.load_averages['one']), color: "#E8E800" }
-        	]
-
-        	options.yaxis.max = Math.max(
-				self.load_averages.one.max(),
-				self.load_averages.five.max(),
-				self.load_averages.fifteen.max()) || 1;
-
-        	var plot = $.plot($("#load_averages"), [0], options);
-
-            plot.setData(dataset);
-            plot.draw();
-            setTimeout(update, 2000);
+        	$.getJSON('/vm/loadavg').then(rerender);
+			setTimeout(update, 2000);
         }   
 
         update();
