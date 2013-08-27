@@ -341,6 +341,10 @@ class mc(object):
         """Removes old rdiff-backup data/metadata."""
         self._command_direct(self.command_prune(steps), self.env['bwd'])
 
+    def prune_archives(self, filename):
+        """Removes old archives by filename as a space-separated string."""
+        self._command_direct(self.command_delete_archives(filename), self.env['awd'])
+
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
         for server in self.list_servers_up():
@@ -957,6 +961,16 @@ class mc(object):
 
         self._previous_arguments = required_arguments
         return '%(rsync)s -rlptD --chmod=ug+rw %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
+
+    @sanitize
+    def command_delete_archives(self, archives):
+        """Deletes archive_list of files from awd"""       
+        required_arguments = {
+            'archives': archives,
+            }
+
+        self._previous_arguments = required_arguments
+        return 'rm -- %(archives)s' % required_arguments
 
 #generator expressions
 

@@ -554,10 +554,9 @@
                         <div class="control-group">
                             <label class="control-label">Remove archives older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_archives" data-bind="value: archive.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date"> <button id="go_prune2" data-bind="visible: archive.to_remove() > 0, click: prune_archives" data-cmd="prune2" data-required="server_name,filename" data-steps="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
+                                <input type="text" id="prune_archives" data-bind="value: archive.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date"> <button id="go_prune2" data-bind="visible: archive.to_remove() > 0, click: $root.command" data-cmd="prune_archives" data-required="server_name,filename" data-filename="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
                             </div>
                         </div>
-
                     </div>
                     <!--/ END Row -->
 
@@ -612,7 +611,7 @@
                                 <div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
-                                        <li><a data-bind="click: $root.delete_archive">Delete</a></li>
+                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
                                         <li><a data-bind="">Create Server From</a></li>
                                     </ul>
                                 </div>

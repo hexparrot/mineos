@@ -334,10 +334,10 @@ function viewmodel() {
 		} else {
 			self.archive.archives_to_delete(clone.slice(0,match).map(function(e) {
 			  return e.filename;
-			}))
+			}).join(' '))
 			self.archive.to_remove(clone.slice(0,match).length);
 			self.archive.space_reclaimed(reclaimed);
-			$('#go_prune2').data('filename', self.archive.filename())
+			$('#go_prune2').data('filename', self.archive.archives_to_delete())
 		}
 	})
 
@@ -354,16 +354,6 @@ function viewmodel() {
 	            source: available_tags
 	        });
 		})
-	}
-
-	self.delete_archive = function(vm, event) {
-		self.archive.archives_to_delete([vm.filename]);
-		self.prune_archives();
-	}
-
-	self.prune_archives = function() {
-		console.log('deleting')
-		console.log(self.archive.archives_to_delete())
 	}
 
 	self.prune.user_input.subscribe(function(new_value) {
