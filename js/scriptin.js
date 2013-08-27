@@ -133,14 +133,14 @@ function viewmodel() {
 		  return i.state == 'error';
 		})
 	})
-	self.confirm_removal = ko.observable();
 
 	self.dashboard = {
 		whoami: ko.observable(),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
 		servers_up: ko.observable(),
-		df: ko.observable()
+		df: ko.observable(),
+		confirm_removal: ko.observable()
 	}
 
 	self.dashboard['df_pct'] = ko.computed(function() {
@@ -221,14 +221,6 @@ function viewmodel() {
 	self.select_server = function(model) {
 		self.server(model);
 		self.select_page('server_status');
-	}
-
-	self.removal_confirmation = function(vm, event) {
-		try {
-			self.confirm_removal(vm.profile);
-		} catch (e) {
-			self.confirm_removal(null);
-		}
 	}
 
 	self.refresh_dashboard = function() {
@@ -415,6 +407,16 @@ function viewmodel() {
 	            source: available_tags
 	        });
 		})
+	}
+
+	self.removal_confirmation = function(vm, event) {
+		try {
+			$('#confirm_removal').data('profile', vm.profile);
+		} catch (e) {
+			$('#confirm_removal').data('profile', '');
+		}
+
+		self.dashboard.confirm_removal($('#confirm_removal').data('profile'))
 	}
 
 	self.refresh_profiles = function() {
