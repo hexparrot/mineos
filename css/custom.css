@@ -25,3 +25,6 @@ li.accordion-group a, ul.nav  {
 #prune_intervals, #prune_archives {
 	margin-bottom: 0px;
 }
+#server_status h4 {
+    cursor: pointer;
+}

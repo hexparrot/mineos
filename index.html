@@ -434,17 +434,18 @@
                         <!-- START Default Widget -->
                         <div class="span6 widget" data-bind="">
                             <header>
-                                <h4 class="title"><span class="icon icone-bookmark"></span> Restore Points</h4>
+                            	<h4 class="title" data-bind="click: select_page" data-page="backup_list"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="500" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-success pull-right" data-bind="text: pagedata.rdiffs().length"></span>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <p>Last successful restore point created: <strong data-bind="text: backup_summary.last_backup"></strong></p>
+                                	<p>Oldest restore point: <strong data-bind="text: backup_summary.first_backup"></strong></p>
+                                    <p>Most recent restore point: <strong data-bind="text: backup_summary.last_backup"></strong></p>
                                     <p>Space used by backups: <strong data-bind="text: backup_summary.cumulative_size"></strong></p>
                                 </div>
                             </section>
@@ -454,19 +455,20 @@
                         <!-- START Default Widget -->
                         <div class="span6 widget">
                             <header>
-                                <h4 class="title"><span class="icon icone-bookmark"></span> Archives</h4>
+                                <h4 class="title" data-bind="click: select_page" data-page="archive_list"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-refresh="1000" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
-                                <span class="label label-important pull-right"></span>
+                                <span class="label label-success pull-right" data-bind="text: pagedata.archives().length"></span>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <p></p>
+                                	<p>Oldest archive: <strong data-bind="text: archive_summary.first_archive"></strong></p>
+                                    <p>Most recent archive: <strong data-bind="text: archive_summary.last_archive"></strong></p>
+                                    <p>Space used by archives: <strong data-bind="text: archive_summary.cumulative_size"></strong></p>
                                 </div>
-                                <div class="footer"></div>
                             </section>
                         </div>
                         <!--/ END Default Widget -->
@@ -605,7 +607,7 @@
                           <tbody data-bind="foreach: pagedata.archives">
                             <tr>
                               <td data-bind="text: $data.friendly_timestamp"></td>
-                              <td data-bind="text: $data.friendly_size"></td>
+                              <td data-bind="text: bytes_to_mb($data.size)"></td>
                               <td data-bind="text: $data.filename"></td>
                               <td>
                                 <div class="btn-group">

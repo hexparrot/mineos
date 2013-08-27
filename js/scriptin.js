@@ -224,6 +224,37 @@ function viewmodel() {
 			} catch (e) {
 				return '0 MB';
 			}
+		}),
+		first_backup: ko.computed(function() {
+			try {
+				return self.pagedata.rdiffs()[self.pagedata.rdiffs().length-1].timestamp;
+			} catch (e) {
+				return 'None';
+			}
+		})
+	}
+
+	self.archive_summary = {
+		last_archive: ko.computed(function() {
+			try {
+				return self.pagedata.archives()[0].friendly_timestamp;
+			} catch (e) {
+				return 'None';
+			}
+		}),
+		cumulative_size: ko.computed(function() {
+			var cumulative = 0;
+			$.each(self.pagedata.archives(), function(i,v) {
+				cumulative += v.size
+			})
+			return bytes_to_mb(cumulative);
+		}),
+		first_archive: ko.computed(function() {
+			try {
+				return self.pagedata.archives()[self.pagedata.archives().length-1].friendly_timestamp;
+			} catch (e) {
+				return 'None';
+			}
 		})
 	}
 
@@ -294,6 +325,7 @@ function viewmodel() {
 			case 'server_status':
 				$.getJSON('/vm/status').then(self.refresh_pings).then(self.redraw_gauges);
 				$.getJSON('/vm/increments', params).then(self.refresh_increments);
+				$.getJSON('/vm/archives', params).then(self.refresh_archives);
 				break;
 			case 'profiles':
 				$.getJSON('/vm/profiles').then(self.refresh_profiles);
@@ -341,24 +373,19 @@ function viewmodel() {
 				self.archive.filename(v.filename);
 				return false;
 			}
-
-			if (v.friendly_size.slice(-1) == 'K')
-				reclaimed += parseFloat(v.friendly_size) / 1000;
-			else if (v.friendly_size.slice(-1) == 'M')
-				reclaimed += parseFloat(v.friendly_size);
-			else if (v.friendly_size.slice(-1) == 'G')
-				reclaimed += parseFloat(v.friendly_size);
+			reclaimed += v.size;
 		})
 
 		if (!match){
+			self.archive.archives_to_delete('');
 			self.archive.to_remove(0);
-			self.archive.space_reclaimed(0);
+			self.archive.space_reclaimed(0.0);
 		} else {
 			self.archive.archives_to_delete(clone.slice(0,match).map(function(e) {
 			  return e.filename;
 			}).join(' '))
 			self.archive.to_remove(clone.slice(0,match).length);
-			self.archive.space_reclaimed(reclaimed);
+			self.archive.space_reclaimed(bytes_to_mb(reclaimed));
 			$('#go_prune2').data('filename', self.archive.archives_to_delete())
 		}
 	})
@@ -756,4 +783,19 @@ function seconds_to_time(seconds) {
 	var seconds = Math.ceil(divisor_for_seconds);
 	
 	return '{0}:{1}:{2}'.format(hours, zero_pad(minutes), zero_pad(seconds));
+}
+
+function bytes_to_mb(bytes){
+	//http://stackoverflow.com/a/15901418/1191579
+    if ( ( bytes >> 30 ) & 0x3FF )
+        bytes = ( bytes >>> 30 ) + '.' + (bytes & (3*0x3FF )).toString().substring(0,2) + 'GB' ;
+    else if ( ( bytes >> 20 ) & 0x3FF )
+        bytes = ( bytes >>> 20 ) + '.' + (bytes & (2*0x3FF )).toString().substring(0,2) + 'MB' ;
+    else if ( ( bytes >> 10 ) & 0x3FF )
+        bytes = ( bytes >>> 10 ) + '.' + (bytes & (0x3FF )).toString().substring(0,2) + 'KB' ;
+    else if ( ( bytes >> 1 ) & 0x3FF )
+        bytes = ( bytes >>> 1 ) + 'Bytes' ;
+    else
+        bytes = bytes + 'Byte' ;
+    return bytes;
 }
