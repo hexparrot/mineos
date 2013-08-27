@@ -185,36 +185,40 @@
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
-
+                                    
                                     <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="visible: server().server_name">
-                                        <a data-toggle="collapse" data-parent="#navigation" href="#submenu3">
-                                            <span class="icon icone-th-list"></span>
-                                            <span class="text">Backup &amp; Restore</span>
-                                            <span class="arrow icone-caret-down"></span>
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'backup_list'}">
+                                        <a data-bind="click: select_page" data-page="backup_list">
+                                            <span class="icon icone-hdd"></span>
+                                            <span class="text">Restore Points</span>
                                         </a>
-                                        <!-- START Submenu Menu -->
-                                        <ul id="submenu3" class="collapse ">
-                                            <li data-bind="css: {'active': page() == 'backup_list'}, click: select_page" data-page="backup_list"><a><span class="icon icone-angle-right"></span> Restore Points</a></li>
-                                            <li data-bind="css: {'active': page() == 'archive_list'}, click: select_page" data-page="archive_list"><a><span class="icon icone-angle-right"></span> Archives</a></li>
-                                        </ul>
-                                        <!--/ END Submenu Menu -->
                                     </li>
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="visible: server().server_name">
-                                        <a data-toggle="collapse" data-parent="#navigation" href="#submenu6">
-                                            <span class="icon icone-cogs"></span>
-                                            <span class="text">Server Configuration</span>
-                                            <span class="arrow icone-caret-down"></span>
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'archive_list'}">
+                                        <a data-bind="click: select_page" data-page="archive_list">
+                                            <span class="icon icone-hdd"></span>
+                                            <span class="text">Archives</span>
                                         </a>
-                                        <!-- START Submenu Menu -->
-                                        <ul id="submenu6" class="collapse ">
-                                            <li data-bind="css: {'active': page() == 'server_properties'}"><a data-bind="click: select_page" data-page="server_properties"><span class="icon icone-angle-right"></span> server.properties</a></li>
-                                            <li data-bind="css: {'active': page() == 'server_config'}"><a data-bind="click: select_page" data-page="server_config"><span class="icon icone-angle-right"></span> server.config</a></li>
-                                        </ul>
-                                        <!--/ END Submenu Menu -->
+                                    </li>
+                                    <!--/ END Menu -->
+                                    
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_properties'}">
+                                        <a data-bind="click: select_page" data-page="server_properties">
+                                            <span class="icon iconm-pencil-5"></span>
+                                            <span class="text">server.properties</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_config'}">
+                                        <a data-bind="click: select_page" data-page="server_config">
+                                            <span class="icon iconm-pencil-5"></span>
+                                            <span class="text">server.config</span>
+                                        </a>
                                     </li>
                                     <!--/ END Menu -->
 

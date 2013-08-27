@@ -28,3 +28,6 @@ li.accordion-group a, ul.nav  {
 #server_status h4 {
     cursor: pointer;
 }
+#sidebar #nav > ul > li > a > .text {
+	text-transform: none;
+}
