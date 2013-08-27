@@ -223,14 +223,11 @@ function viewmodel() {
 		self.select_page('server_status');
 	}
 
-	self.refresh_dashboard = function() {
-		$.getJSON('/vm/dashboard')
-		.success(function(data){
-			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
-			self.dashboard.memfree(data.memfree);
-			self.dashboard.whoami(data.whoami);
-			self.dashboard.df(data.df);
-		})
+	self.refresh_dashboard = function(data) {
+		self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
+		self.dashboard.memfree(data.memfree);
+		self.dashboard.whoami(data.whoami);
+		self.dashboard.df(data.df);
 
 		try {
 			self.dashboard.servers_up(vm.pagedata.pings().filter(function(i) {return i.up}).length);
@@ -252,35 +249,36 @@ function viewmodel() {
 	}
 
 	self.page.subscribe(function(page){
+		var server_name = self.server().server_name;
+		var params = {server_name: server_name};
+
 		switch(page) {
 			case 'dashboard':
-				self.refresh_pings();
-				self.refresh_dashboard();
+				$.getJSON('/vm/status').then(self.refresh_pings);
+				$.getJSON('/vm/dashboard').then(self.refresh_dashboard).then(self.redraw_gauges);
 				self.redraw_chart();
-				setTimeout(self.redraw_gauges, 500);
 				break;
 			case 'backup_list':
-				self.refresh_increments();
+				$.getJSON('/vm/increments', params).then(self.refresh_increments);
 				break;
 			case 'archive_list':
-				self.refresh_archives();
+				$.getJSON('/vm/archives', params).then(self.refresh_archives);
 				break;	
 			case 'server_status':
-				self.refresh_pings();
-				self.refresh_increments();
-				setTimeout(self.redraw_gauges, 500);
+				$.getJSON('/vm/status').then(self.refresh_pings).then(self.redraw_gauges);
+				$.getJSON('/vm/increments', params).then(self.refresh_increments);
 				break;
 			case 'profiles':
-				self.refresh_profiles();
+				$.getJSON('/vm/profiles').then(self.refresh_profiles);
 				break;
 			case 'create_server':
-				self.refresh_profiles();
+				$.getJSON('/vm/profiles').then(self.refresh_profiles);
 				break;
 			case 'server_properties':
-				self.refresh_sp();
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sp'})).then(self.refresh_sp);
 				break;
 			case 'server_config':
-				self.refresh_sc();
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh_sc);
 				break;
 			default:
 				break;			
@@ -291,13 +289,10 @@ function viewmodel() {
 
 	})
 
-	self.refresh_pings = function() {
-		$.getJSON('/vm/status')
-		.success(function(data){
-			self.pagedata.pings.removeAll();
-			$.each(data.ascending_by('server_name'), function(i,v) {
-				self.pagedata.pings.push(new model_status(v));
-			})
+	self.refresh_pings = function(data) {
+		self.pagedata.pings.removeAll();
+		$.each(data.ascending_by('server_name'), function(i,v) {
+			self.pagedata.pings.push(new model_status(v));
 		})
 	}
 
@@ -341,19 +336,16 @@ function viewmodel() {
 		}
 	})
 
-	self.refresh_archives = function() {
-		$.getJSON('/vm/archives', {server_name: self.server().server_name})
-		.success(function(data){
-			self.pagedata.archives(data.ascending_by('timestamp').reverse());
+	self.refresh_archives = function(data) {
+		self.pagedata.archives(data.ascending_by('timestamp').reverse());
 
-			var available_tags = vm.pagedata.archives().map(function(i) {
-			  return i.friendly_timestamp
-			})
-
-			$("#prune_archives").autocomplete({
-	            source: available_tags
-	        });
+		var available_tags = vm.pagedata.archives().map(function(i) {
+		  return i.friendly_timestamp
 		})
+
+		$("#prune_archives").autocomplete({
+            source: available_tags
+        });
 	}
 
 	self.prune.user_input.subscribe(function(new_value) {
@@ -384,19 +376,16 @@ function viewmodel() {
 		}
 	})
 
-	self.refresh_increments = function() {
-		$.getJSON('/vm/increments', {server_name: self.server().server_name})
-		.success(function(data){
-			self.pagedata.rdiffs(data)
+	self.refresh_increments = function(data) {
+		self.pagedata.rdiffs(data)
 
-			var available_tags = vm.pagedata.rdiffs().map(function(i) {
-			  return i.timestamp
-			})
-
-			$("#prune_intervals").autocomplete({
-	            source: available_tags
-	        });
+		var available_tags = vm.pagedata.rdiffs().map(function(i) {
+		  return i.timestamp
 		})
+
+		$("#prune_intervals").autocomplete({
+            source: available_tags
+        });
 	}
 
 	self.removal_confirmation = function(vm, event) {
@@ -409,15 +398,12 @@ function viewmodel() {
 		self.dashboard.confirm_removal($('#confirm_removal').data('profile'))
 	}
 
-	self.refresh_profiles = function() {
-		$.getJSON('/vm/profiles')
-		.success(function(data){
-			self.pagedata.profiles.removeAll();
-			$.each(data, function(i,v) {
-				self.pagedata.profiles.push($.extend({profile: i}, v));
-			})
-			self.pagedata.profiles(self.pagedata.profiles().ascending_by('profile'))
+	self.refresh_profiles = function(data) {
+		self.pagedata.profiles.removeAll();
+		$.each(data, function(i,v) {
+			self.pagedata.profiles.push($.extend({profile: i}, v));
 		})
+		self.pagedata.profiles(self.pagedata.profiles().ascending_by('profile'))
 	}
 
 	self.define_profile = function(formelement) {
@@ -595,46 +581,32 @@ function viewmodel() {
 
 	}
 
-	self.refresh_sp = function() {
-		var params = {
-			'server_name': self.server().server_name,
-			'cmd': 'sp'
-		};
-		$.getJSON('/server', params)
-		.success(function(data) {
-			self.pagedata.sp.removeAll();
-			$.each(data.payload, function(i,v){
-				self.pagedata.sp.push(new model_property(params.server_name, i,v));
-			})
-
-			$('#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
-	            checkboxClass: 'icheckbox_minimal-grey',
-	            radioClass: 'iradio_minimal-grey',
-	            increaseArea: '40%' // optional
-	        });
+	self.refresh_sp = function(data) {
+		self.pagedata.sp.removeAll();
+		$.each(data.payload, function(i,v){
+			self.pagedata.sp.push(new model_property(self.server().server_name, i,v));
 		})
+
+		$('#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
+            checkboxClass: 'icheckbox_minimal-grey',
+            radioClass: 'iradio_minimal-grey',
+            increaseArea: '40%' // optional
+        });
 	}
 
-	self.refresh_sc = function() {
-		var params = {
-			'server_name': self.server().server_name,
-			'cmd': 'sc'
-		};
-		$.getJSON('/server', params)
-		.success(function(data) {
-			self.pagedata.sc.removeAll();
-			$.each(data.payload, function(i,v){
-				$.each(v, function(a,b){
-					self.pagedata.sc.push(new model_property(params.server_name,a,b,i));
-				})
+	self.refresh_sc = function(data) {
+		self.pagedata.sc.removeAll();
+		$.each(data.payload, function(i,v){
+			$.each(v, function(a,b){
+				self.pagedata.sc.push(new model_property(self.server().server_name,a,b,i));
 			})
-
-			$('#table_config input[type="checkbox"]').not('.nostyle').iCheck({
-	            checkboxClass: 'icheckbox_minimal-grey',
-	            radioClass: 'iradio_minimal-grey',
-	            increaseArea: '40%' // optional
-	        });
 		})
+
+		$('#table_config input[type="checkbox"]').not('.nostyle').iCheck({
+            checkboxClass: 'icheckbox_minimal-grey',
+            radioClass: 'iradio_minimal-grey',
+            increaseArea: '40%' // optional
+        });
 	}
 
 	self.redraw_gauges = function() {
@@ -754,9 +726,7 @@ function viewmodel() {
 	}
 
 	self.select_page('dashboard');
-	setTimeout(self.refresh_dashboard, 1500)
 }
-
 
 /* prototypes */
 
