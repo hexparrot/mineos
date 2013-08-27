@@ -1032,6 +1032,21 @@ class mc(object):
             except AttributeError:
                 continue
 
+    def list_archives(self):
+        """Returns a list of the filenames/sizes of all archives found.
+        """
+        from time import ctime
+        from procfs_reader import human_readable
+        arcs = namedtuple('archives', 'filename size friendly_size timestamp friendly_timestamp')
+
+        for i in self._list_files(self.env['awd']):
+            info = os.stat(os.path.join(self.env['awd'], i))
+            yield arcs(i,
+                       info.st_size,
+                       human_readable(info.st_size),
+                       int(info.st_mtime),
+                       ctime(info.st_mtime))
+
     @classmethod
     def list_servers_up(cls):
         """Returns screen and java pid info for all running servers"""

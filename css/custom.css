@@ -22,6 +22,6 @@ li.accordion-group a, ul.nav  {
 .dropdown-menu li {
     cursor: pointer;
 }
-#prune_intervals {
+#prune_intervals, #prune_archives {
 	margin-bottom: 0px;
 }

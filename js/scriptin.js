@@ -169,6 +169,7 @@ function viewmodel() {
 
 	self.pagedata = {
 		pings: ko.observableArray(),
+		archives: ko.observableArray(),
 		rdiffs: ko.observableArray(),
 		profiles: ko.observableArray(),
 		sp: ko.observableArray(),
@@ -202,6 +203,14 @@ function viewmodel() {
 	self.prune = {
 		user_input: ko.observable(),
 		steps: ko.observable(),
+		to_remove: ko.observable(0),
+		space_reclaimed: ko.observable(0.0)
+	}
+
+	self.archive = {
+		user_input: ko.observable(),
+		filename: ko.observable(),
+		archives_to_delete: ko.observableArray(),
 		to_remove: ko.observable(0),
 		space_reclaimed: ko.observable(0.0)
 	}
@@ -260,6 +269,9 @@ function viewmodel() {
 				break;
 			case 'backup_list':
 				self.refresh_increments();
+				break;
+			case 'archive_list':
+				self.refresh_archives();
 				break;	
 			case 'server_status':
 				self.refresh_pings();
@@ -303,6 +315,64 @@ function viewmodel() {
 				self.server(v);
 		})
 	})
+
+	self.archive.user_input.subscribe(function(new_value) {
+		var clone = self.pagedata.archives().slice(0).reverse();
+		var match;
+		var reclaimed = 0.0;
+
+		$.each(clone, function(i,v) {
+			if (v.friendly_timestamp == new_value) {
+				match = i;
+				self.archive.filename(v.filename);
+				return false;
+			}
+
+			if (v.friendly_size.slice(-1) == 'K')
+				reclaimed += parseFloat(v.friendly_size) / 1000;
+			else if (v.friendly_size.slice(-1) == 'M')
+				reclaimed += parseFloat(v.friendly_size);
+			else if (v.friendly_size.slice(-1) == 'G')
+				reclaimed += parseFloat(v.friendly_size);
+		})
+
+		if (!match){
+			self.archive.to_remove(0);
+			self.archive.space_reclaimed(0);
+		} else {
+			self.archive.archives_to_delete(clone.slice(0,match).map(function(e) {
+			  return e.filename;
+			}))
+			self.archive.to_remove(clone.slice(0,match).length);
+			self.archive.space_reclaimed(reclaimed);
+			$('#go_prune2').data('filename', self.archive.filename())
+		}
+	})
+
+	self.refresh_archives = function() {
+		$.getJSON('/vm/archives', {server_name: self.server().server_name})
+		.success(function(data){
+			self.pagedata.archives(data.ascending_by('timestamp').reverse());
+
+			var available_tags = vm.pagedata.archives().map(function(i) {
+			  return i.friendly_timestamp
+			})
+
+			$("#prune_archives").autocomplete({
+	            source: available_tags
+	        });
+		})
+	}
+
+	self.delete_archive = function(vm, event) {
+		self.archive.archives_to_delete([vm.filename]);
+		self.prune_archives();
+	}
+
+	self.prune_archives = function() {
+		console.log('deleting')
+		console.log(self.archive.archives_to_delete())
+	}
 
 	self.prune.user_input.subscribe(function(new_value) {
 		var clone = self.pagedata.rdiffs().slice(0).reverse();
