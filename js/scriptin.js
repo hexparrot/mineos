@@ -217,7 +217,8 @@ function webui() {
 		archives: {
 			user_input: ko.observable(),
 			filename: ko.observable(),
-			archives_to_delete: ko.observable(0),
+			remove_count: ko.observable(0),
+			archives_to_delete: '',
 			space_reclaimed: ko.observable(0.0)
 		}
 	}
@@ -266,7 +267,6 @@ function webui() {
 		$.extend(params, self.extract_required(['path','filename'], target, model));
 
 		self.import_information(params);
-		console.log(params)
 	}
 
 	self.import_server = function(vm, eventobj) {
@@ -275,6 +275,18 @@ function webui() {
 
 		$.getJSON('/import_server', params).then(self.ajax.received, self.ajax.lost)
 										   .then(self.show_page('dashboard'));
+	}
+
+	self.prune_archives = function(vm, eventobj) {
+		var target = $(eventobj.currentTarget);
+		var refresh_time = parseInt($(target).data('refresh'));
+		var params = {
+			cmd: 'prune_archives',
+			server_name: self.server().server_name,
+			filename: self.pruning.archives.archives_to_delete
+		}
+		$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
+									.then(function() {self.ajax.refresh(refresh_time)});
 	}
 
 	self.ajax = {
@@ -357,6 +369,72 @@ function webui() {
 				break;			
 		}
 	})
+
+	self.pruning.archives.user_input.subscribe(function(new_value) {
+		var clone = self.vmdata.archives().slice(0).reverse();
+		var match;
+		var reclaimed = 0.0;
+
+		$.each(clone, function(i,v) {
+			if (v.friendly_timestamp == new_value) {
+				match = i;
+				self.pruning.archives.filename(v.filename);
+				return false;
+			}
+			reclaimed += v.size;
+		})
+
+		if (!match){
+			self.pruning.archives.remove_count(0);
+			self.pruning.archives.space_reclaimed(0.0);
+			self.pruning.archives.archives_to_delete = '';
+		} else {
+			var hits = clone.slice(0,match).map(function(e) { return e.filename });
+			
+			self.pruning.archives.remove_count(hits.length);
+			self.pruning.archives.space_reclaimed(bytes_to_mb(reclaimed));
+			self.pruning.archives.archives_to_delete = hits.join(' ');
+		}
+	})
+
+	/*self.prune.user_input.subscribe(function(new_value) {
+		var clone = self.pagedata.rdiffs().slice(0).reverse();
+		var match;
+		var reclaimed = 0.0;
+
+		$.each(clone, function(i,v) {
+			if (v.timestamp == new_value || v.step == new_value) {
+				match = i;
+				self.prune.steps(v.step);
+				return false;
+			}
+
+			if (v.increment_size.slice(-2) == 'KB')
+				reclaimed += parseFloat(v.increment_size) / 1000;
+			else
+				reclaimed += parseFloat(v.increment_size);
+		})
+
+		if (!match){
+			self.prune.to_remove(0);
+			self.prune.space_reclaimed(0);
+		} else {
+			self.prune.to_remove(clone.slice(0,match).length);
+			self.prune.space_reclaimed(reclaimed);
+			$('#go_prune').data('steps', self.prune.steps())
+		}
+	})*/
+
+
+
+
+
+
+
+
+
+
+
 
 	/* form submissions */
 
