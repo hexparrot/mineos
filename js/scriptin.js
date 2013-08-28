@@ -184,13 +184,13 @@ function webui() {
 	self.summary = {
 		backup: {
 			most_recent: ko.computed(function() { 
-				try { return self.vmdata.rdiffs()[0].timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.increments()[0].timestamp } catch (e) { return 'None' }
 			}),
 			first: ko.computed(function() {
-				try { return self.vmdata.rdiffs()[self.vmdata.rdiffs().length-1].timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.increments()[self.vmdata.increments().length-1].timestamp } catch (e) { return 'None' }
 			}),
 			cumulative: ko.computed(function() {
-				try { return self.vmdata.rdiffs()[0].cumulative_size } catch (e) { return '0 MB' }
+				try { return self.vmdata.increments()[0].cumulative_size } catch (e) { return '0 MB' }
 			})
 		},
 		archive: {
@@ -224,7 +224,7 @@ function webui() {
 
 	self.select_server = function(model) {
 		self.server(model);
-		self.show_page('select_server');
+		self.show_page('server_status');
 	}
 
 	self.show_page = function(vm, event) {
@@ -238,11 +238,22 @@ function webui() {
 		$('#{0}'.format(self.page())).show();
 	}
 
+	self.ajax = {
+		received: function(data) {
+			console.log(data);
+		},
+		lost: function(data) {
+			console.log(data);
+		}
+	}
+
 	self.command = function(vm, eventobj) {
 		var target = $(eventobj.currentTarget);
 		var cmd = $(target).data('cmd');
 		var required = $(target).data('required').split(',');
 		var params = {cmd: cmd};
+
+		console.log(required)
 
 		$.each(required, function(i,v) {
 			//checks if required param in DOM element
@@ -258,13 +269,17 @@ function webui() {
 		if (required.indexOf('force') >= 0)
 			params['force'] = true;
 
+		console.log(params)
+
 		if (required.indexOf('server_name') >= 0) {
 			$.extend(params, {server_name: self.server().server_name});
-			$.getJSON('/server', params).then(self.command.received, self.command.lost);
+			$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost);
 			setTimeout(self.page.valueHasMutated, parseInt($(target).data('refresh')) || self.refresh_rate);
+		} else {
+			$.getJSON('/host', params).then(self.ajax.received, self.ajax.lost);
+			setTimeout(self.page.valueHasMutated, parseInt($(target).data('refresh')) || self.refresh_rate)
 		}
 	}
-
 
 	self.page.subscribe(function(page){
 		var server_name = self.server().server_name;
@@ -393,7 +408,7 @@ function webui() {
 			})
 		},
 		archives: function(data) {
-			self.vmdata.archives().ascending_by('timestamp').reverse();
+			self.vmdata.archives(data.ascending_by('timestamp').reverse());
 
 			$("input#prune_archive_input").autocomplete({
 	            source: self.vmdata.archives().map(function(i) {
