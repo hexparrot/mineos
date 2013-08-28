@@ -212,6 +212,7 @@ function webui() {
 		increments: {
 			user_input: ko.observable(),
 			remove_count: ko.observable(0),
+			steps: '',
 			space_reclaimed: ko.observable(0.0)
 		},
 		archives: {
@@ -278,15 +279,23 @@ function webui() {
 	}
 
 	self.prune_archives = function(vm, eventobj) {
-		var target = $(eventobj.currentTarget);
-		var refresh_time = parseInt($(target).data('refresh'));
 		var params = {
 			cmd: 'prune_archives',
 			server_name: self.server().server_name,
 			filename: self.pruning.archives.archives_to_delete
 		}
 		$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
-									.then(function() {self.ajax.refresh(refresh_time)});
+									.then(function() {self.ajax.refresh(null)});
+	}
+
+	self.prune_increments = function(vm, eventobj) {
+		var params = {
+			cmd: 'prune',
+			server_name: self.server().server_name,
+			steps: self.pruning.increments.steps
+		}
+		$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
+									.then(function() {self.ajax.refresh(null)});
 	}
 
 	self.ajax = {
@@ -397,15 +406,15 @@ function webui() {
 		}
 	})
 
-	/*self.prune.user_input.subscribe(function(new_value) {
-		var clone = self.pagedata.rdiffs().slice(0).reverse();
+	self.pruning.increments.user_input.subscribe(function(new_value){
+		var clone = self.vmdata.increments().slice(0).reverse();
 		var match;
 		var reclaimed = 0.0;
 
 		$.each(clone, function(i,v) {
 			if (v.timestamp == new_value || v.step == new_value) {
 				match = i;
-				self.prune.steps(v.step);
+				self.pruning.increments.steps = v.step;
 				return false;
 			}
 
@@ -416,25 +425,14 @@ function webui() {
 		})
 
 		if (!match){
-			self.prune.to_remove(0);
-			self.prune.space_reclaimed(0);
+			self.pruning.increments.remove_count(0);
+			self.pruning.increments.space_reclaimed(0);
+			self.pruning.increments.steps = '';
 		} else {
-			self.prune.to_remove(clone.slice(0,match).length);
-			self.prune.space_reclaimed(reclaimed);
-			$('#go_prune').data('steps', self.prune.steps())
+			self.pruning.increments.remove_count(clone.slice(0,match).length);
+			self.pruning.increments.space_reclaimed(reclaimed);
 		}
-	})*/
-
-
-
-
-
-
-
-
-
-
-
+	})
 
 	/* form submissions */
 

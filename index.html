@@ -492,7 +492,7 @@
                         <div class="control-group">
                             <label class="control-label">Remove restore points older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_increment_input" data-bind="" placeholder="Pick a date or step"> <button id="go_prune" data-bind="" data-cmd="prune" data-required="server_name,steps" data-steps="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
+                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button data-bind="click: prune_increments" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
                             </div>
                         </div>
 
@@ -510,7 +510,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle lime"><span class="icone-folder-close"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind=""></span><small>Restore Points</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.remove_count"></span><small>Restore Points</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 1 -->
 
@@ -518,7 +518,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind=""></span><small>MB Reclaimed</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.space_reclaimed"></span><small>MB Reclaimed</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
                                 </div>
