@@ -230,6 +230,52 @@ class mc_server(object):
 
     @cherrypy.expose
     @require()
+    def create(self, **args):
+        args = {k:str(v) for k,v in args.iteritems()}
+        server_name = args.pop('server_name')
+        command = args.pop('cmd')
+
+        retval = None
+        response = {
+            'result': None,
+            'server_name': server_name,
+            'cmd': command,
+            'payload': None
+            }
+
+        from json import loads
+        from collections import defaultdict
+
+        try:
+            instance = mc(server_name,
+                          cherrypy.session['_cp_username'],
+                          base_directory=self.base_directory)
+            sp_unicode = loads(args['sp'])
+            sc_unicode = loads(args['sc'])
+
+            sp = {str(k):str(v) for k,v in sp_unicode.iteritems()}
+            
+            sc = defaultdict(dict)
+            for section in sc_unicode.keys():
+                for key in sc_unicode[section].keys():
+                    sc[str(section)][str(key)] = str(sc_unicode[section][key])
+            
+            instance.create(dict(sc),sp)
+        except (RuntimeError, KeyError, OSError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        else:
+            response['result'] = 'success'
+            retval = 'server %s successfully created' % server_name
+
+        response['payload'] = self.to_jsonable_type(retval)
+        return dumps(response)
+
+    @cherrypy.expose
+    @require()
     def server(self, **args):
         from subprocess import CalledProcessError
 
@@ -247,32 +293,13 @@ class mc_server(object):
 
         try:
             path_ = os.path.join(self.base_directory, 'servers', server_name)
-            
-            if command not in ['create']:
-                mc.valid_owner(cherrypy.session['_cp_username'], path_)
-                '''valid_owner will fail on nonexistent path_,
-                which will only occur on create'''
+            mc.valid_owner(cherrypy.session['_cp_username'], path_)
  
             instance = mc(server_name,
                           cherrypy.session['_cp_username'],
                           base_directory=self.base_directory) 
-
-            if command == 'create':
-                from json import loads
-                from collections import defaultdict
-
-                sp_unicode = loads(args['sp'])
-                sc_unicode = loads(args['sc'])
-
-                sp = {str(k):str(v) for k,v in sp_unicode.iteritems()}
-                
-                sc = defaultdict(dict)
-                for section in sc_unicode.keys():
-                    for key in sc_unicode[section].keys():
-                        sc[str(section)][str(key)] = str(sc_unicode[section][key])
-                
-                retval = instance.create(dict(sc),sp)                
-            elif command in self.METHODS:
+             
+            if command in self.METHODS:
                 retval = getattr(instance, command)(**args)
             elif command in self.PROPERTIES:
                 if args:

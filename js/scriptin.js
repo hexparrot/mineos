@@ -628,11 +628,7 @@ function viewmodel() {
 			'sc': JSON.stringify(sc)
 		}
 
-		$.getJSON('/server', params)
-		.success(function() {
-			self.select_page('dashboard');
-		})
-
+		$.getJSON('/create', params).then(self.select_page('dashboard'))
 	}
 
 	self.refresh_sp = function(data) {
