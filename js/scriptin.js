@@ -511,10 +511,11 @@ function webui() {
 		   properties[ $(this).attr('name') ] = $(this).val();
 		})
 
-		properties.ignore = $(form).find('input[name="tags"]').map(function(i,v) {
+		var props = $(form).find('input[name="tags"]').map(function(i,v) {
 			return $(this).val();
-		}).join(' ');
+		});
 
+		properties['ignore'] = (props.length > 0) ? props.join(' ') : '';
 		delete properties.tags;
 
 		params = {
