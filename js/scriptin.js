@@ -125,6 +125,7 @@ function webui() {
 	self.page.extend({ notify: 'always' });
 
 	self.refresh_rate = 100;
+	self.refresh_loadavg = 2000;
 
 	self.dashboard = {
 		whoami: ko.observable(),
@@ -141,7 +142,7 @@ function webui() {
 		one: [0],
 		five: [0],
 		fifteen: [0],
-		autorefresh: ko.observable(false),
+		autorefresh: ko.observable(true),
 		options: {
 	        series: { 
 	            lines: {
@@ -228,6 +229,15 @@ function webui() {
 	}
 
 	/* beginning root functions */
+
+	self.toggle_loadaverages = function() {
+		if (self.load_averages.autorefresh())
+			self.load_averages.autorefresh(false);
+		else {
+			self.load_averages.autorefresh(true);
+			self.redraw.chart();
+		}
+	}
 
 	self.select_server = function(model) {
 		self.server(model);
@@ -617,170 +627,58 @@ function webui() {
 	        });
 		},
 		chart: function() {
+			function rerender(data) {
+				function enumerate(arr) {
+		            var res = [];
+		            for (var i = 0; i < arr.length; ++i)
+		                res.push([i, arr[i]])
+		                return res;
+		        }
 
+		        self.load_averages.one.push(data[0])
+				self.load_averages.five.push(data[1])
+				self.load_averages.fifteen.push(data[2])
+
+				while (self.load_averages.one.length > (self.load_averages.options.xaxis.max + 1)){
+					self.load_averages.one.splice(0,1)
+					self.load_averages.five.splice(0,1)
+					self.load_averages.fifteen.splice(0,1)
+				}
+
+				//colors http://www.jqueryflottutorial.com/tester-4.html
+		        var dataset = [
+				    { label: "fifteen", data: enumerate(self.load_averages['fifteen']), color: "#0077FF" },
+				    { label: "five", data: enumerate(self.load_averages['five']), color: "#ED7B00" },
+				    { label: "one", data: enumerate(self.load_averages['one']), color: "#E8E800" }
+	        	]
+
+	        	self.load_averages.options.yaxis.max = Math.max(
+					self.load_averages.one.max(),
+					self.load_averages.five.max(),
+					self.load_averages.fifteen.max()) || 1;
+
+	        	var plot = $.plot($("#load_averages"), dataset, self.load_averages.options);
+	            plot.draw();
+			}
+
+	        function update() {
+	        	if (self.page() != 'dashboard' || !self.load_averages.autorefresh()) {
+					self.load_averages.one.push.apply(self.load_averages.one, [0,0,0])
+					self.load_averages.five.push.apply(self.load_averages.five, [0,0,0])
+					self.load_averages.fifteen.push.apply(self.load_averages.fifteen, [0,0,0])
+	        		return
+	        	}
+
+	        	$.getJSON('/vm/loadavg').then(rerender);
+				setTimeout(update, self.refresh_loadavg);
+	        }   
+	        update();
 		}
 	}
-
-
-
-
 
 	/* viewmodel startup */
 
 	self.show_page('dashboard');
-
-
-
-}
-
-function viewmodel() {
-
-
-	self.archive.user_input.subscribe(function(new_value) {
-		var clone = self.pagedata.archives().slice(0).reverse();
-		var match;
-		var reclaimed = 0.0;
-
-		$.each(clone, function(i,v) {
-			if (v.friendly_timestamp == new_value) {
-				match = i;
-				self.archive.filename(v.filename);
-				return false;
-			}
-			reclaimed += v.size;
-		})
-
-		if (!match){
-			self.archive.archives_to_delete('');
-			self.archive.to_remove(0);
-			self.archive.space_reclaimed(0.0);
-		} else {
-			self.archive.archives_to_delete(clone.slice(0,match).map(function(e) {
-			  return e.filename;
-			}).join(' '))
-			self.archive.to_remove(clone.slice(0,match).length);
-			self.archive.space_reclaimed(bytes_to_mb(reclaimed));
-			$('#go_prune2').data('filename', self.archive.archives_to_delete())
-		}
-	})
-
-
-	self.prune.user_input.subscribe(function(new_value) {
-		var clone = self.pagedata.rdiffs().slice(0).reverse();
-		var match;
-		var reclaimed = 0.0;
-
-		$.each(clone, function(i,v) {
-			if (v.timestamp == new_value || v.step == new_value) {
-				match = i;
-				self.prune.steps(v.step);
-				return false;
-			}
-
-			if (v.increment_size.slice(-2) == 'KB')
-				reclaimed += parseFloat(v.increment_size) / 1000;
-			else
-				reclaimed += parseFloat(v.increment_size);
-		})
-
-		if (!match){
-			self.prune.to_remove(0);
-			self.prune.space_reclaimed(0);
-		} else {
-			self.prune.to_remove(clone.slice(0,match).length);
-			self.prune.space_reclaimed(reclaimed);
-			$('#go_prune').data('steps', self.prune.steps())
-		}
-	})
-
-
-	self.removal_confirmation = function(vm, event) {
-		try {
-			$('#confirm_removal').data('profile', vm.profile);
-		} catch (e) {
-			$('#confirm_removal').data('profile', '');
-		}
-
-		self.dashboard.confirm_removal($('#confirm_removal').data('profile'))
-	}
-
-
-	self.redraw_spinners = function() {
-		$('[data-widget="refresh"]').on('click', function (e) {
-			var $modal = $('<div class="widget-modal"><span class="spinner spinner1"></span></div>');
-			var $target = $(this).parents('.widget');
-
-			// append to widget
-			$target.append($modal);
-
-			// remove after 3 second
-			setTimeout(function () {
-		        $modal.remove();
-		    }, 2000);
-
-			e.preventDefault();
-		});
-	}
-
-	self.redraw_chart = function() {
-		function rerender(data) {
-			function enumerate(arr) {
-	            var res = [];
-	            for (var i = 0; i < arr.length; ++i)
-	                res.push([i, arr[i]])
-	                return res;
-	        }
-
-	        self.load_averages.one.push(data[0])
-			self.load_averages.five.push(data[1])
-			self.load_averages.fifteen.push(data[2])
-
-			while (self.load_averages.one.length > (self.load_averages.options.xaxis.max + 1)){
-				self.load_averages.one.splice(0,1)
-				self.load_averages.five.splice(0,1)
-				self.load_averages.fifteen.splice(0,1)
-			}
-
-			//colors http://www.jqueryflottutorial.com/tester-4.html
-	        var dataset = [
-			    { label: "fifteen", data: enumerate(self.load_averages['fifteen']), color: "#0077FF" },
-			    { label: "five", data: enumerate(self.load_averages['five']), color: "#ED7B00" },
-			    { label: "one", data: enumerate(self.load_averages['one']), color: "#E8E800" }
-        	]
-
-        	self.load_averages.options.yaxis.max = Math.max(
-				self.load_averages.one.max(),
-				self.load_averages.five.max(),
-				self.load_averages.fifteen.max()) || 1;
-
-        	var plot = $.plot($("#load_averages"), dataset, self.load_averages.options);
-            plot.draw();
-		}
-
-        function update() {
-        	if (self.page() != 'dashboard' || !self.load_averages.autorefresh()) {
-				self.load_averages.one.push.apply(self.load_averages.one, [0,0,0])
-				self.load_averages.five.push.apply(self.load_averages.five, [0,0,0])
-				self.load_averages.fifteen.push.apply(self.load_averages.fifteen, [0,0,0])
-        		return
-        	}
-
-        	$.getJSON('/vm/loadavg').then(rerender);
-			setTimeout(update, 2000);
-        }   
-
-        update();
-	}
-
-	self.toggle_loadaverages = function() {
-		if (self.load_averages.autorefresh())
-			self.load_averages.autorefresh(false);
-		else {
-			self.load_averages.autorefresh(true);
-			self.redraw_chart();
-		}
-	}
-
 }
 
 /* prototypes */
