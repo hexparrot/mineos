@@ -697,7 +697,7 @@
                                 <td data-bind="text: save_as_mtime"></td>
                                 <td>
                                 	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
-                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.removal_confirmation" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
+                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
                                 </td>
                             </tr>
                           </tbody>
@@ -719,18 +719,6 @@
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4>You are about to delete <span data-bind=""></span>!</h4>
-                        </div>
-                        <div class="modal-body">
-                            <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button id="confirm_removal" data-bind="click: $root.command" data-dismiss="modal" class="btn btn-danger" data-required="profile" data-cmd="remove_profile">Remove Profile</button>
-                        </div>
-                    </div>
                 </div>
                 <!--/ END Content -->
 
@@ -1076,6 +1064,19 @@
                     <div class="modal-footer">
                         <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
                         <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Create new Server</button>
+                    </div>
+                </div>
+
+                <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4>You are about to delete <span data-bind="text: pruning.profiles.profile"></span>!</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Remove Profile</button>
                     </div>
                 </div>
 

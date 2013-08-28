@@ -221,6 +221,9 @@ function webui() {
 			remove_count: ko.observable(0),
 			archives_to_delete: '',
 			space_reclaimed: ko.observable(0.0)
+		},
+		profiles: {
+			profile: ko.observable()
 		}
 	}
 
@@ -296,6 +299,19 @@ function webui() {
 		}
 		$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
 									.then(function() {self.ajax.refresh(null)});
+	}
+
+	self.remember_profile = function(model, eventobj) {
+		self.pruning.profiles.profile(model.profile);
+	}
+
+	self.prune_profile = function(vm, eventobj) {
+		var params = {
+			cmd: 'remove_profile',
+			profile: self.pruning.profiles.profile
+		}
+		$.getJSON('/host', params).then(self.ajax.received, self.ajax.lost)
+								  .then(function() {self.ajax.refresh(null)});
 	}
 
 	self.ajax = {
