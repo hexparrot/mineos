@@ -1,6 +1,6 @@
 /* webui functions */
 
-function model_status(data) {
+function model_server(data) {
 	var self = this;
 	$.extend(self, data);
 	
@@ -91,6 +91,19 @@ function model_property(server_name, option, value, section) {
 	}
 
 	self.val.subscribe(function(value) {
+		function flash_success(data) {
+			if (data.result == 'success') {
+				self.success(true);
+				setTimeout(function() {self.success(null)}, 5000)
+			} else {
+				self.success(false);
+			}
+		}
+
+		function flash_failure(data) {
+			self.success(false);
+		}
+
 		var params = {
 			server_name: server_name,
 			cmd: 'modify_config',
@@ -98,34 +111,265 @@ function model_property(server_name, option, value, section) {
 			value: self.val(),
 			section: self.section
 		}
-		$.getJSON('/server', params)
-		.success(function(data) {
-			if (data.result == 'success') {
-				self.success(true);
-				setTimeout(function() {
-					self.success(null);
-				}, 5000)
-			} else {
-				self.success(false);
-			}
-		})
-
+		$.getJSON('/server', params).then(flash_success, flash_failure)
 	}, self)
 }
 
-function model_increment(enumeration, inc_data) {
+function webui() {
 	var self = this;
-	self.step = '{0}B'.format(enumeration);
 
-	self.timestamp = inc_data[0];
-	self.increment_size = inc_data[1];
-	self.cumulative_size = inc_data[2];
+	self.server = ko.observable({});
+	self.page = ko.observable();
+
+	self.server.extend({ notify: 'always' });
+	self.page.extend({ notify: 'always' });
+
+	self.dashboard = {
+		whoami: ko.observable(),
+		memfree: ko.observable(),
+		uptime: ko.observable(),
+		servers_up: ko.computed(function() {		
+			try { return vm.pagedata.pings().filter(function(i) {return i.up}).length; } catch (e) { return 0; }
+		}),
+		disk_usage: ko.observable(),
+		disk_usage_pct: ko.observable(),
+	}
+
+	self.load_averages = {
+		one: [0],
+		five: [0],
+		fifteen: [0],
+		autorefresh: ko.observable(false),
+		options: {
+	        series: { 
+	            lines: {
+	                show: true,
+	                fill: .3
+	            },
+	            shadowSize: 0 
+	        },
+	        yaxis: { 
+	        	min: 0, 
+	        	max: 1,
+	        	axisLabel: "Load Average for last minute",
+		        axisLabelUseCanvas: true,
+		        axisLabelFontSizePixels: 12,
+		        axisLabelFontFamily: 'Verdana, Arial',
+		        axisLabelPadding: 3
+	        },
+	        xaxis: { min: 0, max: 30, show: false },
+	        grid: {
+	            borderWidth: 0, 
+	            hoverable: false 
+	        },
+	        legend: {
+		        labelBoxBorderColor: "#858585",
+		        position: "ne"
+		    }
+	    }
+	}
+
+	self.vmdata = {
+		pings: ko.observableArray(),
+		archives: ko.observableArray(),
+		increments: ko.observableArray(),
+		archives_importable: ko.observableArray(),
+		profiles: ko.observableArray(),
+		sp: ko.observableArray(),
+		sc: ko.observableArray()
+	}
+
+	self.summary = {
+		backup: {
+			most_recent: ko.computed(function() { 
+				try { return self.pagedata.rdiffs()[0].timestamp } catch (e) { return 'None' }
+			}),
+			first: ko.computed(function() {
+				try { return self.pagedata.rdiffs()[self.pagedata.rdiffs().length-1].timestamp } catch (e) { return 'None' }
+			}),
+			cumulative: ko.computed(function() {
+				try { return self.pagedata.rdiffs()[0].cumulative_size } catch (e) { return '0 MB' }
+			})
+		},
+		archive: {
+			most_recent: ko.computed(function() {
+				try { return self.pagedata.archives()[0].friendly_timestamp } catch (e) { return 'None' }
+			}),
+			first: ko.computed(function() {
+				try { return self.pagedata.archives()[self.pagedata.archives().length-1].friendly_timestamp } catch (e) { return 'None' }
+			}),
+			cumulative: ko.computed(function() {
+				return bytes_to_mb(self.pagedata.archives().sum('size'))
+			})
+		}
+	}
+
+	self.pruning = {
+		increments: {
+			user_input: ko.observable(),
+			remove_count: ko.observable(),
+			space_reclaimed: ko.observable(0.0)
+		},
+		archives: {
+			user_input: ko.observable(),
+			filename: ko.observable(),
+			archives_to_delete: ko.observable(),
+			space_reclaimed: ko.observable(0.0)
+		}
+	}
+
+	/* beginning root functions */
+
+	self.select_server = function(model) {
+		self.server(model);
+		self.show_page('select_server');
+	}
+
+	self.show_page = function(vm, event) {
+		try {
+			self.page($(event.currentTarget).data('page'));
+		} catch (e) {
+			self.page(vm);
+		}
+	}
+
+	/*self.page.subscribe(function(page){
+		var server_name = self.server().server_name;
+		var params = {server_name: server_name};
+
+		switch(page) {
+			case 'dashboard':
+				$.getJSON('/vm/status').then(self.refresh_pings);
+				$.getJSON('/vm/dashboard').then(self.refresh_dashboard).then(self.redraw_gauges);
+				self.redraw_chart();
+				break;
+			case 'backup_list':
+				$.getJSON('/vm/increments', params).then(self.refresh_increments);
+				break;
+			case 'archive_list':
+				$.getJSON('/vm/archives', params).then(self.refresh_archives);
+				break;	
+			case 'server_status':
+				$.getJSON('/vm/status').then(self.refresh_pings).then(self.redraw_gauges);
+				$.getJSON('/vm/increments', params).then(self.refresh_increments);
+				$.getJSON('/vm/archives', params).then(self.refresh_archives);
+				break;
+			case 'profiles':
+				$.getJSON('/vm/profiles').then(self.refresh_profiles);
+				break;
+			case 'create_server':
+				$.getJSON('/vm/profiles').then(self.refresh_profiles);
+				break;
+			case 'server_properties':
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sp'})).then(self.refresh_sp);
+				break;
+			case 'server_config':
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh_sc);
+				break;
+			case 'importable':
+				$.getJSON('/vm/importable', {}).then(self.refresh_importable);
+				break;
+			default:
+				break;			
+		}
+
+		$('.container-fluid').hide();
+		$('#{0}'.format(page)).show();
+
+	})*/
+
+	/* promises */
+
+	self.refresh = {
+		dashboard: function(data) {
+			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
+			self.dashboard.memfree(data.memfree);
+			self.dashboard.whoami(data.whoami);
+			self.dashboard.disk_usage(data.df);
+			self.dashboard_disk_usage_pct(str_to_bytes(self.dashboard.disk_usage().used) / str_to_bytes(self.dashboard.disk_usage().total) * 100));
+
+		},
+		pings: function(data) {
+			self.vmdata.pings.removeAll();
+			$.each(data.ascending_by('server_name'), function() {
+				self.vmdata.pings.push( new model_server(v) );
+
+				if (self.server().server_name == v.server_name)
+					self.server(new model_server(v));
+			})
+		},
+		archives: function(data) {
+			self.vmdata.archives().ascending_by('timestamp').reverse();
+
+			$("input#prune_archive_input").autocomplete({
+	            source: vm.pagedata.archives().map(function(i) {
+				  return i.friendly_timestamp
+				})
+	        });
+		},
+		increments: function(data) {
+			self.vmdata.increments(data);
+
+			$("input#prune_increment_input").autocomplete({
+	            source: vm.vmdata.increments().map(function(i) {
+				  return i.timestamp
+				})
+	        });
+		},
+		profiles: function(data) {
+			self.vmdata.profiles.removeAll();
+			$.each(data, function(i,v) {
+				self.vmdata.profiles.push( $.extend({profile: i}, v));
+			})
+			self.vmdata.profiles.ascending_by('profile');
+		},
+		sp: function(data) {
+			self.vmdata.sp.removeAll();
+			$.each(data.payload, function(option, value) {
+				self.vmdata.sp.push( new model_property(self.server().server_name, i, v) )
+			})
+
+			$('table#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
+	            checkboxClass: 'icheckbox_minimal-grey',
+	            radioClass: 'iradio_minimal-grey',
+	            increaseArea: '40%' // optional
+	        });
+		},
+		sc: function(data) {
+			self.vmdata.sp.removeaAll();
+			$.each(data.payload, function(section, option_value_pair){
+				$.each(option_value_pair, function(option, value){
+					self.vmdata.sc.push(new model_property(self.server().server_name, option, value, section))
+				})
+			})
+
+			$('table#table_config input[type="checkbox"]').not('.nostyle').iCheck({
+	            checkboxClass: 'icheckbox_minimal-grey',
+	            radioClass: 'iradio_minimal-grey',
+	            increaseArea: '40%' // optional
+	        });
+		},
+		archives_importable = function(data) {
+			self.pagedata.importable(data.ascending_by('filename'));
+		}
+
+
+	}
+
+
+
+
+
+
+
+
+
 }
 
 function viewmodel() {
 	var self = this;
 
-	self.server = ko.observableArray();
+	self.server = ko.observable({});
 	self.page = ko.observableArray();
 	self.tasks = ko.observableArray();
 	self.tasks_notify = ko.computed(function() {
@@ -810,6 +1054,13 @@ Array.prototype.ascending_by = function(param) {
 	return this.sort(function(a, b) {return a[param] == b[param] ? 0 : (a[param] < b[param] ? -1 : 1) })
 }
 
+Array.prototype.sum = function(param) {
+	var total = 0;
+	for (var i=0; i < this.length; i++)
+		total += this[i][param]
+	return total;
+}
+
 function seconds_to_time(seconds) {
 	function zero_pad(number){
 		if (number.toString().length == 1)
@@ -828,14 +1079,25 @@ function seconds_to_time(seconds) {
 	return '{0}:{1}:{2}'.format(hours, zero_pad(minutes), zero_pad(seconds));
 }
 
+function str_to_bytes(str) {
+	if (str.substr(-1) == 'G') 
+		return parseFloat(str) * Math.pow(10,9);
+	else if (str.substr(-1) == 'M') 
+		return parseFloat(str) * Math.pow(10,6);
+	else if (str.substr(-1) == 'K') 
+		return parseFloat(str) * Math.pow(10,3);
+	else
+		return parseFloat(str);
+}
+
 function bytes_to_mb(bytes){
 	//http://stackoverflow.com/a/15901418/1191579
     if ( ( bytes >> 30 ) & 0x3FF )
-        bytes = ( bytes >>> 30 ) + '.' + (bytes & (3*0x3FF )).toString().substring(0,2) + 'GB' ;
+        bytes = ( bytes >>> 30 ) + '.' + (bytes & (3*0x3FF )).toString().substring(0,2) + 'GB';
     else if ( ( bytes >> 20 ) & 0x3FF )
-        bytes = ( bytes >>> 20 ) + '.' + (bytes & (2*0x3FF )).toString().substring(0,2) + 'MB' ;
+        bytes = ( bytes >>> 20 ) + '.' + (bytes & (2*0x3FF )).toString().substring(0,2) + 'MB';
     else if ( ( bytes >> 10 ) & 0x3FF )
-        bytes = ( bytes >>> 10 ) + '.' + (bytes & (0x3FF )).toString().substring(0,2) + 'KB' ;
+        bytes = ( bytes >>> 10 ) + '.' + (bytes & (0x3FF )).toString().substring(0,2) + 'KB';
     else if ( ( bytes >> 1 ) & 0x3FF )
         bytes = ( bytes >>> 1 ) + ' b' ;
     else
