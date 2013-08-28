@@ -124,12 +124,14 @@ function webui() {
 	self.server.extend({ notify: 'always' });
 	self.page.extend({ notify: 'always' });
 
+	self.refresh_rate = 100;
+
 	self.dashboard = {
 		whoami: ko.observable(),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
 		servers_up: ko.computed(function() {		
-			try { return vm.pagedata.pings().filter(function(i) {return i.up}).length; } catch (e) { return 0; }
+			try { return self.vmdata.pings().filter(function(i) {return i.up}).length; } catch (e) { return 0; }
 		}),
 		disk_usage: ko.observable(),
 		disk_usage_pct: ko.observable(),
@@ -182,24 +184,24 @@ function webui() {
 	self.summary = {
 		backup: {
 			most_recent: ko.computed(function() { 
-				try { return self.pagedata.rdiffs()[0].timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.rdiffs()[0].timestamp } catch (e) { return 'None' }
 			}),
 			first: ko.computed(function() {
-				try { return self.pagedata.rdiffs()[self.pagedata.rdiffs().length-1].timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.rdiffs()[self.vmdata.rdiffs().length-1].timestamp } catch (e) { return 'None' }
 			}),
 			cumulative: ko.computed(function() {
-				try { return self.pagedata.rdiffs()[0].cumulative_size } catch (e) { return '0 MB' }
+				try { return self.vmdata.rdiffs()[0].cumulative_size } catch (e) { return '0 MB' }
 			})
 		},
 		archive: {
 			most_recent: ko.computed(function() {
-				try { return self.pagedata.archives()[0].friendly_timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.archives()[0].friendly_timestamp } catch (e) { return 'None' }
 			}),
 			first: ko.computed(function() {
-				try { return self.pagedata.archives()[self.pagedata.archives().length-1].friendly_timestamp } catch (e) { return 'None' }
+				try { return self.vmdata.archives()[self.vmdata.archives().length-1].friendly_timestamp } catch (e) { return 'None' }
 			}),
 			cumulative: ko.computed(function() {
-				return bytes_to_mb(self.pagedata.archives().sum('size'))
+				return bytes_to_mb(self.vmdata.archives().sum('size'))
 			})
 		}
 	}
@@ -207,13 +209,13 @@ function webui() {
 	self.pruning = {
 		increments: {
 			user_input: ko.observable(),
-			remove_count: ko.observable(),
+			remove_count: ko.observable(0),
 			space_reclaimed: ko.observable(0.0)
 		},
 		archives: {
 			user_input: ko.observable(),
 			filename: ko.observable(),
-			archives_to_delete: ko.observable(),
+			archives_to_delete: ko.observable(0),
 			space_reclaimed: ko.observable(0.0)
 		}
 	}
@@ -231,52 +233,144 @@ function webui() {
 		} catch (e) {
 			self.page(vm);
 		}
+
+		$('.container-fluid').hide();
+		$('#{0}'.format(self.page())).show();
 	}
 
-	/*self.page.subscribe(function(page){
+	self.command = function(vm, eventobj) {
+		var target = $(eventobj.currentTarget);
+		var cmd = $(target).data('cmd');
+		var required = $(target).data('required').split(',');
+		var params = {cmd: cmd};
+
+		$.each(required, function(i,v) {
+			//checks if required param in DOM element
+			//then falls back to vm
+			var required_param = v.replace(/\s/g, '');
+
+			if (required_param in $(target).data())
+				params[required_param] = $(target).data(required_param);
+			else if (required_param in vm)
+				params[required_param] = vm[required_param];
+		})
+
+		if (required.indexOf('force') >= 0)
+			params['force'] = true;
+
+		if (required.indexOf('server_name') >= 0) {
+			$.extend(params, {server_name: self.server().server_name});
+			$.getJSON('/server', params).then(self.command.received, self.command.lost);
+			setTimeout(self.page.valueHasMutated, parseInt($(target).data('refresh')) || self.refresh_rate);
+		}
+	}
+
+
+	self.page.subscribe(function(page){
 		var server_name = self.server().server_name;
 		var params = {server_name: server_name};
 
 		switch(page) {
 			case 'dashboard':
-				$.getJSON('/vm/status').then(self.refresh_pings);
-				$.getJSON('/vm/dashboard').then(self.refresh_dashboard).then(self.redraw_gauges);
-				self.redraw_chart();
+				$.getJSON('/vm/status').then(self.refresh.pings);
+				$.getJSON('/vm/dashboard').then(self.refresh.dashboard).then(self.redraw.gauges);
+				self.redraw.chart();
 				break;
 			case 'backup_list':
-				$.getJSON('/vm/increments', params).then(self.refresh_increments);
+				$.getJSON('/vm/increments', params).then(self.refresh.increments);
 				break;
 			case 'archive_list':
-				$.getJSON('/vm/archives', params).then(self.refresh_archives);
+				$.getJSON('/vm/archives', params).then(self.refresh.archives);
 				break;	
 			case 'server_status':
-				$.getJSON('/vm/status').then(self.refresh_pings).then(self.redraw_gauges);
-				$.getJSON('/vm/increments', params).then(self.refresh_increments);
-				$.getJSON('/vm/archives', params).then(self.refresh_archives);
+				$.getJSON('/vm/status').then(self.refresh.pings).then(self.redraw.gauges);
+				$.getJSON('/vm/increments', params).then(self.refresh.increments);
+				$.getJSON('/vm/archives', params).then(self.refresh.archives);
 				break;
 			case 'profiles':
-				$.getJSON('/vm/profiles').then(self.refresh_profiles);
+				$.getJSON('/vm/profiles').then(self.refresh.profiles);
 				break;
 			case 'create_server':
-				$.getJSON('/vm/profiles').then(self.refresh_profiles);
+				$.getJSON('/vm/profiles').then(self.refresh.profiles);
 				break;
 			case 'server_properties':
-				$.getJSON('/server', $.extend({}, params, {'cmd': 'sp'})).then(self.refresh_sp);
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sp'})).then(self.refresh.sp);
 				break;
 			case 'server_config':
-				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh_sc);
+				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh.sc);
 				break;
 			case 'importable':
-				$.getJSON('/vm/importable', {}).then(self.refresh_importable);
+				$.getJSON('/vm/importable', {}).then(self.refresh.importable);
 				break;
 			default:
 				break;			
 		}
+	})
 
-		$('.container-fluid').hide();
-		$('#{0}'.format(page)).show();
+	/* form submissions */
 
-	})*/
+	self.create_server = function(form) {
+		var server_name = $(form).find('input[name="server_name"]').val();
+
+		var step1 = $(form).find('fieldset#step1 :input').filter(function() {
+			return ($(this).val() ? true : false);
+		})
+
+		var step2 = $(form).find('fieldset#step2 :input').filter(function() {
+			return ($(this).val() ? true : false);
+		})
+
+		var step3 = $(form).find('fieldset#step3 :input').filter(function() {
+			return ($(this).val() ? true : false);
+		})
+
+		var sp = {};
+		$.each($(step2).serialize().split('&'), function(i,v) {
+		 	sp[v.split('=')[0]] = v.split('=')[1];
+		})
+
+		var sc = {};
+		$.each(step3, function(i,v) {
+			input = $(v);
+			section = input.data('section');
+			if (!(section in sc))
+				sc[section] = {};
+			sc[section][input.attr('name')] = input.val();
+		})
+
+		params = {
+			'server_name': server_name,
+			'cmd': 'create',
+			'sp': JSON.stringify(sp),
+			'sc': JSON.stringify(sc)
+		}
+
+		$.getJSON('/create', params).then( self.show_page('dashboard') )
+	}
+
+	self.define_profile = function(form) {
+		var step1 = $(form).find('fieldset :input').filter(function() {
+			return ($(this).val() ? true : false);
+		})
+
+		var properties = {};
+		$(step1).each(function() {
+		   properties[ $(this).attr('name') ] = $(this).val();
+		})
+
+		properties.ignore = $(form).find('input[name="tags"]').map(function(i,v) {
+			return $(this).val();
+		}).join(' ');
+
+		delete properties.tags;
+
+		params = {
+			'cmd': 'define_profile',
+			'profile': JSON.stringify(properties),
+		}
+
+		$.getJSON('/host', params).then( self.show_page('profiles') );
+	}
 
 	/* promises */
 
@@ -286,12 +380,12 @@ function webui() {
 			self.dashboard.memfree(data.memfree);
 			self.dashboard.whoami(data.whoami);
 			self.dashboard.disk_usage(data.df);
-			self.dashboard_disk_usage_pct(str_to_bytes(self.dashboard.disk_usage().used) / str_to_bytes(self.dashboard.disk_usage().total) * 100));
-
+			self.dashboard.disk_usage_pct(str_to_bytes(self.dashboard.disk_usage().used) / 
+										  str_to_bytes(self.dashboard.disk_usage().total) * 100);
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();
-			$.each(data.ascending_by('server_name'), function() {
+			$.each(data.ascending_by('server_name'), function(i,v) {
 				self.vmdata.pings.push( new model_server(v) );
 
 				if (self.server().server_name == v.server_name)
@@ -302,7 +396,7 @@ function webui() {
 			self.vmdata.archives().ascending_by('timestamp').reverse();
 
 			$("input#prune_archive_input").autocomplete({
-	            source: vm.pagedata.archives().map(function(i) {
+	            source: self.vmdata.archives().map(function(i) {
 				  return i.friendly_timestamp
 				})
 	        });
@@ -311,7 +405,7 @@ function webui() {
 			self.vmdata.increments(data);
 
 			$("input#prune_increment_input").autocomplete({
-	            source: vm.vmdata.increments().map(function(i) {
+	            source: self.vmdata.increments().map(function(i) {
 				  return i.timestamp
 				})
 	        });
@@ -321,12 +415,12 @@ function webui() {
 			$.each(data, function(i,v) {
 				self.vmdata.profiles.push( $.extend({profile: i}, v));
 			})
-			self.vmdata.profiles.ascending_by('profile');
+			self.vmdata.profiles(self.vmdata.profiles().ascending_by('profile'));
 		},
 		sp: function(data) {
 			self.vmdata.sp.removeAll();
 			$.each(data.payload, function(option, value) {
-				self.vmdata.sp.push( new model_property(self.server().server_name, i, v) )
+				self.vmdata.sp.push( new model_property(self.server().server_name, option, value) )
 			})
 
 			$('table#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
@@ -336,7 +430,7 @@ function webui() {
 	        });
 		},
 		sc: function(data) {
-			self.vmdata.sp.removeaAll();
+			self.vmdata.sp.removeAll();
 			$.each(data.payload, function(section, option_value_pair){
 				$.each(option_value_pair, function(option, value){
 					self.vmdata.sc.push(new model_property(self.server().server_name, option, value, section))
@@ -349,11 +443,39 @@ function webui() {
 	            increaseArea: '40%' // optional
 	        });
 		},
-		archives_importable = function(data) {
+		archives_importable: function(data) {
 			self.pagedata.importable(data.ascending_by('filename'));
 		}
+	}
 
+	/* redraw functions */
 
+	self.judge_severity = function(percent) {
+		var colors = ['green', 'yellow', 'orange', 'red'];
+		var thresholds = [0, 60, 75, 90];
+
+		var gauge_color = colors[0];
+		for (var i=0; i < colors.length; i++) 
+			gauge_color = (parseInt(percent) >= thresholds[i] ? colors[i] : gauge_color)
+
+		return gauge_color;
+	}
+
+	self.redraw = {
+		gauges: function() {
+			$('#{0} .gauge'.format(self.page())).easyPieChart({
+	            barColor: $color[self.judge_severity( $(this).data('percent') )],
+	            scaleColor: false,
+	            trackColor: '#999',
+	            lineCap: 'butt',
+	            lineWidth: 4,
+	            size: 50,
+	            animate: 1000
+	        });
+		},
+		chart: function() {
+
+		}
 	}
 
 
@@ -361,255 +483,18 @@ function webui() {
 
 
 
+
+
+	/* viewmodel startup */
+
+	self.show_page('dashboard');
 
 
 
 }
 
 function viewmodel() {
-	var self = this;
 
-	self.server = ko.observable({});
-	self.page = ko.observableArray();
-	self.tasks = ko.observableArray();
-	self.tasks_notify = ko.computed(function() {
-		return self.tasks().filter(function(i){
-		  return i.state == 'error';
-		})
-	})
-
-	self.dashboard = {
-		whoami: ko.observable(),
-		memfree: ko.observable(),
-		uptime: ko.observable(),
-		servers_up: ko.observable(),
-		df: ko.observable(),
-		confirm_removal: ko.observable(),
-		confirm_import: ko.observable()
-	}
-
-	self.dashboard['df_pct'] = ko.computed(function() {
-		function expand(size) {
-			if (size.substr(-1) == 'G')
-				return parseFloat(size) * 1000;
-			else if (size.substr(-1) == 'M')
-				return parseFloat(size)
-			else if (size.substr(-1) == 'K')
-				return parseFloat(size) / 1000.0; 
-		}
-
-		try {
-			return Math.round(expand(self.dashboard.df().used) / expand(self.dashboard.df().total) * 100);
-		} catch (e) {
-			return '--';
-		}
-	})
-
-	self.load_averages = {
-		one: [0],
-		five: [0],
-		fifteen: [0],
-		autorefresh: ko.observable(true),
-		options: {
-	        series: { 
-	            lines: {
-	                show: true,
-	                fill: .3
-	            },
-	            shadowSize: 0 
-	        },
-	        yaxis: { 
-	        	min: 0, 
-	        	max: 1,
-	        	axisLabel: "Load Average for last minute",
-		        axisLabelUseCanvas: true,
-		        axisLabelFontSizePixels: 12,
-		        axisLabelFontFamily: 'Verdana, Arial',
-		        axisLabelPadding: 3
-	        },
-	        xaxis: { min: 0, max: 30, show: false },
-	        grid: {
-	            borderWidth: 0, 
-	            hoverable: false 
-	        },
-	        legend: {
-		        labelBoxBorderColor: "#858585",
-		        position: "ne"
-		    }
-	    }
-	}
-
-	self.pagedata = {
-		pings: ko.observableArray(),
-		archives: ko.observableArray(),
-		rdiffs: ko.observableArray(),
-		profiles: ko.observableArray(),
-		sp: ko.observableArray(),
-		sc: ko.observableArray(),
-		importable: ko.observableArray()
-	}
-
-	self.backup_summary = {
-		last_backup: ko.computed(function() {
-			try {
-				return self.pagedata.rdiffs()[0].timestamp;
-			} catch (e) {
-				return 'None';
-			}
-		}),
-		cumulative_size: ko.computed(function() {
-			try {
-				return self.pagedata.rdiffs()[0].cumulative_size;
-			} catch (e) {
-				return '0 MB';
-			}
-		}),
-		frequency: ko.computed(function() {
-			try {
-				return self.pagedata.rdiffs()[0].cumulative_size;
-			} catch (e) {
-				return '0 MB';
-			}
-		}),
-		first_backup: ko.computed(function() {
-			try {
-				return self.pagedata.rdiffs()[self.pagedata.rdiffs().length-1].timestamp;
-			} catch (e) {
-				return 'None';
-			}
-		})
-	}
-
-	self.archive_summary = {
-		last_archive: ko.computed(function() {
-			try {
-				return self.pagedata.archives()[0].friendly_timestamp;
-			} catch (e) {
-				return 'None';
-			}
-		}),
-		cumulative_size: ko.computed(function() {
-			var cumulative = 0;
-			$.each(self.pagedata.archives(), function(i,v) {
-				cumulative += v.size
-			})
-			return bytes_to_mb(cumulative);
-		}),
-		first_archive: ko.computed(function() {
-			try {
-				return self.pagedata.archives()[self.pagedata.archives().length-1].friendly_timestamp;
-			} catch (e) {
-				return 'None';
-			}
-		})
-	}
-
-	self.prune = {
-		user_input: ko.observable(),
-		steps: ko.observable(),
-		to_remove: ko.observable(0),
-		space_reclaimed: ko.observable(0.0)
-	}
-
-	self.archive = {
-		user_input: ko.observable(),
-		filename: ko.observable(),
-		archives_to_delete: ko.observableArray(),
-		to_remove: ko.observable(0),
-		space_reclaimed: ko.observable(0.0)
-	}
-
-	self.server.extend({ notify: 'always' });
-	self.page.extend({ notify: 'always' });
-
-	self.select_server = function(model) {
-		self.server(model);
-		self.select_page('server_status');
-	}
-
-	self.refresh_dashboard = function(data) {
-		self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
-		self.dashboard.memfree(data.memfree);
-		self.dashboard.whoami(data.whoami);
-		self.dashboard.df(data.df);
-
-		try {
-			self.dashboard.servers_up(vm.pagedata.pings().filter(function(i) {return i.up}).length);
-		} catch (e) {
-			self.dashboard.servers_up(0)
-		}
-	}
-
-	self.clear_tasks = function() {
-		self.tasks.removeAll();
-	}
-
-	self.select_page = function(vm, event) {
-		try {
-			self.page($(event.currentTarget).data('page'));
-		} catch (e) {
-			self.page(vm);
-		}
-	}
-
-	self.page.subscribe(function(page){
-		var server_name = self.server().server_name;
-		var params = {server_name: server_name};
-
-		switch(page) {
-			case 'dashboard':
-				$.getJSON('/vm/status').then(self.refresh_pings);
-				$.getJSON('/vm/dashboard').then(self.refresh_dashboard).then(self.redraw_gauges);
-				self.redraw_chart();
-				break;
-			case 'backup_list':
-				$.getJSON('/vm/increments', params).then(self.refresh_increments);
-				break;
-			case 'archive_list':
-				$.getJSON('/vm/archives', params).then(self.refresh_archives);
-				break;	
-			case 'server_status':
-				$.getJSON('/vm/status').then(self.refresh_pings).then(self.redraw_gauges);
-				$.getJSON('/vm/increments', params).then(self.refresh_increments);
-				$.getJSON('/vm/archives', params).then(self.refresh_archives);
-				break;
-			case 'profiles':
-				$.getJSON('/vm/profiles').then(self.refresh_profiles);
-				break;
-			case 'create_server':
-				$.getJSON('/vm/profiles').then(self.refresh_profiles);
-				break;
-			case 'server_properties':
-				$.getJSON('/server', $.extend({}, params, {'cmd': 'sp'})).then(self.refresh_sp);
-				break;
-			case 'server_config':
-				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh_sc);
-				break;
-			case 'importable':
-				$.getJSON('/vm/importable', {}).then(self.refresh_importable);
-				break;
-			default:
-				break;			
-		}
-
-		$('.container-fluid').hide();
-		$('#{0}'.format(page)).show();
-
-	})
-
-	self.refresh_pings = function(data) {
-		self.pagedata.pings.removeAll();
-		$.each(data.ascending_by('server_name'), function(i,v) {
-			self.pagedata.pings.push(new model_status(v));
-		})
-	}
-
-	self.pagedata.pings.subscribe(function() {
-		$.each(self.pagedata.pings(), function(i,v){
-			if (self.server().server_name == v.server_name)
-				self.server(v);
-		})
-	})
 
 	self.archive.user_input.subscribe(function(new_value) {
 		var clone = self.pagedata.archives().slice(0).reverse();
@@ -639,17 +524,6 @@ function viewmodel() {
 		}
 	})
 
-	self.refresh_archives = function(data) {
-		self.pagedata.archives(data.ascending_by('timestamp').reverse());
-
-		var available_tags = vm.pagedata.archives().map(function(i) {
-		  return i.friendly_timestamp
-		})
-
-		$("#prune_archives").autocomplete({
-            source: available_tags
-        });
-	}
 
 	self.prune.user_input.subscribe(function(new_value) {
 		var clone = self.pagedata.rdiffs().slice(0).reverse();
@@ -679,17 +553,6 @@ function viewmodel() {
 		}
 	})
 
-	self.refresh_increments = function(data) {
-		self.pagedata.rdiffs(data)
-
-		var available_tags = vm.pagedata.rdiffs().map(function(i) {
-		  return i.timestamp
-		})
-
-		$("#prune_intervals").autocomplete({
-            source: available_tags
-        });
-	}
 
 	self.removal_confirmation = function(vm, event) {
 		try {
@@ -701,43 +564,6 @@ function viewmodel() {
 		self.dashboard.confirm_removal($('#confirm_removal').data('profile'))
 	}
 
-	self.refresh_profiles = function(data) {
-		self.pagedata.profiles.removeAll();
-		$.each(data, function(i,v) {
-			self.pagedata.profiles.push($.extend({profile: i}, v));
-		})
-		self.pagedata.profiles(self.pagedata.profiles().ascending_by('profile'))
-	}
-
-	self.define_profile = function(formelement) {
-		var form = $('form#definenewprofile');
-		var step1 = $(form).find('fieldset :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var properties = {};
-		$.each($(step1).serialize().split('&'), function(i,v) {
-		  properties[v.split('=')[0]] = v.split('=')[1]
-		})
-
-		var ignored_files = [];
-		$('input[name="tags"]').each(function(i,v) {
-		  ignored_files.push($(v).val())
-		})
-		properties.ignore = ignored_files.join(' ')
-
-		delete properties.tags;
-
-		params = {
-			'cmd': 'define_profile',
-			'profile': JSON.stringify(properties),
-		}
-
-		$.getJSON('/host', params)
-		.success(function() {
-			self.select_page('profiles');
-		})
-	}
 
 	self.remember_import = function(data, eventobj) {
 		var cmd = $(eventobj.currentTarget).data('cmd');
@@ -762,177 +588,8 @@ function viewmodel() {
 		$.getJSON('/import_server', params).then(self.select_page('dashboard'));
 	}
 
-	self.command = function(data, eventobj) {
-		var cmd = $(eventobj.currentTarget).data('cmd');
-		var required = $(eventobj.currentTarget).data('required').split(',');
-		var params = {cmd: cmd};
-		var timestamp = (new Date().getTime()) / 1000;
-		var id_num = timestamp;
+	
 
-		function pending_gritter(required) {
-			var param_text = '';
-			$.each(required, function(i,v){
-			  param_text += "{0}: {1}<br>".format(v,params[v])
-			})
-
-			$.gritter.add({
-				title: '{0}'.format(cmd),
-				text: param_text,
-				image: '',
-				sticky: false,
-				time: '2000',
-				class_name: 'pending'
-			});
-		}
-
-		function success_gritter(required, ret) {
-			var param_text = '';
-			$.each(required, function(i,v){
-			  param_text += "{0}: {1}<br>".format(v,params[v])
-			})
-
-			$.gritter.add({
-				title: '{0}: {1}'.format(ret.cmd, ret.result),
-				text: param_text + ret.payload,
-				image: '',
-				sticky: false,
-				time: '3000',
-				class_name: ret.result
-			});
-		}
-
-		$.each(required, function(i,v) {
-			reqd = v.replace(/\s/g, '');
-			if (reqd in $(eventobj.currentTarget).data())
-				params[reqd] = $(eventobj.currentTarget).data(reqd);
-			else if (reqd in data)
-				params[reqd] = data[reqd];
-		})
-
-		if (required.indexOf('force') >= 0) 
-			params['force'] = true;
-
-		if (required.indexOf('server_name') >= 0) {
-			self.tasks.push({
-				id: id_num,
-				timestamp: timestamp,
-				state: 'pending',
-				command: '{0} {1}'.format(cmd, self.server().server_name)				
-			})
-			
-			$.extend(params, {server_name: self.server().server_name});
-			pending_gritter(required);
-
-			$.getJSON('/server', params)
-			.success(function(ret) {
-
-				success_gritter(required, ret)
-				
-				$.each(self.tasks(), function(i,v) {
-					if (v.id == id_num)  {
-						self.tasks.splice(i,1);
-					}
-				})
-
-				self.tasks.push({
-					id: id_num,
-					timestamp: timestamp,
-					state: ret.result,
-					command: '{0} {1}'.format(cmd, self.server().server_name)				
-				})
-
-				if (ret.result != 'success')
-					console.log(ret)
-
-				self.tasks(self.tasks().ascending_by('timestamp').reverse());
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 100)
-			})
-		} else {
-			pending_gritter(required)
-
-			$.getJSON('/host', params)
-			.success(function(ret) {
-				success_gritter(required, ret)
-
-				if (ret.result != 'success')
-					console.log(ret)
-
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 100)
-			})
-		}
-	}
-
-	self.create_server = function(formelement) {
-		var form = $('form#createnewserver');
-		var server_name = $(form).find('fieldset#step1 input[name=server_name]').val();
-
-		var step1 = $(form).find('fieldset#step1 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var step2 = $(form).find('fieldset#step2 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var step3 = $(form).find('fieldset#step3 :input').filter(function() {
-		  return ($(this).val() ? true : false);
-		})
-
-		var sp = {};
-		$.each($(step2).serialize().split('&'), function(i,v) {
-		  sp[v.split('=')[0]] = v.split('=')[1]
-		})
-
-		var sc = {};
-		$.each(step3, function(i,v) {
-		  input = $(v);
-		  section = input.data('section');
-		  if (!(section in sc))
-		    sc[section] = {};
-		  sc[section][input.attr('name')] = input.val();
-		})
-
-		params = {
-			'server_name': server_name,
-			'cmd': 'create',
-			'sp': JSON.stringify(sp),
-			'sc': JSON.stringify(sc)
-		}
-
-		$.getJSON('/create', params).then(self.select_page('dashboard'))
-	}
-
-	self.refresh_sp = function(data) {
-		self.pagedata.sp.removeAll();
-		$.each(data.payload, function(i,v){
-			self.pagedata.sp.push(new model_property(self.server().server_name, i,v));
-		})
-
-		$('#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
-            checkboxClass: 'icheckbox_minimal-grey',
-            radioClass: 'iradio_minimal-grey',
-            increaseArea: '40%' // optional
-        });
-	}
-
-	self.refresh_sc = function(data) {
-		self.pagedata.sc.removeAll();
-		$.each(data.payload, function(i,v){
-			$.each(v, function(a,b){
-				self.pagedata.sc.push(new model_property(self.server().server_name,a,b,i));
-			})
-		})
-
-		$('#table_config input[type="checkbox"]').not('.nostyle').iCheck({
-            checkboxClass: 'icheckbox_minimal-grey',
-            radioClass: 'iradio_minimal-grey',
-            increaseArea: '40%' // optional
-        });
-	}
-
-	self.refresh_importable = function(data) {
-		self.pagedata.importable(data);
-	}
 
 	self.redraw_spinners = function() {
 		$('[data-widget="refresh"]').on('click', function (e) {
@@ -949,29 +606,6 @@ function viewmodel() {
 
 			e.preventDefault();
 		});
-	}
-
-	self.redraw_gauges = function() {
-		function judge_color(percent, colors, thresholds) {
-			var gauge_color = colors[0];
-			for (var i=0; i < colors.length; i++) {
-				gauge_color = (parseInt(percent) >= thresholds[i] ? colors[i] : gauge_color)
-			}
-			return gauge_color;
-		}
-
-		var colors = ['green', 'yellow', 'orange', 'red'];
-		var thresholds = [0, 60, 75, 90];
-
-		$('#{0} .gauge'.format(vm.page())).easyPieChart({
-            barColor: $color[judge_color($(this).data('percent'), colors, thresholds)],
-            scaleColor: false,
-            trackColor: '#999',
-            lineCap: 'butt',
-            lineWidth: 4,
-            size: 50,
-            animate: 1000
-        });
 	}
 
 	self.redraw_chart = function() {
@@ -1033,7 +667,6 @@ function viewmodel() {
 		}
 	}
 
-	self.select_page('dashboard');
 }
 
 /* prototypes */
