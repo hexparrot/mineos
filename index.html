@@ -451,7 +451,7 @@
                             	<h4 class="title" data-bind="click: select_page" data-page="backup_list"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-success pull-right" data-bind="text: pagedata.rdiffs().length"></span>
@@ -472,7 +472,7 @@
                                 <h4 class="title" data-bind="click: select_page" data-page="archive_list"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
                                 <span class="label label-success pull-right" data-bind="text: pagedata.archives().length"></span>
@@ -637,21 +637,6 @@
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4 id="myModalLabel">Create a new server from an existing archive</h4>
-                        </div>
-                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
-                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
-                            <p>Please enter the name of the new server to create:</p>
-                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
-                        </div>
-                    </div>
-
                 </div>
                 <!--/ END Content -->
 
@@ -672,27 +657,13 @@
                             <tr>
                               <td data-bind="text: $data.filename"></td>
                               <td>
-                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal2">Create Server From </button>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal">Create Server From </button>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="import_server_modal2" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4 id="myModalLabel2">Create a new server from an existing archive</h4>
-                        </div>
-                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
-                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
-                            <p>Please enter the name of the new server to create:</p>
-                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
-                        </div>
-                    </div>
                 </div>
                 <!--/ END Content -->
 
@@ -1099,6 +1070,21 @@
                     <!--/ END Row -->
                 </div>
                 <!--/ END Content -->
+
+                <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4 id="myModalLabel">Create a new server from an existing archive</h4>
+                    </div>
+                    <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
+                        <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
+                        <p>Please enter the name of the new server to create:</p>
+                        <input type="text" name="newname" class="input-medium required" placeholder="imported">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
+                    </div>
+                </div>
 
             </section>
             <!--/ END Template Main Content -->

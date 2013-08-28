@@ -513,7 +513,7 @@ function viewmodel() {
 
 	self.import_server = function(data, eventobj) {
 		var params = self.dashboard.confirm_import();
-		params['server_name'] = $(eventobj.currentTarget).parents('.container-fluid').find('input[name="newname"]').val();
+		params['server_name'] = $('#import_server_modal').find('input[name="newname"]').val();
 
 		$.getJSON('/import_server', params).then(self.select_page('dashboard'));
 	}
@@ -601,7 +601,7 @@ function viewmodel() {
 					console.log(ret)
 
 				self.tasks(self.tasks().ascending_by('timestamp').reverse());
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 50)
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 100)
 			})
 		} else {
 			pending_gritter(required)
@@ -613,7 +613,7 @@ function viewmodel() {
 				if (ret.result != 'success')
 					console.log(ret)
 
-				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 50)
+				setTimeout(self.page.valueHasMutated, parseInt($(eventobj.currentTarget).data('refresh')) || 100)
 			})
 		}
 	}
@@ -690,6 +690,23 @@ function viewmodel() {
 		self.pagedata.importable(data);
 	}
 
+	self.redraw_spinners = function() {
+		$('[data-widget="refresh"]').on('click', function (e) {
+			var $modal = $('<div class="widget-modal"><span class="spinner spinner1"></span></div>');
+			var $target = $(this).parents('.widget');
+
+			// append to widget
+			$target.append($modal);
+
+			// remove after 3 second
+			setTimeout(function () {
+		        $modal.remove();
+		    }, 2000);
+
+			e.preventDefault();
+		});
+	}
+
 	self.redraw_gauges = function() {
 		function judge_color(percent, colors, thresholds) {
 			var gauge_color = colors[0];
@@ -714,7 +731,6 @@ function viewmodel() {
 	}
 
 	self.redraw_chart = function() {
-
 		function rerender(data) {
 			function enumerate(arr) {
 	            var res = [];
@@ -821,8 +837,8 @@ function bytes_to_mb(bytes){
     else if ( ( bytes >> 10 ) & 0x3FF )
         bytes = ( bytes >>> 10 ) + '.' + (bytes & (0x3FF )).toString().substring(0,2) + 'KB' ;
     else if ( ( bytes >> 1 ) & 0x3FF )
-        bytes = ( bytes >>> 1 ) + 'Bytes' ;
+        bytes = ( bytes >>> 1 ) + ' b' ;
     else
-        bytes = bytes + 'Byte' ;
+        bytes = bytes + ' b' ;
     return bytes;
 }
