@@ -73,7 +73,8 @@ class mc(object):
         'servers': 'servers',
         'backup': 'backup',
         'archive': 'archive',
-        'profiles': 'profiles'
+        'profiles': 'profiles',
+        'import': 'import'
         }
     BINARY_PATHS = {
         'rdiff-backup': find_executable('rdiff-backup'),

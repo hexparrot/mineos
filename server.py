@@ -111,6 +111,14 @@ class ViewModel(object):
             'df': dict(disk_usage('/')._asdict())
             })
 
+    @cherrypy.expose
+    def importable(self):
+        path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['import'])
+        return dumps([{
+            'path': path,
+            'filename': f
+            } for f in mc._list_files(path)])
+
 class mc_server(object):    
     auth = AuthController()
     

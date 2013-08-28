@@ -172,6 +172,16 @@
                                     </li>
                                     <!--/ END Menu -->
 
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
+                                        <a data-bind="click: select_page" data-page="importable">
+                                            <span class="icon icone-cogs"></span>
+                                            <span class="text">Archive Import</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
                                     <!-- START Menu Divider -->
                                     <li class="divider">Server Settings</li>
                                     <!--/ END Menu Divider -->
@@ -638,10 +648,51 @@
                         </div>
                         <div class="modal-footer">
                             <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button id="confirm_import" data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
+                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
                         </div>
                     </div>
 
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="importable" class="container-fluid" data-bind="">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_importable" class="table table-hover" data-bind="">
+                          <thead>
+                            <tr>
+                              <th scope="col">Filename</th>
+                              <th scope="col">Increment Size</th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: pagedata.importable">
+                            <tr>
+                              <td data-bind="text: $data.filename"></td>
+                              <td>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal2">Create Server From </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                    <div id="import_server_modal2" class="modal hide fade" style="display: none;" aria-hidden="true">
+                        <div class="modal-header">
+                            <h4 id="myModalLabel2">Create a new server from an existing archive</h4>
+                        </div>
+                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
+                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
+                            <p>Please enter the name of the new server to create:</p>
+                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
+                        </div>
+                    </div>
                 </div>
                 <!--/ END Content -->
 

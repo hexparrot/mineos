@@ -201,7 +201,8 @@ function viewmodel() {
 		rdiffs: ko.observableArray(),
 		profiles: ko.observableArray(),
 		sp: ko.observableArray(),
-		sc: ko.observableArray()
+		sc: ko.observableArray(),
+		importable: ko.observableArray()
 	}
 
 	self.backup_summary = {
@@ -339,6 +340,9 @@ function viewmodel() {
 				break;
 			case 'server_config':
 				$.getJSON('/server', $.extend({}, params, {'cmd': 'sc'})).then(self.refresh_sc);
+				break;
+			case 'importable':
+				$.getJSON('/vm/importable', {}).then(self.refresh_importable);
 				break;
 			default:
 				break;			
@@ -509,7 +513,8 @@ function viewmodel() {
 
 	self.import_server = function(data, eventobj) {
 		var params = self.dashboard.confirm_import();
-		params['server_name'] = $('#archive_list input[name="newname"]').val();
+		params['server_name'] = $(eventobj.currentTarget).parents('.container-fluid').find('input[name="newname"]').val();
+
 		$.getJSON('/import_server', params).then(self.select_page('dashboard'));
 	}
 
@@ -679,6 +684,10 @@ function viewmodel() {
             radioClass: 'iradio_minimal-grey',
             increaseArea: '40%' // optional
         });
+	}
+
+	self.refresh_importable = function(data) {
+		self.pagedata.importable(data);
 	}
 
 	self.redraw_gauges = function() {
