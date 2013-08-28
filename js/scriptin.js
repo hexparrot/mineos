@@ -140,7 +140,8 @@ function viewmodel() {
 		uptime: ko.observable(),
 		servers_up: ko.observable(),
 		df: ko.observable(),
-		confirm_removal: ko.observable()
+		confirm_removal: ko.observable(),
+		confirm_import: ko.observable()
 	}
 
 	self.dashboard['df_pct'] = ko.computed(function() {
@@ -488,7 +489,28 @@ function viewmodel() {
 		.success(function() {
 			self.select_page('profiles');
 		})
+	}
 
+	self.remember_import = function(data, eventobj) {
+		var cmd = $(eventobj.currentTarget).data('cmd');
+		var required = $(eventobj.currentTarget).data('required').split(',');
+		var params = {cmd: cmd};
+
+		$.each(required, function(i,v) {
+			reqd = v.replace(/\s/g, '');
+			if (reqd in $(eventobj.currentTarget).data())
+				params[reqd] = $(eventobj.currentTarget).data(reqd);
+			else if (reqd in data)
+				params[reqd] = data[reqd];
+		})
+
+		self.dashboard.confirm_import(params);
+	}
+
+	self.import_server = function(data, eventobj) {
+		var params = self.dashboard.confirm_import();
+		params['server_name'] = $('#archive_list input[name="newname"]').val();
+		$.getJSON('/import_server', params).then(self.select_page('dashboard'));
 	}
 
 	self.command = function(data, eventobj) {

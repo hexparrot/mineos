@@ -618,7 +618,7 @@
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
                                         <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
-                                        <li><a data-bind="">Create Server From</a></li>
+                                        <li><a data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -627,6 +627,20 @@
                         </table>
                     </div>
                     <!--/ END Row -->
+                    <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                        <div class="modal-header">
+                            <h4 id="myModalLabel">Create a new server from an existing archive</h4>
+                        </div>
+                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
+                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
+                            <p>Please enter the name of the new server to create:</p>
+                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                            <button id="confirm_import" data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
+                        </div>
+                    </div>
 
                 </div>
                 <!--/ END Content -->

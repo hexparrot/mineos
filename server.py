@@ -276,6 +276,45 @@ class mc_server(object):
 
     @cherrypy.expose
     @require()
+    def import_server(self, **args):
+        args = {k:str(v) for k,v in args.iteritems()}
+        server_name = args.pop('server_name')
+        command = args.pop('cmd')
+
+        retval = None
+        response = {
+            'result': None,
+            'server_name': server_name,
+            'cmd': command,
+            'payload': None
+            }
+
+        from json import loads
+        from collections import defaultdict
+
+        try:
+            instance = mc(server_name,
+                          cherrypy.session['_cp_username'],
+                          base_directory=self.base_directory)
+
+            instance.import_server(**args)
+            for d in ('cwd', 'bwd', 'awd'):
+                instance._make_directory(instance.env[d])
+        except (RuntimeError, KeyError, OSError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        else:
+            response['result'] = 'success'
+            retval = 'server %s successfully imported' % server_name
+
+        response['payload'] = self.to_jsonable_type(retval)
+        return dumps(response)
+
+    @cherrypy.expose
+    @require()
     def server(self, **args):
         from subprocess import CalledProcessError
 

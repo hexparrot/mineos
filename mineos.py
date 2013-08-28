@@ -336,6 +336,40 @@ class mc(object):
         else:
             raise RuntimeError('Ignoring command {restore}; Unable to locate backup')
 
+    @server_exists(False)
+    def import_server(self, path, filename):
+        """ Extracts an existing archive into the live space.
+        Might need additional review if run as root by server.py
+        """
+        import tarfile, zipfile
+        
+        filepath = os.path.join(path, filename)
+
+        if tarfile.is_tarfile(filepath):
+            archive_ = tarfile.open(filepath, mode='r')
+            prefix_ = os.path.commonprefix(archive_.getnames())
+        elif zipfile.is_zipfile(filepath):
+            archive_ = zipfile.ZipFile(filepath, 'r')
+            prefix_ = os.path.commonprefix(archive_.namelist())
+        else:
+            raise RuntimeError('Ignoring command {import_world};'
+                               'archive file must be compressed tar or zip(%s)' % filename)
+        
+        archive_.extractall(self.env['cwd'])
+
+        if not os.path.samefile(self.env['cwd'], os.path.join(self.env['cwd'], prefix_)):     
+            prefixed_dir = os.path.join(self.env['cwd'], prefix_)
+
+            from distutils.dir_util import copy_tree
+            copy_tree(prefixed_dir, self.env['cwd'])
+
+            from shutil import rmtree
+            rmtree(prefixed_dir)
+        
+        self._load_config(generate_missing=True)
+        #from shutil import rmtree
+        #rmtree(self.env['cwd'])
+
     @server_exists(True)
     def prune(self, steps=None):
         """Removes old rdiff-backup data/metadata."""
@@ -1051,14 +1085,15 @@ class mc(object):
         """
         from time import ctime
         from procfs_reader import human_readable
-        arcs = namedtuple('archives', 'filename size timestamp friendly_timestamp')
+        arcs = namedtuple('archives', 'filename size timestamp friendly_timestamp path')
 
         for i in self._list_files(self.env['awd']):
             info = os.stat(os.path.join(self.env['awd'], i))
             yield arcs(i,
                        info.st_size,
                        int(info.st_mtime),
-                       ctime(info.st_mtime))
+                       ctime(info.st_mtime),
+                       self.env['awd'])
 
     @classmethod
     def list_servers_up(cls):
