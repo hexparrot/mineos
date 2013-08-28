@@ -175,11 +175,13 @@ function webui() {
 		pings: ko.observableArray(),
 		archives: ko.observableArray(),
 		increments: ko.observableArray(),
-		archives_importable: ko.observableArray(),
+		importable: ko.observableArray(),
 		profiles: ko.observableArray(),
 		sp: ko.observableArray(),
 		sc: ko.observableArray()
 	}
+
+	self.import_information = ko.observable();
 
 	self.summary = {
 		backup: {
@@ -238,12 +240,52 @@ function webui() {
 		$('#{0}'.format(self.page())).show();
 	}
 
+	self.extract_required = function(required, element, vm) {
+		var params = {};
+		$.each(required, function(i,v) {
+			//checks if required param in DOM element
+			//then falls back to vm
+			var required_param = v.replace(/\s/g, '');
+
+			if (required_param in $(element).data())
+				params[required_param] = $(element).data(required_param);
+			else if (required_param in vm)
+				params[required_param] = vm[required_param];
+		})
+		return params;
+	}
+
+	self.remember_import = function(model, eventobj) {
+		var target = $(eventobj.currentTarget);
+		var params = {
+			cmd: 'import_server',
+			path: model['path'],
+			filename: model['filename']
+		}
+
+		$.extend(params, self.extract_required(['path','filename'], target, model));
+
+		self.import_information(params);
+		console.log(params)
+	}
+
+	self.import_server = function(vm, eventobj) {
+		var params = self.import_information();
+		params['server_name'] = $('#import_server_modal').find('input[name="newname"]').val();
+
+		$.getJSON('/import_server', params).then(self.ajax.received, self.ajax.lost)
+										   .then(self.show_page('dashboard'));
+	}
+
 	self.ajax = {
 		received: function(data) {
 			console.log(data);
 		},
 		lost: function(data) {
 			console.log(data);
+		},
+		refresh: function(time) {
+			setTimeout(self.page.valueHasMutated, time || self.refresh_rate)
 		}
 	}
 
@@ -255,29 +297,23 @@ function webui() {
 
 		console.log(required)
 
-		$.each(required, function(i,v) {
-			//checks if required param in DOM element
-			//then falls back to vm
-			var required_param = v.replace(/\s/g, '');
-
-			if (required_param in $(target).data())
-				params[required_param] = $(target).data(required_param);
-			else if (required_param in vm)
-				params[required_param] = vm[required_param];
-		})
+		$.extend(params, self.extract_required(required, target, vm));
 
 		if (required.indexOf('force') >= 0)
 			params['force'] = true;
 
 		console.log(params)
 
+		var refresh_time = parseInt($(target).data('refresh'));
+
 		if (required.indexOf('server_name') >= 0) {
 			$.extend(params, {server_name: self.server().server_name});
-			$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost);
-			setTimeout(self.page.valueHasMutated, parseInt($(target).data('refresh')) || self.refresh_rate);
+			$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
+										.then(function() {self.ajax.refresh(refresh_time)});
 		} else {
-			$.getJSON('/host', params).then(self.ajax.received, self.ajax.lost);
-			setTimeout(self.page.valueHasMutated, parseInt($(target).data('refresh')) || self.refresh_rate)
+			$.getJSON('/host', params).then(self.ajax.received, self.ajax.lost)
+									  .then(function() {self.ajax.refresh(refresh_time)});
+
 		}
 	}
 
@@ -458,8 +494,8 @@ function webui() {
 	            increaseArea: '40%' // optional
 	        });
 		},
-		archives_importable: function(data) {
-			self.pagedata.importable(data.ascending_by('filename'));
+		importable: function(data) {
+			self.vmdata.importable(data.ascending_by('filename'));
 		}
 	}
 
@@ -492,9 +528,6 @@ function webui() {
 
 		}
 	}
-
-
-
 
 
 
@@ -578,32 +611,6 @@ function viewmodel() {
 
 		self.dashboard.confirm_removal($('#confirm_removal').data('profile'))
 	}
-
-
-	self.remember_import = function(data, eventobj) {
-		var cmd = $(eventobj.currentTarget).data('cmd');
-		var required = $(eventobj.currentTarget).data('required').split(',');
-		var params = {cmd: cmd};
-
-		$.each(required, function(i,v) {
-			reqd = v.replace(/\s/g, '');
-			if (reqd in $(eventobj.currentTarget).data())
-				params[reqd] = $(eventobj.currentTarget).data(reqd);
-			else if (reqd in data)
-				params[reqd] = data[reqd];
-		})
-
-		self.dashboard.confirm_import(params);
-	}
-
-	self.import_server = function(data, eventobj) {
-		var params = self.dashboard.confirm_import();
-		params['server_name'] = $('#import_server_modal').find('input[name="newname"]').val();
-
-		$.getJSON('/import_server', params).then(self.select_page('dashboard'));
-	}
-
-	
 
 
 	self.redraw_spinners = function() {

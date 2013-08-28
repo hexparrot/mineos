@@ -621,7 +621,7 @@
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
                                         <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
-                                        <li><a data-bind="" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
+                                        <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -646,11 +646,11 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: vmdata.archive_importable">
+                          <tbody data-bind="foreach: vmdata.importable">
                             <tr>
                               <td data-bind="text: filename"></td>
                               <td>
-                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal">Create Server From </button>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From </button>
                               </td>
                             </tr>
                           </tbody>
@@ -1068,14 +1068,14 @@
                     <div class="modal-header">
                         <h4 id="myModalLabel">Create a new server from an existing archive</h4>
                     </div>
-                    <div class="modal-body" data-bind="">
-                        <p><strong data-bind=""></strong> will be extracted.</p>
+                    <div class="modal-body" data-bind="if: $root.import_information()">
+                        <p><strong data-bind="text: $root.import_information().filename"></strong> will be extracted.</p>
                         <p>Please enter the name of the new server to create:</p>
                         <input type="text" name="newname" class="input-medium required" placeholder="imported">
                     </div>
                     <div class="modal-footer">
                         <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                        <button data-bind="" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
+                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Create new Server</button>
                     </div>
                 </div>
 
