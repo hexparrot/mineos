@@ -69,26 +69,26 @@
                     <!-- START Task -->
                     <li class="task">
                         <a href="#" data-toggle="dropdown">
-                            <span class="badge" data-bind="visible: tasks_notify().length > 0, text: tasks_notify().length"></span>
+                            <span class="badge" data-bind=""></span>
                             <span class="icon iconm-flag-5"></span>
                         </a>
                         <!-- START Dropdown Menu -->
                         <div class="dropdown-menu" role="menu">
                             <header>Tasks</header>
-                            <ul class="body" data-bind="foreach: tasks">
+                            <ul class="body" data-bind="">
                                 <li>
-                                    <span class="icon" data-bind="css: {'icone-ok': state == 'success', 'icone-exclamation-sign': state != 'success'}"></span>
+                                    <span class="icon" data-bind=""></span>
                                     <a href="#" class="text">
-                                        <strong data-bind="text: command"></strong><br>
-                                        <small data-bind="text: timestamp"></small>
+                                        <strong data-bind=""></strong><br>
+                                        <small data-bind=""></small>
                                     </a>
                                     <span class="action show">
-                                        <a href="" class="label" data-bind="text: state, css: {'label-important': state == 'error', 'label-warning': state == 'pending', 'label-success': state == 'success'}"></a>
+                                        <a href="" class="label" data-bind=""></a>
                                     </span>
                                 </li>
                             </ul>
                             <footer>
-                                <a href="#" class="text" data-bind="click: clear_tasks">Clear</a>
+                                <a href="#" class="text" data-bind="">Clear</a>
                             </footer>
                         </div>
                         <!--/ END Dropdown Menu -->
@@ -104,14 +104,7 @@
                         </a>
                         <!-- START Dropdown Menu -->
                         <div class="dropdown-menu" role="menu">
-                            <header>
-                                Your Profile 
-                                <ul class="toolbar">
-                                    <li><a href="#" class="btn btn-small"><span class="icon icone-pencil"></span></a></li>
-                                    <li><a href="#" class="btn btn-small"><span class="icon icone-cog"></span></a></li>
-                                </ul>
-                            </header>
-                            <ul class="body" data-bind="foreach: pagedata.pings">
+                            <ul class="body" data-bind="foreach: vmdata.pings">
                                 <li data-bind="click: $root.select_server">
                                     <a class="text"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
                                     <span class="action show"><a href="" class="label" data-bind="text: (up ? capacity() : 'offline'), css: {'label-success': up, 'label-important': !up}"></a></span>
@@ -135,9 +128,9 @@
                 <div class="sidebar-content">
                     <!-- START Sidebar Tab -->
                     <ul class="nav nav-tabs">
-                        <li data-bind="css: {'active': page() == 'dashboard'}"><a data-bind="click: select_page" data-page="dashboard"><span class="icon icone-bar-chart"></span></a></li>
-                        <li data-bind="css: {'active': page() == 'create_server'}"><a data-bind="click: select_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
-                        <li data-bind="css: {'active': page() == 'define_profile'}"><a data-bind="click: select_page" data-page="define_profile"><span class="icon icone-book"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'dashboard'}"><a data-bind="click: show_page" data-page="dashboard"><span class="icon icone-bar-chart"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'create_server'}"><a data-bind="click: show_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
+                        <li data-bind="css: {'active': page() == 'define_profile'}"><a data-bind="click: show_page" data-page="define_profile"><span class="icon icone-book"></span></a></li>
                     </ul>
                     <!--/ END Sidebar Tab -->
 
@@ -154,7 +147,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'dashboard'}">
-                                        <a data-bind="click: select_page" data-page="dashboard">
+                                        <a data-bind="click: show_page" data-page="dashboard">
                                             <span class="icon icone-dashboard"></span>
                                             <span class="text">Dashboard</span>
                                             <span class=""></span>
@@ -164,7 +157,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'profiles'}">
-                                        <a data-bind="click: select_page" data-page="profiles">
+                                        <a data-bind="click: show_page" data-page="profiles">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Profiles</span>
                                             <span class=""></span>
@@ -174,7 +167,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
-                                        <a data-bind="click: select_page" data-page="importable">
+                                        <a data-bind="click: show_page" data-page="importable">
                                             <span class="icon icone-cogs"></span>
                                             <span class="text">Archive Import</span>
                                             <span class=""></span>
@@ -188,7 +181,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_status'}">
-                                        <a data-bind="click: select_page" data-page="server_status">
+                                        <a data-bind="click: show_page" data-page="server_status">
                                             <span class="icon iconm-home-4"></span>
                                             <span class="text">Server Status</span>
                                             <span class="label label-inverse" data-bind="text: server().capacity"></span>
@@ -198,7 +191,7 @@
                                     
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'backup_list'}">
-                                        <a data-bind="click: select_page" data-page="backup_list">
+                                        <a data-bind="click: show_page" data-page="backup_list">
                                             <span class="icon icone-hdd"></span>
                                             <span class="text">Restore Points</span>
                                         </a>
@@ -207,7 +200,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'archive_list'}">
-                                        <a data-bind="click: select_page" data-page="archive_list">
+                                        <a data-bind="click: show_page" data-page="archive_list">
                                             <span class="icon icone-hdd"></span>
                                             <span class="text">Archives</span>
                                         </a>
@@ -216,7 +209,7 @@
                                     
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_properties'}">
-                                        <a data-bind="click: select_page" data-page="server_properties">
+                                        <a data-bind="click: show_page" data-page="server_properties">
                                             <span class="icon iconm-pencil-5"></span>
                                             <span class="text">server.properties</span>
                                         </a>
@@ -225,7 +218,7 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_config'}">
-                                        <a data-bind="click: select_page" data-page="server_config">
+                                        <a data-bind="click: show_page" data-page="server_config">
                                             <span class="icon iconm-pencil-5"></span>
                                             <span class="text">server.config</span>
                                         </a>
@@ -260,7 +253,7 @@
                     <div class="navbar-inner">
                         <!-- Breadcrumb -->
                         <ul class="breadcrumb">
-                            <li data-bind="if: server().server_name"><a data-page="server_status" data-bind="text: server().server_name, click: select_page"></a> <span class="divider"></span></li>
+                            <li data-bind="if: server().server_name"><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a> <span class="divider"></span></li>
                             <li class="active">Dashboard</li>
                         </ul>
                         <!--/ Breadcrumb -->
@@ -318,11 +311,11 @@
 
                                         <!-- START Circular 1 -->
                                         <figure class="stats circular">
-                                            <div class="gauge" data-bind="attr: {'data-percent': dashboard.df_pct}" data-percent="">
-                                                <span><span class="text" data-bind="text: dashboard.df_pct"></span>%</span>
+                                            <div class="gauge" data-bind="attr: {'data-percent': dashboard.disk_usage_pct}" data-percent="">
+                                                <span><span class="text" data-bind="text: dashboard.disk_usage_pct"></span>%</span>
                                             </div>
                                             <figcaption>
-                                                <h4><span data-bind="text: dashboard.df_pct"></span></span>%</span><small>HDD Used</small></h4>
+                                                <h4><span data-bind="text: dashboard.disk_usage_pct"></span></span>%</span><small>HDD Used</small></h4>
                                             </figcaption>
                                         </figure>
                                         <!--/ END Circular 1 -->
@@ -355,7 +348,7 @@
                               <th scope="col">Memory</th>
                             </tr>
                           </thead>
-                          <tbody data-bind="foreach: pagedata.pings">
+                          <tbody data-bind="foreach: vmdata.pings">
                             <tr>
                               <td data-bind="text: server_name, click: $root.select_server"></td>
                               <td data-bind="text: profile"></td>
@@ -448,19 +441,19 @@
                         <!-- START Default Widget -->
                         <div class="span6 widget" data-bind="">
                             <header>
-                            	<h4 class="title" data-bind="click: select_page" data-page="backup_list"><span class="icon icone-bookmark"></span> Restore Points</h4>
+                            	<h4 class="title" data-bind="click: show_page" data-page="backup_list"><span class="icon icone-bookmark"></span> Restore Points</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
-                                <span class="label label-success pull-right" data-bind="text: pagedata.rdiffs().length"></span>
+                                <span class="label label-success pull-right" data-bind="text: vmdata.increments().length"></span>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                	<p>Oldest restore point: <strong data-bind="text: backup_summary.first_backup"></strong></p>
-                                    <p>Most recent restore point: <strong data-bind="text: backup_summary.last_backup"></strong></p>
-                                    <p>Space used by backups: <strong data-bind="text: backup_summary.cumulative_size"></strong></p>
+                                	<p>Oldest restore point: <strong data-bind="text: summary.backup.first"></strong></p>
+                                    <p>Most recent restore point: <strong data-bind="text: summary.backup.most_recent"></strong></p>
+                                    <p>Space used by backups: <strong data-bind="text: summary.backup.cumulative"></strong></p>
                                 </div>
                             </section>
                         </div>
@@ -469,19 +462,19 @@
                         <!-- START Default Widget -->
                         <div class="span6 widget">
                             <header>
-                                <h4 class="title" data-bind="click: select_page" data-page="archive_list"><span class="icon icone-bookmark"></span> Archives</h4>
+                                <h4 class="title" data-bind="click: show_page" data-page="archive_list"><span class="icon icone-bookmark"></span> Archives</h4>
                                 <!-- START Toolbar -->
                                 <ul class="toolbar pull-right">
-                                    <li><a href="#" class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
                                 </ul>
                                 <!--/ END Toolbar -->
-                                <span class="label label-success pull-right" data-bind="text: pagedata.archives().length"></span>
+                                <span class="label label-success pull-right" data-bind="text: vmdata.archives().length"></span>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                	<p>Oldest archive: <strong data-bind="text: archive_summary.first_archive"></strong></p>
-                                    <p>Most recent archive: <strong data-bind="text: archive_summary.last_archive"></strong></p>
-                                    <p>Space used by archives: <strong data-bind="text: archive_summary.cumulative_size"></strong></p>
+                                	<p>Oldest archive: <strong data-bind="text: summary.archive.first"></strong></p>
+                                    <p>Most recent archive: <strong data-bind="text: summary.archive.most_recent"></strong></p>
+                                    <p>Space used by archives: <strong data-bind="text: summary.archive.cumulative"></strong></p>
                                 </div>
                             </section>
                         </div>
@@ -499,7 +492,7 @@
                         <div class="control-group">
                             <label class="control-label">Remove restore points older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_intervals" data-bind="value: prune.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button id="go_prune" data-bind="visible: prune.to_remove() > 0, click: command" data-cmd="prune" data-required="server_name,steps" data-steps="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
+                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button data-bind="click: prune_increments" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
                             </div>
                         </div>
 
@@ -517,7 +510,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle lime"><span class="icone-folder-close"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: prune.to_remove"></span><small>Restore Points</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.remove_count"></span><small>Restore Points</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 1 -->
 
@@ -525,7 +518,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: prune.space_reclaimed"></span><small>MB Reclaimed</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.space_reclaimed"></span><small>MB Reclaimed</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
                                 </div>
@@ -537,7 +530,7 @@
 
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <table id="table_backup" class="table table-hover" data-bind="">
+                        <table class="table table-hover" data-bind="">
                           <thead>
                             <tr>
                               <th scope="col">Step</th>
@@ -548,7 +541,7 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.rdiffs">
+                          <tbody data-bind="foreach: vmdata.increments">
                             <tr>
                               <td data-bind="text: $data.step"></td>
                               <td data-bind="text: $data.timestamp"></td>
@@ -570,7 +563,7 @@
                         <div class="control-group">
                             <label class="control-label">Remove archives older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_archives" data-bind="value: archive.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date"> <button id="go_prune2" data-bind="visible: archive.to_remove() > 0, click: $root.command" data-cmd="prune_archives" data-required="server_name,filename" data-filename="" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
+                                <input type="text" id="prune_archive_input" data-bind="value: pruning.archives.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date"> <button data-bind="visible: pruning.archives.remove_count, click: prune_archives" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
                             </div>
                         </div>
                     </div>
@@ -587,7 +580,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle lime"><span class="icone-folder-close"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: archive.to_remove"></span><small>Archives</small></h3>
+                                            <h3><span data-bind="text: pruning.archives.remove_count"></span><small>Archives</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 1 -->
 
@@ -595,7 +588,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: archive.space_reclaimed"></span><small>MB Reclaimed</small></h3>
+                                            <h3><span data-bind="text: pruning.archives.space_reclaimed"></span><small>MB Reclaimed</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
                                 </div>
@@ -607,7 +600,7 @@
 
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <table id="table_backup" class="table table-hover" data-bind="">
+                        <table class="table table-hover" data-bind="">
                           <thead>
                             <tr>
                               <th scope="col">Timestamp</th>
@@ -618,7 +611,7 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.archives">
+                          <tbody data-bind="foreach: vmdata.archives">
                             <tr>
                               <td data-bind="text: $data.friendly_timestamp"></td>
                               <td data-bind="text: bytes_to_mb($data.size)"></td>
@@ -628,7 +621,7 @@
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
                                         <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
-                                        <li><a data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
+                                        <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -637,21 +630,6 @@
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4 id="myModalLabel">Create a new server from an existing archive</h4>
-                        </div>
-                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
-                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
-                            <p>Please enter the name of the new server to create:</p>
-                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
-                        </div>
-                    </div>
-
                 </div>
                 <!--/ END Content -->
 
@@ -668,31 +646,17 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.importable">
+                          <tbody data-bind="foreach: vmdata.importable">
                             <tr>
-                              <td data-bind="text: $data.filename"></td>
+                              <td data-bind="text: filename"></td>
                               <td>
-                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-required="path,filename" data-cmd="import_server" data-toggle="modal" data-target="#import_server_modal2">Create Server From </button>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From </button>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="import_server_modal2" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4 id="myModalLabel2">Create a new server from an existing archive</h4>
-                        </div>
-                        <div class="modal-body" data-bind="if: $root.dashboard.confirm_import()">
-                            <p><strong data-bind="text: $root.dashboard.confirm_import().filename"></strong> will be extracted.</p>
-                            <p>Please enter the name of the new server to create:</p>
-                            <input type="text" name="newname" class="input-medium required" placeholder="imported">
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success" data-cmd="import_server">Create new Server</button>
-                        </div>
-                    </div>
                 </div>
                 <!--/ END Content -->
 
@@ -711,7 +675,7 @@
                     <!--/ END Row -->
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <table id="table_backup" class="table table-hover">
+                        <table id="table_profiles" class="table table-hover">
                           <thead>
                             <tr>
                               <th scope="col">Profile</th>
@@ -724,7 +688,7 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.profiles">
+                          <tbody data-bind="foreach: vmdata.profiles">
                             <tr>
                                 <td data-bind="text: profile"></td>
                                 <td data-bind="text: run_as"></td>
@@ -733,7 +697,7 @@
                                 <td data-bind="text: save_as_mtime"></td>
                                 <td>
                                 	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
-                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.removal_confirmation" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
+                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
                                 </td>
                             </tr>
                           </tbody>
@@ -755,18 +719,6 @@
                         </table>
                     </div>
                     <!--/ END Row -->
-                    <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
-                        <div class="modal-header">
-                            <h4 id="myModalLabel">You are about to delete <span data-bind="text: dashboard.confirm_removal()"></span>!</h4>
-                        </div>
-                        <div class="modal-body">
-                            <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-                            <button id="confirm_removal" data-bind="click: $root.command" data-dismiss="modal" class="btn btn-danger" data-required="profile" data-cmd="remove_profile">Remove Profile</button>
-                        </div>
-                    </div>
                 </div>
                 <!--/ END Content -->
 
@@ -878,7 +830,7 @@
                                         <div class="control-group">
                                             <label class="control-label">profile</label>
                                             <div class="controls">
-                                                <select class="input-medium" data-section="minecraft" name="profile" data-bind="foreach: pagedata.profiles" required>
+                                                <select class="input-medium" data-section="minecraft" name="profile" data-bind="foreach: vmdata.profiles" required>
                                                     <option data-bind="text: profile, attr: {value: profile}"></option>
                                                 </select>
                                             </div>
@@ -962,7 +914,7 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.sp">
+                          <tbody data-bind="foreach: vmdata.sp">
                             <tr>
                               <td data-bind="text: option" class="span4"></td>
                               <td>
@@ -1008,7 +960,7 @@
                           </thead>
                           <tfoot>
                           </tfoot>
-                          <tbody data-bind="foreach: pagedata.sc">
+                          <tbody data-bind="foreach: vmdata.sc">
                             <tr>
                               <td data-bind="text: section" class="span2"></td>
                               <td data-bind="text: option" class="span4"></td>
@@ -1100,6 +1052,34 @@
                 </div>
                 <!--/ END Content -->
 
+                <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4 id="myModalLabel">Create a new server from an existing archive</h4>
+                    </div>
+                    <div class="modal-body" data-bind="if: $root.import_information()">
+                        <p><strong data-bind="text: $root.import_information().filename"></strong> will be extracted.</p>
+                        <p>Please enter the name of the new server to create:</p>
+                        <input type="text" name="newname" class="input-medium required" placeholder="imported">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Create new Server</button>
+                    </div>
+                </div>
+
+                <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4>You are about to delete <span data-bind="text: pruning.profiles.profile"></span>!</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Remove Profile</button>
+                    </div>
+                </div>
+
             </section>
             <!--/ END Template Main Content -->
 
@@ -1161,7 +1141,7 @@
     <!--/ Javascript (Application) -->
     
     <script type="text/javascript">
-        var vm = new viewmodel();
+        var vm = new webui();
         
         $(document).ready(function() {
             ko.applyBindings(vm);

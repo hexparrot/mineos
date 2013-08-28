@@ -22,7 +22,7 @@ li.accordion-group a, ul.nav  {
 .dropdown-menu li {
     cursor: pointer;
 }
-#prune_intervals, #prune_archives {
+#prune_increment_input, #prune_archive_input {
 	margin-bottom: 0px;
 }
 #server_status h4 {
