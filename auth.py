@@ -17,19 +17,19 @@ def check_credentials(username, password):
     try:
         enc_pwd = getspnam(username)[1]
     except KeyError:
-        return "user '%s' not found" % username
+        raise OSError("user '%s' not found" % username)
     else:
-        if enc_pwd in ["NP", "!", "", None]:
-            return "user '%s' has no password set" % username
-        elif enc_pwd in ["LK", "*"]:
-            return 'account is locked'
+        if enc_pwd in ['NP', '!', '', None]:
+            raise OSError("user '%s' has no password set" % username)
+        elif enc_pwd in ['LK', '*']:
+            raise OSError('account is locked')
         elif enc_pwd == "!!":
-            return 'password is expired'
+            raise OSError('password is expired')
 
         if crypt(password, enc_pwd) == enc_pwd:
-            return None
+            return True
         else:
-            return "incorrect password"
+            raise OSError('incorrect password')
 
 def check_auth(*args, **kwargs):
     """A tool that looks in config for 'auth.require'. If found and it
@@ -111,7 +111,7 @@ class AuthController(object):
     def on_logout(self, username):
         """Called on logout"""
     
-    def get_loginform(self, username, msg="Enter Username and Password", from_page="/"):
+    def get_loginform(self):
         import os
         from cgi import escape
         from cherrypy.lib.static import serve_file
@@ -119,18 +119,24 @@ class AuthController(object):
         return serve_file(os.path.join(os.getcwd(),'login.html'))
     
     @cherrypy.expose
-    def login(self, username=None, password=None, from_page="/"):
-        if username is None or password is None:
-            return self.get_loginform("", from_page=from_page)
-        
-        error_msg = check_credentials(username, password)
-        if error_msg:
-            return self.get_loginform(username, error_msg, from_page)
-        else:
-            cherrypy.session.regenerate()
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
-            self.on_login(username)
-            raise cherrypy.HTTPRedirect("/")
+    def login(self, username=None, password=None, from_page='/'):
+        if not username or not password:
+            return self.get_loginform()
+
+        validated = False
+        try:      
+            validated = check_credentials(username, password)
+        except OSError:
+            import pam
+            validated = pam.authenticate(username, password)
+        finally:
+            if validated:
+                cherrypy.session.regenerate()
+                cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
+                self.on_login(username)
+                raise cherrypy.HTTPRedirect("/")
+            else:
+                return self.get_loginform()
     
     @cherrypy.expose
     def logout(self):

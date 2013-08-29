@@ -399,7 +399,7 @@ class mc_server(object):
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(description='MineOS command line execution scripts',
+    parser = ArgumentParser(description='MineOS web user interface service',
                             version=__version__)
     parser.add_argument('-p',
                         dest='port',
@@ -445,7 +445,7 @@ if __name__ == "__main__":
             }
         }
 
-    if args.base_directory:
-         mc._make_skeleton(args.base_directory) 
+    base_dir = args.base_directory or mc.valid_user('will')[1]
+    mc._make_skeleton(base_dir) 
 
-    cherrypy.quickstart(mc_server(args.base_directory), config=conf)
+    cherrypy.quickstart(mc_server(base_dir), config=conf)
