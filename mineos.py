@@ -348,13 +348,19 @@ class mc(object):
 
         if tarfile.is_tarfile(filepath):
             archive_ = tarfile.open(filepath, mode='r')
-            prefix_ = os.path.commonprefix(archive_.getnames())
+            members_ = archive_.getnames()
+            prefix_ = os.path.commonprefix(members_)
         elif zipfile.is_zipfile(filepath):
             archive_ = zipfile.ZipFile(filepath, 'r')
-            prefix_ = os.path.commonprefix(archive_.namelist())
+            members_ = archive_.getnames()
+            prefix_ = os.path.commonprefix(members_)
         else:
             raise RuntimeError('Ignoring command {import_world};'
-                               'archive file must be compressed tar or zip(%s)' % filename)
+                               'archive file must be compressed tar or zip')
+
+        if any(f for f in members_ if f.startswith('/') or '..' in f):
+            raise RuntimeError('Ignoring command {import_world};'
+                               'archive contains files with absolute path or ..')
         
         archive_.extractall(self.env['cwd'])
 
