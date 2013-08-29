@@ -25,13 +25,11 @@ class ViewModel(object):
 
     def server_list(self):
         for i in mc.list_servers(self.base_directory):
-            try:
-                mc.valid_owner(cherrypy.session['_cp_username'],
-                               os.path.join(self.base_directory, 'servers', i))
-            except OSError:
-                continue
-            else:
+            if mc.has_server_rights(cherrypy.session['_cp_username'],
+                                    i,
+                                    self.base_directory):
                 yield i
+            owner = False
         
     @cherrypy.expose
     def status(self):
@@ -339,12 +337,20 @@ class mc_server(object):
             }
 
         try:
-            path_ = os.path.join(self.base_directory, 'servers', server_name)
-            mc.valid_owner(cherrypy.session['_cp_username'], path_)
- 
-            instance = mc(server_name,
-                          cherrypy.session['_cp_username'],
-                          base_directory=self.base_directory) 
+            instance = None
+
+            approved_user = mc.has_server_rights(cherrypy.session['_cp_username'],
+                                                 server_name,
+                                                 self.base_directory)
+
+            if approved_user:
+                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server_name)
+                instance = mc(server_name,
+                              approved_user,
+                              base_directory=self.base_directory)
+            else:
+                raise OSError('%s does not have sufficient rights to %s' % \
+                              (cherrypy.session['_cp_username'], server_name))
              
             if command in self.METHODS:
                 retval = getattr(instance, command)(**args)

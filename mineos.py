@@ -612,6 +612,18 @@ class mc(object):
             raise OSError("user '%s' does not have permissions on %s" % (username,
                                                                          directory))
 
+    @classmethod
+    def has_server_rights(cls, username, server_name, base_directory):
+        has_rights = False
+        for d in ('servers', 'backup'):
+            try:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS[d], server_name)
+                has_rights = cls.valid_owner(username, path_)
+                break
+            except OSError:
+                pass
+        return has_rights
+
     ''' properties '''
 
     @property
