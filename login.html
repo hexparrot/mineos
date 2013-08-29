@@ -88,7 +88,7 @@
                                 <div class="control-group">
                                     <div class="controls">
                                         <label class="checkbox styled">
-                                            <input type="checkbox"> Remember me
+                                            <input type="checkbox" name="hide"> Hide password
                                         </label>
                                     </div>
                                 </div><!--/ Checkbox -->
@@ -97,8 +97,7 @@
                             <!-- Form Action -->
                             <!-- Place out form `.body-inner` -->
                             <div class="form-actions">
-                                <button type="submit" class="btn btn-primary">Login</button>
-                                <button type="button" class="btn">Cancel</button>
+                                <button type="submit" class="btn btn-primary span12">Login</button>
                             </div>
                             <!--/ Form Action -->
                         </section>
@@ -156,5 +155,22 @@
     <script src="/js/knockout-min.js"></script>
     <script src="/js/scriptin.js"></script>
     <!--/ Javascript (Application) -->
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            try {
+                $('input[name=password]').attr('type', 'textbox');
+                $('input[name=hide]').on('ifChanged', function() {
+                    if ($(this).is(':checked'))
+                        $('input[name=password]').attr('type', 'password');
+                    else
+                        $('input[name=password]').attr('type', 'textbox');
+                })
+            } catch (e) {
+                $('input[name=password]').attr('type', 'password');
+            }
+        })
+    </script>
+
     </body>
     </html>
