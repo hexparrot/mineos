@@ -307,22 +307,10 @@ $(function() {
 /*  Gritter - Growl notification
 /*  http://boedesign.com/blog/2009/07/11/growl-for-jquery-gritter/
 /*----------------------------------------------------*/
-$(function () {
-    if($('.gritter-data').length > 0) {
-        $('.gritter-data').each(function () {
-            var $title = $(this).children('.title').text();
-            var $text = $(this).children('.text').text();
-            var $image = $(this).children('.image').text();
-            var $color = 'gritter-'+$(this).data('color');
-            var $time = $(this).data('time');
 
-            $.gritter.add({
-                title: $title,
-                text: $text,
-                image: $image,
-                time: $time,
-                class_name: $color
-            });
+$.extend($.gritter.options, {
+            position: 'bottom-right', // possibilities: bottom-left, bottom-right, top-left, top-right
+            fade_in_speed: 100, // how fast notifications fade in (string or int)
+            fade_out_speed: 100, // how fast the notices fade out
+            time: 3000 // hang on the screen for...
         });
-    }
-});

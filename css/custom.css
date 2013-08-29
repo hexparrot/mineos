@@ -31,3 +31,22 @@ li.accordion-group a, ul.nav  {
 #sidebar #nav > ul > li > a > .text {
 	text-transform: none;
 }
+#donate {
+	display: inline-block;
+}
+.gritter-success .gritter-top, .gritter-success .gritter-item , .gritter-success .gritter-bottom {
+	background-color: #51a351;
+	color: white;
+}
+.gritter-error .gritter-top, .gritter-error .gritter-item , .gritter-error .gritter-bottom {
+	background-color: #bd362f;
+	color: white;
+}
+.gritter-info .gritter-top, .gritter-info .gritter-item , .gritter-info .gritter-bottom {
+	background-color: #2f96b4;
+	color: white;
+}
+.gritter-warning .gritter-top, .gritter-warning .gritter-item , .gritter-warning .gritter-bottom {
+	background-color: #f89406;
+	color: white;
+}

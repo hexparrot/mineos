@@ -324,32 +324,18 @@ function webui() {
 								  .then(function() {self.ajax.refresh(null)});
 	}
 
-	self.ajax = {
-		received: function(data) {
-			console.log(data);
-		},
-		lost: function(data) {
-			console.log(data);
-		},
-		refresh: function(time) {
-			setTimeout(self.page.valueHasMutated, time || self.refresh_rate)
-		}
-	}
-
 	self.command = function(vm, eventobj) {
 		var target = $(eventobj.currentTarget);
 		var cmd = $(target).data('cmd');
 		var required = $(target).data('required').split(',');
 		var params = {cmd: cmd};
 
-		console.log(required)
-
 		$.extend(params, self.extract_required(required, target, vm));
 
 		if (required.indexOf('force') >= 0)
 			params['force'] = true;
 
-		console.log(params)
+		//console.log(params)
 
 		var refresh_time = parseInt($(target).data('refresh'));
 
@@ -528,14 +514,38 @@ function webui() {
 
 	/* promises */
 
+	self.ajax = {
+		received: function(data) {
+			$.gritter.add({
+				text: (data.payload) ? data.payload : '{0} [{1}]'.format(data.cmd, data.result),
+				sticky: false,
+				time: '3000',
+				class_name: 'gritter-{0}'.format(data.result)
+			});
+			console.log(data);
+		},
+		lost: function(data) {
+			$.gritter.add({
+				text: 'Server did not respond to request',
+				sticky: true,
+				time: '3000',
+				class_name: 'gritter-warning'
+			});
+			console.log(data);
+		},
+		refresh: function(time) {
+			setTimeout(self.page.valueHasMutated, time || self.refresh_rate)
+		}
+	}
+
 	self.refresh = {
 		dashboard: function(data) {
 			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
 			self.dashboard.memfree(data.memfree);
 			self.dashboard.whoami(data.whoami);
 			self.dashboard.disk_usage(data.df);
-			self.dashboard.disk_usage_pct(str_to_bytes(self.dashboard.disk_usage().used) / 
-										  str_to_bytes(self.dashboard.disk_usage().total) * 100);
+			self.dashboard.disk_usage_pct((str_to_bytes(self.dashboard.disk_usage().used) / 
+										   str_to_bytes(self.dashboard.disk_usage().total) * 100).toFixed(1));
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();
