@@ -450,6 +450,7 @@ function webui() {
 
 	self.create_server = function(form) {
 		var server_name = $(form).find('input[name="server_name"]').val();
+		var group = $(form).find('input[name=group]').val();
 
 		var step1 = $(form).find('fieldset#step1 :input').filter(function() {
 			return ($(this).val() ? true : false);
@@ -481,7 +482,8 @@ function webui() {
 			'server_name': server_name,
 			'cmd': 'create',
 			'sp': JSON.stringify(sp),
-			'sc': JSON.stringify(sc)
+			'sc': JSON.stringify(sc),
+			'group': group
 		}
 
 		$.getJSON('/create', params).then( self.show_page('dashboard') )

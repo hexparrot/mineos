@@ -267,6 +267,13 @@ class mc_server(object):
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
             instance.create(dict(sc),sp)
+
+            from grp import getgrnam
+            try:
+                instance.chgrp(args['group'])
+            except KeyError:
+                pass
+
         except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
