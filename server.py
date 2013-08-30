@@ -413,13 +413,17 @@ if __name__ == "__main__":
                         dest='base_directory',
                         help='the base of the mc file structure',
                         default=None)
+    parser.add_argument('--http',
+                        action='store_true',
+                        help='use HTTP not HTTPS.',
+                        default=None)
     parser.add_argument('-s',
                         dest='cert_files',
-                        help='certificate files: /path/to/server.crt,/path/to/server.key',
+                        help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
                         default=None)
     parser.add_argument('-c',
                         dest='cert_chain',
-                        help='CA certificate chain: /path/to/cert-chain.crt',
+                        help='CA certificate chain: /etc/ssl/certs/cert-chain.crt',
                         default=None)
     args = parser.parse_args()
 
@@ -449,12 +453,20 @@ if __name__ == "__main__":
             }
         }
 
-    if args.cert_files:
-        ssl = {
-            'server.ssl_module': 'builtin',
-            'server.ssl_certificate': args.cert_files.split(',')[0].strip(),
-            'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
-            }
+    if not args.http:
+        if args.cert_files:
+            ssl = {
+                'server.ssl_module': 'builtin',
+                'server.ssl_certificate': args.cert_files.split(',')[0].strip(),
+                'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
+                }
+        else:
+            ssl = {
+                'server.ssl_module': 'builtin',
+                'server.ssl_certificate': '/etc/ssl/certs/mineos.crt',
+                'server.ssl_private_key': '/etc/ssl/certs/mineos.key',
+                }
+            
         if args.cert_chain:
             ssl.update({'server.ssl_certificate_chain': args.cert_chain.strip()})
         else:
