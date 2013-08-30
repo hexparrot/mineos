@@ -461,11 +461,19 @@ if __name__ == "__main__":
                 'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
                 }
         else:
-            ssl = {
-                'server.ssl_module': 'builtin',
-                'server.ssl_certificate': '/etc/ssl/certs/mineos.crt',
-                'server.ssl_private_key': '/etc/ssl/certs/mineos.key',
-                }
+            if os.path.isfile('/etc/ssl/certs/mineos.crt') and \
+               os.path.isfile('/etc/ssl/certs/mineos.key'):
+                ssl = {
+                    'server.ssl_module': 'builtin',
+                    'server.ssl_certificate': '/etc/ssl/certs/mineos.crt',
+                    'server.ssl_private_key': '/etc/ssl/certs/mineos.key',
+                    }
+            else:
+                ssl = {
+                    'server.ssl_module': 'builtin',
+                    'server.ssl_certificate': 'mineos.crt',
+                    'server.ssl_private_key': 'mineos.key',
+                    }
             
         if args.cert_chain:
             ssl.update({'server.ssl_certificate_chain': args.cert_chain.strip()})
