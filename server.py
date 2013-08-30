@@ -413,6 +413,10 @@ if __name__ == "__main__":
                         dest='base_directory',
                         help='the base of the mc file structure',
                         default=None)
+    parser.add_argument('-s',
+                        dest='cert_files',
+                        help='certificate files: /path/to/server.crt,/path/to/server.key',
+                        default=None)
     args = parser.parse_args()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -441,6 +445,15 @@ if __name__ == "__main__":
             }
         }
 
+    if args.cert_files:
+        ssl = {
+            'server.ssl_module': 'builtin',
+            'server.ssl_certificate': args.cert_files.split(',')[0].strip(),
+            'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
+            'server.ssl_ca_certificate': None
+            }
+        conf['global'].update(ssl)
+        
     from getpass import getuser
     base_dir = args.base_directory or mc.valid_user(getuser())[1]
     mc._make_skeleton(base_dir) 
