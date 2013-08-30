@@ -119,7 +119,7 @@ class AuthController(object):
         return serve_file(os.path.join(os.getcwd(),'login.html'))
     
     @cherrypy.expose
-    def login(self, username=None, password=None, from_page='/'):
+    def login(self, username=None, password=None, hide=None, from_page='/'):
         if not username or not password:
             return self.get_loginform()
 
