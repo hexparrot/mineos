@@ -415,17 +415,13 @@ if __name__ == "__main__":
                         default=None)
     args = parser.parse_args()
 
-    cherrypy.config.update({
-        'tools.sessions.on': True,
-        'tools.auth.on': True
-        })
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
-
     conf = {
         'global': { 
             'server.socket_host': args.ip_address,
-            'server.socket_port': int(args.port)
+            'server.socket_port': int(args.port),
+            'tools.sessions.on': True,
+            'tools.auth.on': True
             },
         '/assets': {
             'tools.staticdir.on': True,
@@ -445,7 +441,8 @@ if __name__ == "__main__":
             }
         }
 
-    base_dir = args.base_directory or mc.valid_user('will')[1]
+    from getpass import getuser
+    base_dir = args.base_directory or mc.valid_user(getuser())[1]
     mc._make_skeleton(base_dir) 
 
     cherrypy.quickstart(mc_server(base_dir), config=conf)

@@ -566,7 +566,6 @@ class mc(object):
         INFO: this might be refactored into two methods,
         one for owner, one for base_directory
         """
-        from getpass import getuser
         from pwd import getpwnam
 
         try:
