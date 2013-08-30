@@ -355,11 +355,11 @@ class mc(object):
             members_ = archive_.getnames()
             prefix_ = os.path.commonprefix(members_)
         else:
-            raise RuntimeError('Ignoring command {import_world};'
+            raise RuntimeError('Ignoring command {import_server};'
                                'archive file must be compressed tar or zip')
 
         if any(f for f in members_ if f.startswith('/') or '..' in f):
-            raise RuntimeError('Ignoring command {import_world};'
+            raise RuntimeError('Ignoring command {import_server};'
                                'archive contains files with absolute path or ..')
         
         archive_.extractall(self.env['cwd'])
@@ -374,8 +374,6 @@ class mc(object):
             rmtree(prefixed_dir)
         
         self._load_config(generate_missing=True)
-        #from shutil import rmtree
-        #rmtree(self.env['cwd'])
 
     @server_exists(True)
     def prune(self, steps=None):

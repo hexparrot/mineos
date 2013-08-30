@@ -486,7 +486,11 @@ function webui() {
 			'group': group
 		}
 
-		$.getJSON('/create', params).then( self.show_page('dashboard') )
+		$.getJSON('/create', params).then(self.ajax.received, self.ajax.lost)
+									.then(function(data) {
+										if (data.result == 'success')
+											self.show_page('dashboard')
+									})
 	}
 
 	self.define_profile = function(form) {
@@ -528,7 +532,7 @@ function webui() {
 		},
 		lost: function(data) {
 			$.gritter.add({
-				text: 'Server did not respond to request',
+				text: data.payload || 'Server did not respond to request',
 				sticky: true,
 				time: '3000',
 				class_name: 'gritter-warning'

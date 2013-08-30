@@ -240,6 +240,10 @@ class mc_server(object):
         args = {k:str(v) for k,v in args.iteritems()}
         server_name = args.pop('server_name')
         command = args.pop('cmd')
+        try:
+            group = args.pop('group')
+        except KeyError:
+            group = None
 
         retval = None
         response = {
@@ -251,8 +255,17 @@ class mc_server(object):
 
         from json import loads
         from collections import defaultdict
+        from grp import getgrnam
 
         try:
+            try:
+                if group and cherrypy.session['_cp_username'] not in getgrnam(group).gr_mem:
+                    raise OSError("Create server aborted: " \
+                                  "%s does not belong to group '%s'" % (cherrypy.session['_cp_username'],
+                                                                        group))
+            except KeyError:
+                raise OSError('Group not found: %s' % group)
+            
             instance = mc(server_name,
                           cherrypy.session['_cp_username'],
                           base_directory=self.base_directory)
@@ -267,14 +280,8 @@ class mc_server(object):
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
             instance.create(dict(sc),sp)
-
-            from grp import getgrnam
-            try:
-                instance.chgrp(args['group'])
-            except KeyError:
-                pass
-
-        except (RuntimeError, KeyError, OSError) as ex:
+            instance.chgrp(args['group'])
+        except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except RuntimeWarning as ex:
@@ -282,7 +289,7 @@ class mc_server(object):
             retval = ex.message
         else:
             response['result'] = 'success'
-            retval = 'server %s successfully created' % server_name
+            retval = "Server '%s' successfully created" % server_name
 
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
@@ -321,7 +328,7 @@ class mc_server(object):
             retval = ex.message
         else:
             response['result'] = 'success'
-            retval = 'server %s successfully imported' % server_name
+            retval = "Server '%s' successfully imported" % server_name
 
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
