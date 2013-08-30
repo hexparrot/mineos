@@ -424,6 +424,10 @@ if __name__ == "__main__":
                         action='store_true',
                         help='use HTTP not HTTPS.',
                         default=None)
+    parser.add_argument('--debug',
+                        action='store_true',
+                        default=False,
+                        help='enable logging to the stdout')
     parser.add_argument('-s',
                         dest='cert_files',
                         help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
@@ -440,7 +444,8 @@ if __name__ == "__main__":
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port),
             'tools.sessions.on': True,
-            'tools.auth.on': True
+            'tools.auth.on': True,
+            'log.screen': args.debug
             },
         '/assets': {
             'tools.staticdir.on': True,
