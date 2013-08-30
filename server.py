@@ -417,6 +417,10 @@ if __name__ == "__main__":
                         dest='cert_files',
                         help='certificate files: /path/to/server.crt,/path/to/server.key',
                         default=None)
+    parser.add_argument('-c',
+                        dest='cert_chain',
+                        help='CA certificate chain: /path/to/cert-chain.crt',
+                        default=None)
     args = parser.parse_args()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -450,8 +454,12 @@ if __name__ == "__main__":
             'server.ssl_module': 'builtin',
             'server.ssl_certificate': args.cert_files.split(',')[0].strip(),
             'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
-            'server.ssl_ca_certificate': None
             }
+        if args.cert_chain:
+            ssl.update({'server.ssl_certificate_chain': args.cert_chain.strip()})
+        else:
+            ssl.update({'server.ssl_ca_certificate': None})
+
         conf['global'].update(ssl)
         
     from getpass import getuser
