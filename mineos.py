@@ -399,7 +399,12 @@ class mc(object):
                 with self.profile_config as pc:
                     pc.remove_section(profile)
         except OSError as e:
-            raise RuntimeError('Ignoring command {remove_profile}; User does not have permissions on this profile')
+            from errno import ENOENT
+            if e.errno == ENOENT:
+                with self.profile_config as pc:
+                    pc.remove_section(profile)
+            else:
+                raise RuntimeError('Ignoring command {remove_profile}; User does not have permissions on this profile')
             
     def define_profile(self, profile_dict):
         """Accepts a dictionary defining how to download and run a piece
@@ -593,8 +598,8 @@ class mc(object):
         """custom addition to check if current user
         is a member of the group a directory is owned by
         and returns the actual owner for further use"""
-        from pwd import getpwuid
-        from grp import getgrgid
+        from pwd import getpwuid, getpwnam
+        from grp import getgrgid, getgrnam
 
         uid = os.stat(directory).st_uid
         gid = os.stat(directory).st_gid
@@ -604,6 +609,8 @@ class mc(object):
         if username == actual_owner:
             return actual_owner
         elif username in getgrgid(gid).gr_mem:
+            return actual_owner
+        elif getpwnam(username).pw_gid == getgrnam(username).gr_gid:
             return actual_owner
         else:
             raise OSError("user '%s' does not have permissions on %s" % (username,
