@@ -476,15 +476,26 @@ if __name__ == "__main__":
                         default=None)
     args = parser.parse_args()
 
+    from getpass import getuser
     current_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = args.base_directory or mc.valid_user(getuser())[1]
+    mc._make_skeleton(base_dir) 
 
-    global_conf = { 
-            'server.socket_host': args.ip_address,
-            'server.socket_port': int(args.port),
-            'tools.sessions.on': True,
-            'tools.auth.on': True,
-            'log.screen': args.debug
-            }
+    log_error = '/var/log/mineos.log'
+    
+    try:
+        with open(log_error, 'a'): pass
+    except IOError:
+        log_error = os.path.join(base_dir, 'mineos.log')
+
+    global_conf = {
+        'server.socket_host': args.ip_address,
+        'server.socket_port': int(args.port),
+        'tools.sessions.on': True,
+        'tools.auth.on': True,
+        'log.screen': args.debug,
+        'log.error_file': log_error
+        }
 
     if not args.http:
         if args.cert_files:
@@ -537,10 +548,6 @@ if __name__ == "__main__":
             'tools.staticfile.filename': 'login.html'
             }
         }
-        
-    from getpass import getuser
-    base_dir = args.base_directory or mc.valid_user(getuser())[1]
-    mc._make_skeleton(base_dir) 
 
     if not args.debug:
         from cherrypy.process.plugins import Daemonizer
