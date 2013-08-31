@@ -278,7 +278,8 @@ class mc_server(object):
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
             instance.create(dict(sc),sp)
-            instance.chgrp(args['group'])
+            if group:
+                instance.chgrp(group)
         except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message

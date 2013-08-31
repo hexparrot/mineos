@@ -488,8 +488,10 @@ function webui() {
 
 		$.getJSON('/create', params).then(self.ajax.received, self.ajax.lost)
 									.then(function(data) {
-										if (data.result == 'success')
-											self.show_page('dashboard')
+										try {
+											if (data.result == 'success')
+												self.show_page('dashboard')
+										} catch (e) {}
 									})
 	}
 

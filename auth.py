@@ -31,6 +31,19 @@ def check_credentials(username, password):
         else:
             raise OSError('incorrect password')
 
+def unix_authenticate(username, password):
+    """Fallback authentication for BSD"""
+    from crypt import crypt
+    from pwd import getpwnam
+    
+    cryptedpasswd = getpwnam(username)[1]
+    if cryptedpasswd:
+        if cryptedpasswd == 'x' or cryptedpasswd == '*':
+            raise NotImplementedError("Shadow passwords not supported")
+        return crypt(password, cryptedpasswd) == cryptedpasswd
+    else:
+        return False
+
 def check_auth(*args, **kwargs):
     """A tool that looks in config for 'auth.require'. If found and it
     is not None, a login is required and the entry is evaluated as a list of
@@ -130,6 +143,8 @@ class AuthController(object):
         except OSError:
             import pam
             validated = pam.authenticate(username, password)
+        except ImportError:
+            validated = unix_authenticate(username, password)
         finally:
             if validated:
                 cherrypy.session.regenerate()
@@ -147,4 +162,4 @@ class AuthController(object):
         if username:
             cherrypy.request.login = None
             self.on_logout(username)
-        raise cherrypy.HTTPRedirect("/")
+        raise cherrypy.HTTPRedirect("/index")

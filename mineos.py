@@ -463,9 +463,14 @@ class mc(object):
                     raise RuntimeWarning('Did not download; expected md5 == existing md5')
 
             new_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'] + '.new')
-            
-            self._command_direct(self.command_wget_profile(profile),
-                                 os.path.join(self.env['pwd'], profile))
+
+            from subprocess import CalledProcessError
+            try:
+                self._command_direct(self.command_wget_profile(profile),
+                                     os.path.join(self.env['pwd'], profile))
+            except CalledProcessError:
+                self._command_direct(self.command_wget_profile(profile, True),
+                                     os.path.join(self.env['pwd'], profile))
 
             new_file_md5 = self._md5sum(new_file_path)
 
@@ -611,6 +616,7 @@ class mc(object):
         elif username in getgrgid(gid).gr_mem:
             return actual_owner
         elif getpwnam(username).pw_gid == getgrnam(username).gr_gid:
+            #^ raises KeyError: 'getgrnam(): name not found: root' on stock FreeBSD
             return actual_owner
         else:
             raise OSError("user '%s' does not have permissions on %s" % (username,
@@ -979,18 +985,19 @@ class mc(object):
         return '%(rdiff)s --list-increment-sizes %(bwd)s' % required_arguments
 
     @sanitize
-    def command_wget_profile(self, profile):
+    def command_wget_profile(self, profile, no_ca=False):
         """Returns the command to download a new file"""
         required_arguments = {
             'wget': self.BINARY_PATHS['wget'],
             'newfile': os.path.join(self.env['pwd'],
                                     profile,
                                     self.profile_config[profile:'save_as'] + '.new'),
-            'url': self.profile_config[profile:'url']
+            'url': self.profile_config[profile:'url'],
+            'no_ca': '--no-check-certificate' if no_ca else ''
             }
 
         self._previous_arguments = required_arguments
-        return '%(wget)s -O %(newfile)s %(url)s' % required_arguments
+        return '%(wget)s %(no_ca)s -O %(newfile)s %(url)s' % required_arguments
 
     @sanitize
     def command_apply_profile(self, profile):
