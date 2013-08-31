@@ -227,10 +227,9 @@
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'console'}">
-                                        <a>
+                                        <a data-bind="click: show_page" data-page="console">
                                             <span class="icon icone-desktop"></span>
                                             <span class="text">Console</span>
-                                            <span class="label label-inverse">0</span>
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
@@ -1049,6 +1048,71 @@
                         <!--/ END Form Wizard With Validation -->
                     </div>
                     <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="console" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget">
+                            <header>
+                                <h4 class="title">Server Logs</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li>
+                                        <a href="#" class="link" data-toggle="dropdown">
+                                            <span data-bind="click: function() { logs.reversed(!logs.reversed()) }" class="icon icon-resize-horizontal"></span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#" class="link" data-toggle="dropdown">
+                                            <span data-bind="click: reset_logs" class="icon icon-refresh"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                            </header>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Datatable 1 -->
+                        <div class="span12 widget stacked">
+                            <section class="body">
+                                <div class="body-inner no-padding">
+                                    <table class="table table-bordered table-striped table-hover" id="logs">
+                                        <thead>
+                                            <tr>
+                                                <th>Entry</th>
+                                            </tr>
+                                        </thead>
+                                        <!-- ko if: logs.reversed() -->
+                                        <tbody data-bind=", foreach: vmdata.logs.slice(0).reverse()">
+                                            <tr>
+                                              <td data-bind="text: entry"></td>
+                                            </tr>
+                                        </tbody>
+                                        <!-- /ko -->
+                                        <!-- ko if: !logs.reversed() -->
+                                        <tbody data-bind=", foreach: vmdata.logs">
+                                            <tr>
+                                              <td data-bind="text: entry"></td>
+                                            </tr>
+                                        </tbody>
+                                        <!-- /ko -->
+                                    </table>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Datatable 1 -->
+                    </div>
+                    <!--/ END Row -->
+
                 </div>
                 <!--/ END Content -->
 

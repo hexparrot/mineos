@@ -115,6 +115,13 @@ function model_property(server_name, option, value, section) {
 	}, self)
 }
 
+function model_logline(str) {
+	var self = this;
+
+	self.timestamp = '';
+	self.entry = str;
+}
+
 function webui() {
 	var self = this;
 
@@ -136,6 +143,10 @@ function webui() {
 		}),
 		disk_usage: ko.observable(),
 		disk_usage_pct: ko.observable(),
+	}
+
+	self.logs = {
+		reversed: ko.observable(true)
 	}
 
 	self.load_averages = {
@@ -179,7 +190,8 @@ function webui() {
 		importable: ko.observableArray(),
 		profiles: ko.observableArray(),
 		sp: ko.observableArray(),
-		sc: ko.observableArray()
+		sc: ko.observableArray(),
+		logs: ko.observableArray()
 	}
 
 	self.import_information = ko.observable();
@@ -237,6 +249,11 @@ function webui() {
 			self.load_averages.autorefresh(true);
 			self.redraw.chart();
 		}
+	}
+
+	self.reset_logs = function() {
+		self.vmdata.logs([]);
+		$.getJSON('/logs', {server_name: self.server().server_name, reset: true}).then(self.refresh.logs);
 	}
 
 	self.select_server = function(model) {
@@ -385,6 +402,9 @@ function webui() {
 				break;
 			case 'importable':
 				$.getJSON('/vm/importable', {}).then(self.refresh.importable);
+				break;
+			case 'console':
+				$.getJSON('/logs', params).then(self.refresh.logs);
 				break;
 			default:
 				break;			
@@ -617,6 +637,12 @@ function webui() {
 		},
 		importable: function(data) {
 			self.vmdata.importable(data.ascending_by('filename'));
+		},
+		logs: function(data) {
+			$.each(data.payload, function(i,v) {
+				if (!v.match(/\[INFO\] \/127.0.0.1:\d+ lost connection/) && !v.match(/\[SEVERE\] Reached end of stream for \/127.0.0.1/))
+					self.vmdata.logs.push(new model_logline(v));
+			})
 		}
 	}
 

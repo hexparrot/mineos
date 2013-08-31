@@ -134,15 +134,12 @@ class mc_server(object):
         from cherrypy.lib.static import serve_file
         return serve_file(os.path.join(self.script_directory, 'index.html'))
 
-    @require()
     def methods(self):
         return dumps(self.METHODS)
 
-    @require()
     def properties(self):
         return dumps(self.PROPERTIES)
 
-    @require()
     def inspect_method(self, method):
         try:
             target = getattr(mc, method).func_closure[0].cell_contents
@@ -161,7 +158,54 @@ class mc_server(object):
             del reqd[reqd.index("cls")]
 
         return dumps(reqd)
-                 
+
+    @cherrypy.expose
+    @require()
+    def logs(self, **args):
+        args = {k:str(v) for k,v in args.iteritems()}
+        server_name = args.pop('server_name')
+
+        retval = None
+        response = {
+            'result': None,
+            'cmd': 'logs',
+            'payload': None
+            }
+
+        init_args = {
+            'owner': cherrypy.session['_cp_username'],
+            'base_directory': self.base_directory
+            }
+
+        try:
+            instance = mc(server_name, **init_args)
+            if 'log_offset' not in cherrypy.session or 'reset' in args:
+                cherrypy.session['log_offset'] = os.stat(instance.env['log']).st_size
+                retval = instance.list_last_loglines(100)
+            elif not cherrypy.session['log_offset']:
+                cherrypy.session['log_offset'] = os.stat(instance.env['log']).st_size
+                retval = instance.list_last_loglines(100)
+            elif cherrypy.session['log_offset']:
+                with open(instance.env['log'], 'rb') as log:
+                    log.seek(cherrypy.session['log_offset'], 0)
+                    retval = log.readlines()
+                    cherrypy.session['log_offset'] = os.stat(instance.env['log']).st_size
+        except (RuntimeError, KeyError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        except CalledProcessError, ex:
+            response['result'] = 'error'
+            retval = ex.output
+        else:
+            response['result'] = 'success'
+
+        response['payload'] = self.to_jsonable_type(retval)
+        return dumps(response)
+
+
     @cherrypy.expose
     @require()
     def host(self, **args):

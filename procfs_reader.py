@@ -10,9 +10,8 @@ __email__ = "wdchromium@gmail.com"
 import os
 from binascii import b2a_qp
 
-
 _PROCFS_PATHS = ['/proc',
-                '/usr/compat/linux/proc']
+                 '/usr/compat/linux/proc']
 
 for procfs in _PROCFS_PATHS:
     try:
@@ -109,3 +108,31 @@ def disk_usage(path):
     return _ntuple_diskusage(human_readable(total),
                              human_readable(used),
                              human_readable(free))
+
+def tail(f, window=50):
+    """
+    Returns the last `window` lines of file `f` as a list.
+    http://stackoverflow.com/a/7047765/1191579
+    """
+    BUFSIZ = 1024
+    f.seek(0, 2)
+    bytes = f.tell()
+    size = window + 1
+    block = -1
+    data = []
+    while size > 0 and bytes > 0:
+        if bytes - BUFSIZ > 0:
+            # Seek back one whole BUFSIZ
+            f.seek(block * BUFSIZ, 2)
+            # read BUFFER
+            data.insert(0, f.read(BUFSIZ))
+        else:
+            # file too small, start from begining
+            f.seek(0,0)
+            # only read what was not read
+            data.insert(0, f.read(bytes))
+        linesFound = data[0].count('\n')
+        size -= linesFound
+        bytes -= BUFSIZ
+        block -= 1
+    return ''.join(data).splitlines()[-window:]

@@ -118,7 +118,8 @@ class mc(object):
             'sc': os.path.join(self.env['cwd'], 'server.config'),
             'pc': os.path.join(self.base, self.DEFAULT_PATHS['profiles'], 'profile.config'),
             'sp_backup': os.path.join(self.env['bwd'], 'server.properties'),
-            'sc_backup': os.path.join(self.env['bwd'], 'server.config')
+            'sc_backup': os.path.join(self.env['bwd'], 'server.config'),
+            'log': os.path.join(self.env['cwd'], 'server.log')
             })
 
     def _load_config(self, load_backup=False, generate_missing=False):
@@ -1159,6 +1160,13 @@ class mc(object):
             yield instance_pids(name, java, screen, os.path.dirname(os.path.dirname(base)))
             '''dirname x2 truncates /servers/ from the string.  all these scripts operate
             on the assumption of child directories anyway, so this is hardcoded'''
+
+    def list_last_loglines(self, lines=100):
+        """Returns last n lines from logfile"""
+        from procfs_reader import tail
+        
+        with open(self.env['log'], 'rb') as log:
+            return tail(log, int(lines))
 
     @classmethod
     def list_profiles(cls, base_directory=None):
