@@ -1213,10 +1213,13 @@ class mc(object):
         from grp import getgrnam
         from stat import S_IWGRP
 
-        if self.owner.pw_name in getgrnam(group).gr_mem:
-            for d in ('cwd', 'bwd', 'awd'):
-                os.lchown(self.env[d], -1, getgrnam(group).gr_gid)
-                os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
+        for d in ('cwd', 'bwd', 'awd'):
+            try:
+                if self.owner.pw_name in getgrnam(group).gr_mem:
+                    os.lchown(self.env[d], -1, getgrnam(group).gr_gid)
+            except KeyError:
+                pass
+            os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
 
     @staticmethod
     def _list_subdirs(directory):

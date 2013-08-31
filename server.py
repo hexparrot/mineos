@@ -205,7 +205,6 @@ class mc_server(object):
         response['payload'] = self.to_jsonable_type(retval)
         return dumps(response)
 
-
     @cherrypy.expose
     @require()
     def host(self, **args):
@@ -282,10 +281,7 @@ class mc_server(object):
         args = {k:str(v) for k,v in args.iteritems()}
         server_name = args.pop('server_name')
         command = args.pop('cmd')
-        try:
-            group = args.pop('group')
-        except KeyError:
-            group = None
+        group = args.get('group', None)
 
         retval = None
         response = {
@@ -322,8 +318,7 @@ class mc_server(object):
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
             instance.create(dict(sc),sp)
-            if group:
-                instance.chgrp(group)
+            instance.chgrp(group)
         except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message

@@ -506,13 +506,7 @@ function webui() {
 			'group': group
 		}
 
-		$.getJSON('/create', params).then(self.ajax.received, self.ajax.lost)
-									.then(function(data) {
-										try {
-											if (data.result == 'success')
-												self.show_page('dashboard')
-										} catch (e) {}
-									})
+		$.getJSON('/create', params).then(self.ajax.received, self.ajax.lost);
 	}
 
 	self.define_profile = function(form) {
