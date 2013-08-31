@@ -118,14 +118,13 @@ class ViewModel(object):
             } for f in mc._list_files(path)])
 
 class mc_server(object):    
-    auth = AuthController()
-    
     METHODS = list(m for m in dir(mc) if callable(getattr(mc,m)) \
                    and not m.startswith('_'))
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
 
-    def __init__(self, base_directory=None):
+    def __init__(self, script_directory, base_directory):
+        self.script_directory = script_directory
         self.base_directory = base_directory
         self.vm = ViewModel(self.base_directory)
 
@@ -133,8 +132,7 @@ class mc_server(object):
     @require()
     def index(self):
         from cherrypy.lib.static import serve_file
-        
-        return serve_file(os.path.join(os.getcwd(),'index.html'))
+        return serve_file(os.path.join(self.script_directory, 'index.html'))
 
     @require()
     def methods(self):
@@ -439,31 +437,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    conf = {
-        'global': { 
+
+    global_conf = { 
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port),
             'tools.sessions.on': True,
             'tools.auth.on': True,
             'log.screen': args.debug
-            },
-        '/assets': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'assets')
-            },
-        '/css': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'css')
-            },
-        '/img': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'img')
-            },
-        '/js': {
-            'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'js')
             }
-        }
 
     if not args.http:
         if args.cert_files:
@@ -485,17 +466,48 @@ if __name__ == "__main__":
                     'server.ssl_module': 'builtin',
                     'server.ssl_certificate': 'mineos.crt',
                     'server.ssl_private_key': 'mineos.key',
-                    }
-            
+                    }  
         if args.cert_chain:
             ssl.update({'server.ssl_certificate_chain': args.cert_chain.strip()})
         else:
             ssl.update({'server.ssl_ca_certificate': None})
+        global_conf.update(ssl)
 
-        conf['global'].update(ssl)
+    static_conf = {
+        '/assets': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'assets')
+            },
+        '/css': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'css')
+            },
+        '/img': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'img')
+            },
+        '/js': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(current_dir, 'js')
+            }
+        }
+
+    auth_conf = {
+        '/login': {
+            'tools.staticfile.filename': 'login.html'
+            }
+        }
         
     from getpass import getuser
     base_dir = args.base_directory or mc.valid_user(getuser())[1]
     mc._make_skeleton(base_dir) 
 
-    cherrypy.quickstart(mc_server(base_dir), config=conf)
+    if not args.debug:
+        from cherrypy.process.plugins import Daemonizer
+        Daemonizer(cherrypy.engine).subscribe()
+
+    cherrypy.config.update(global_conf)
+    cherrypy.tree.mount(mc_server(current_dir, base_dir), "/", config=static_conf)
+    cherrypy.tree.mount(AuthController(current_dir), '/auth', config=auth_conf)
+    cherrypy.engine.start()
+    cherrypy.engine.block()

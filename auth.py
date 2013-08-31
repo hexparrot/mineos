@@ -104,6 +104,8 @@ def all_of(*conditions):
 # Controller to provide login and logout actions
 
 class AuthController(object):
+    def __init__(self, script_directory):
+        self.script_directory = script_directory
     
     def on_login(self, username):
         """Called on successful login"""
@@ -115,8 +117,7 @@ class AuthController(object):
         import os
         from cgi import escape
         from cherrypy.lib.static import serve_file
-        
-        return serve_file(os.path.join(os.getcwd(),'login.html'))
+        return serve_file(os.path.join(self.script_directory, 'login.html'))
     
     @cherrypy.expose
     def login(self, username=None, password=None, hide=None, from_page='/'):
@@ -146,4 +147,4 @@ class AuthController(object):
         if username:
             cherrypy.request.login = None
             self.on_logout(username)
-        raise cherrypy.HTTPRedirect("/index")
+        raise cherrypy.HTTPRedirect("/")
