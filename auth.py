@@ -31,7 +31,7 @@ def check_credentials(username, password):
         else:
             raise OSError('incorrect password')
 
-def unix_authenticate(username, password):
+def pwd_authenticate(username, password):
     """Fallback authentication for BSD"""
     from crypt import crypt
     from pwd import getpwnam
@@ -43,6 +43,26 @@ def unix_authenticate(username, password):
         return crypt(password, cryptedpasswd) == cryptedpasswd
     else:
         return False
+
+def pam_authenticate(username, password, port=8317):
+    """pam_server authentication daemon"""
+    from telnetlib import Telnet
+    import socket
+
+    response = ''
+    try:
+        tn = Telnet('localhost', port)
+        s = '%{0} {1}\r\n'.format(username, password).encode('UTF-16')
+        tn.write(s)
+        response = tn.read_some()
+    except socket.error:
+        pass
+    else:
+        tn.close()
+
+    if response.rstrip("\n").rstrip("\r").decode("utf-16") == 'ok':
+        return True
+    return False
 
 def check_auth(*args, **kwargs):
     """A tool that looks in config for 'auth.require'. If found and it
@@ -74,46 +94,6 @@ def require(*conditions):
         return f
     return decorate
 
-
-# Conditions are callables that return True
-# if the user fulfills the conditions they define, False otherwise
-#
-# They can access the current username as cherrypy.request.login
-#
-# Define those at will however suits the application.
-
-def member_of(groupname):
-    def check():
-        # replace with actual check if <username> is in <groupname>
-        return cherrypy.request.login == 'joe' and groupname == 'admin'
-    return check
-
-def name_is(reqd_username):
-    return lambda: reqd_username == cherrypy.request.login
-
-# These might be handy
-
-def any_of(*conditions):
-    """Returns True if any of the conditions match"""
-    def check():
-        for c in conditions:
-            if c():
-                return True
-        return False
-    return check
-
-# By default all conditions are required, but this might still be
-# needed if you want to use it inside of an any_of(...) condition
-def all_of(*conditions):
-    """Returns True if all of the conditions match"""
-    def check():
-        for c in conditions:
-            if not c():
-                return False
-        return True
-    return check
-
-
 # Controller to provide login and logout actions
 
 class AuthController(object):
@@ -138,21 +118,24 @@ class AuthController(object):
             return self.get_loginform()
 
         validated = False
-        try:      
-            validated = check_credentials(username, password)
-        except OSError:
-            import pam
-            validated = pam.authenticate(username, password)
-        except ImportError:
-            validated = unix_authenticate(username, password)
-        finally:
-            if validated:
-                cherrypy.session.regenerate()
-                cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
-                self.on_login(username)
-                raise cherrypy.HTTPRedirect("/")
-            else:
-                return self.get_loginform()
+        validated = pam_authenticate(username, password)
+        
+        if not validated:
+            try:
+                validated = check_credentials(username, password)
+            except OSError:
+                import pam
+                validated = pam.authenticate(username, password)
+            except ImportError:
+                validated = pwd_authenticate(username, password)
+
+        if validated:
+            cherrypy.session.regenerate()
+            cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
+            self.on_login(username)
+            raise cherrypy.HTTPRedirect("/")
+        else:
+            return self.get_loginform()
     
     @cherrypy.expose
     def logout(self):

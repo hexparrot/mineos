@@ -461,11 +461,11 @@ if __name__ == "__main__":
     parser.add_argument('--http',
                         action='store_true',
                         help='use HTTP not HTTPS.',
-                        default=None)
-    parser.add_argument('--debug',
+                        default=False)
+    parser.add_argument('--daemon',
                         action='store_true',
-                        default=False,
-                        help='enable logging to the stdout')
+                        help='automatically daemonize server.py',
+                        default=False)
     parser.add_argument('-s',
                         dest='cert_files',
                         help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
@@ -493,7 +493,7 @@ if __name__ == "__main__":
         'server.socket_port': int(args.port),
         'tools.sessions.on': True,
         'tools.auth.on': True,
-        'log.screen': args.debug,
+        'log.screen': True,
         'log.error_file': log_error
         }
 
@@ -549,10 +549,23 @@ if __name__ == "__main__":
             }
         }
 
-    if not args.debug:
+    if args.daemon:
         from cherrypy.process.plugins import Daemonizer
         Daemonizer(cherrypy.engine).subscribe()
 
+    import threading
+    from pam_service import Service
+    import asyncore
+    addr = ('localhost', 8317)
+    Service(addr)
+    
+    loop_thread = threading.Thread(target=asyncore.loop, name="pam_service")
+    loop_thread.daemon = True
+    loop_thread.start()
+
+    from cherrypy.process.plugins import DropPrivileges
+    #DropPrivileges(cherrypy.engine, umask=None, uid=65534, gid=65534).subscribe()
+    
     cherrypy.config.update(global_conf)
     cherrypy.tree.mount(mc_server(current_dir, base_dir), "/", config=static_conf)
     cherrypy.tree.mount(AuthController(current_dir), '/auth', config=auth_conf)
