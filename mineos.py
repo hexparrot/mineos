@@ -387,11 +387,6 @@ class mc(object):
 
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
-        for server in self.list_servers_up():
-            if self.__class__(server.server_name,
-                              base_directory=server.base_dir).profile == profile:
-                raise RuntimeError('Ignoring command {remove_profile}; Profile in use by a LIVE server')
-
         try:
             if self.valid_owner(self._owner.pw_name, self.env['pc']):
                 from shutil import rmtree
@@ -412,15 +407,16 @@ class mc(object):
         of Minecraft server software.
 
         profile_dict = {
-                    'name': 'vanilla',
-                    'type': 'standard_jar',
-                    'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
-                    'save_as': 'minecraft_server.jar',
-                    'run_as': 'minecraft_server.jar',
-                    'ignore': '',
-                    }
+            'name': 'vanilla',
+            'type': 'standard_jar',
+            'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar',
+            'save_as': 'minecraft_server.jar',
+            'run_as': 'minecraft_server.jar',
+            'ignore': '',
+            }
 
         """
+        
         self._make_directory(os.path.join(self.env['pwd']))
         profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
         profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
@@ -1248,5 +1244,7 @@ class mc(object):
             try:
                 os.makedirs(os.path.join(base_directory, d))
             except OSError:
-                pass   
+                pass
+
+        with open(os.path.join(base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config'), 'a'): pass
 

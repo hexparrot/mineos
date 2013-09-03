@@ -537,7 +537,14 @@ function webui() {
 			'profile': JSON.stringify(properties),
 		}
 
-		$.getJSON('/host', params).then( self.show_page('profiles') );
+		$.getJSON('/host', params)
+		.then(self.ajax.received, self.ajax.lost)
+		.done(function() {
+			self.show_page('profiles');
+		},function(){
+
+		});
+
 	}
 
 	/* promises */
@@ -560,8 +567,7 @@ function webui() {
 		lost: function(data) {
 			$.gritter.add({
 				text: data.payload || 'Server did not respond to request',
-				sticky: true,
-				time: '3000',
+				time: '4000',
 				class_name: 'gritter-warning'
 			});
 			console.log(data);

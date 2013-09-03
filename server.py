@@ -235,12 +235,19 @@ class mc_server(object):
 
                 definition['url'] = unquote(definition['url'])
 
+                if definition['name'] in mc.list_profiles(self.base_directory).keys():
+                    raise KeyError('Profiles may not be modified once created')
+
                 instance = mc('throwaway', **init_args)
                 retval = instance.define_profile(definition)      
             elif command == 'update_profile':
                 instance = mc('throwaway', **init_args)
                 retval = instance.update_profile(**args)
             elif command == 'remove_profile':
+                for i in mc.list_servers(self.base_directory):
+                    if mc(i, None, self.base_directory).profile == args['profile']:
+                        raise KeyError('May not remove profiles in use by 1 or more servers')
+                
                 instance = mc('throwaway', **init_args)
                 retval = instance.remove_profile(**args)
             elif command == 'stock_profile':
@@ -462,10 +469,10 @@ if __name__ == "__main__":
                         action='store_true',
                         help='use HTTP not HTTPS.',
                         default=None)
-    parser.add_argument('--debug',
+    parser.add_argument('--daemon',
                         action='store_true',
                         default=False,
-                        help='enable logging to the stdout')
+                        help='run server as a daemon')
     parser.add_argument('-s',
                         dest='cert_files',
                         help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
@@ -493,7 +500,7 @@ if __name__ == "__main__":
         'server.socket_port': int(args.port),
         'tools.sessions.on': True,
         'tools.auth.on': True,
-        'log.screen': args.debug,
+        'log.screen': not args.daemon,
         'log.error_file': log_error
         }
 
@@ -549,7 +556,7 @@ if __name__ == "__main__":
             }
         }
 
-    if not args.debug:
+    if args.daemon:
         from cherrypy.process.plugins import Daemonizer
         Daemonizer(cherrypy.engine).subscribe()
 
