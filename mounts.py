@@ -13,6 +13,7 @@ import os
 from json import dumps
 from mineos import mc
 from auth import require
+from subprocess import CalledProcessError
 
 def to_jsonable_type(retval):
     import types
@@ -26,11 +27,8 @@ def to_jsonable_type(retval):
 
 class ViewModel(object):
     def __init__(self, base_directory):
-        from functools import partial
-        
         self.base_directory = base_directory
-        self.quick_create = partial(mc, base_directory=self.base_directory)
-        
+
     @property
     def login(self):
         return cherrypy.session['_cp_username']
@@ -42,26 +40,28 @@ class ViewModel(object):
 
     @cherrypy.expose
     def status(self):
-        def ping():
-            for i in self.server_list():
-                instance = self.quick_create(i, self.login)
+        servers = []
+        for i in self.server_list():
+            instance = mc(i, self.login, self.base_directory)
 
-                try:
-                    ping_info = instance.ping
-                except KeyError:
-                    continue
-                else:
-                    yield {
-                        'server_name': i,
-                        'profile': instance.profile,
-                        'up': instance.up,
-                        'ip_address': instance.ip_address,
-                        'port': instance.port,
-                        'memory': instance.memory,
-                        'java_xmx': instance.server_config['java':'java_xmx':'']
-                        }.update(dict(instance.ping._asdict()))
+            try:
+                ping = instance.ping
+            except KeyError:
+                continue
+            else:
+                srv = {
+                    'server_name': i,
+                    'profile': instance.profile,
+                    'up': instance.up,
+                    'ip_address': instance.ip_address,
+                    'port': instance.port,
+                    'memory': instance.memory,
+                    'java_xmx': instance.server_config['java':'java_xmx':'']
+                    }
+                srv.update(dict(instance.ping._asdict()))
+                servers.append(srv)
 
-        return dumps(list(ping()))
+        return dumps(servers)
 
     @cherrypy.expose
     def profiles(self):
@@ -93,12 +93,12 @@ class ViewModel(object):
 
     @cherrypy.expose
     def increments(self, server_name):
-        instance = self.quick_create(server_name, self.login)
+        instance = mc(server_name, self.login, self.base_directory)
         return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
 
     @cherrypy.expose
     def archives(self, server_name):
-        instance = self.quick_create(server_name, self.login)
+        instance = mc(server_name, self.login, self.base_directory)
         return dumps([dict(d._asdict()) for d in instance.list_archives()])
                     
     @cherrypy.expose
@@ -152,8 +152,6 @@ class Root(object):
     @cherrypy.expose
     @require()
     def host(self, **raw_args):
-        from subprocess import CalledProcessError
-        
         args = {k:str(v) for k,v in raw_args.iteritems()}
         command = args.pop('cmd')
         retval = None
@@ -218,7 +216,7 @@ class Root(object):
                     raise RuntimeError(ex.message)
             else:
                 raise RuntimeWarning('Command not found: should this be to a server?')
-        except (RuntimeError, KeyError) as ex:
+        except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except CalledProcessError, ex:
@@ -255,10 +253,10 @@ class Root(object):
             elif not owner:
                 raise OSError('User %s does not have permissions on %s' % (self.login, server_name))
             
-            instance = mc(args.server_name, owner, self.base_directory)
+            instance = mc(server_name, owner, self.base_directory)
 
             if command in self.METHODS:
-                retval = getattr(instance, command)(**args.args)
+                retval = getattr(instance, command)(**args)
             elif command in self.PROPERTIES:
                 if args:
                     setattr(instance, command, args.values()[0])
@@ -278,13 +276,13 @@ class Root(object):
             response['result'] = 'warning'
             retval = ex.message
         else:
-            reponse['result'] = 'success'
+            response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)
 
     @cherrypy.expose
-    @require
+    @require()
     def logs(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
@@ -320,13 +318,13 @@ class Root(object):
             response['result'] = 'warning'
             retval = ex.message
         else:
-            reponse['result'] = 'success'
+            response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)
         
     @cherrypy.expose
-    @require
+    @require()
     def create(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
@@ -366,13 +364,13 @@ class Root(object):
             response['result'] = 'warning'
             retval = ex.message
         else:
-            reponse['result'] = 'success'
+            response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)
 
     @cherrypy.expose
-    @require
+    @require()
     def import_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
@@ -400,7 +398,7 @@ class Root(object):
             response['result'] = 'warning'
             retval = ex.message
         else:
-            reponse['result'] = 'success'
+            response['result'] = 'success'
             retval = "Server '%s' successfully imported" % server_name
 
         response['payload'] = to_jsonable_type(retval)

@@ -1230,7 +1230,7 @@ class mc(object):
         elif username in owner_group.gr_mem:
             return owner_user.pw_name
         else:
-            raise OSError("user '%s' does not have permissions on %s" % (username, directory))
+            raise OSError("user '%s' does not have permissions on %s" % (username, path))
 
     @classmethod
     def has_server_rights(cls, username, server_name, base_directory):

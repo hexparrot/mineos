@@ -290,7 +290,6 @@ function webui() {
 	self.remember_import = function(model, eventobj) {
 		var target = $(eventobj.currentTarget);
 		var params = {
-			cmd: 'import_server',
 			path: model['path'],
 			filename: model['filename']
 		}
