@@ -506,7 +506,13 @@ function webui() {
 			'group': group
 		}
 
-		$.getJSON('/create', params).then(self.ajax.received, self.ajax.lost);
+		$.getJSON('/create', params)
+		.then(self.ajax.received, self.ajax.lost)
+		.done(function() {
+			self.show_page('dashboard');
+		},function(){
+
+		});
 	}
 
 	self.define_profile = function(form) {
@@ -545,6 +551,11 @@ function webui() {
 				class_name: 'gritter-{0}'.format(data.result)
 			});
 			console.log(data);
+
+			if (data.result == 'success')
+				return $.Deferred().resolve().promise();
+			else
+				return $.Deferred().reject().promise();
 		},
 		lost: function(data) {
 			$.gritter.add({
@@ -554,6 +565,8 @@ function webui() {
 				class_name: 'gritter-warning'
 			});
 			console.log(data);
+
+			return $.Deferred().reject().promise();
 		},
 		refresh: function(time) {
 			setTimeout(self.page.valueHasMutated, time || self.refresh_rate)
