@@ -553,21 +553,25 @@ if __name__ == "__main__":
         from cherrypy.process.plugins import Daemonizer
         Daemonizer(cherrypy.engine).subscribe()
 
-    import threading
+    from multiprocessing import Process
     from pam_service import Service
     import asyncore
     addr = ('localhost', 8317)
     Service(addr)
-    
-    loop_thread = threading.Thread(target=asyncore.loop, name="pam_service")
-    loop_thread.daemon = True
-    loop_thread.start()
+
+    p = Process(target=asyncore.loop)
+    p.daemon = True
+    print(p, p.is_alive())
+    p.start()
+    print(p, p.is_alive())
 
     from cherrypy.process.plugins import DropPrivileges
-    #DropPrivileges(cherrypy.engine, umask=None, uid=65534, gid=65534).subscribe()
+    DropPrivileges(cherrypy.engine, umask=None, uid=65534, gid=65534).subscribe()
     
     cherrypy.config.update(global_conf)
     cherrypy.tree.mount(mc_server(current_dir, base_dir), "/", config=static_conf)
     cherrypy.tree.mount(AuthController(current_dir), '/auth', config=auth_conf)
     cherrypy.engine.start()
+    print(p, p.is_alive())
     cherrypy.engine.block()
+    print(p, p.is_alive())

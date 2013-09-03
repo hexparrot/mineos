@@ -46,21 +46,21 @@ def pwd_authenticate(username, password):
 
 def pam_authenticate(username, password, port=8317):
     """pam_server authentication daemon"""
-    from telnetlib import Telnet
+    import telnetlib
     import socket
 
     response = ''
     try:
-        tn = Telnet('localhost', port)
-        s = '%{0} {1}\r\n'.format(username, password).encode('UTF-16')
-        tn.write(s)
+        tn = telnetlib.Telnet('localhost', port)
+        s = '%s %s\r\n' % (username, password)
+        tn.write(s.encode('ascii'))
         response = tn.read_some()
     except socket.error:
         pass
     else:
         tn.close()
 
-    if response.rstrip("\n").rstrip("\r").decode("utf-16") == 'ok':
+    if str(response).strip() == 'ok':
         return True
     return False
 
