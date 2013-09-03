@@ -233,7 +233,10 @@ class mc_server(object):
                 definition_unicode = loads(args['profile'])
                 definition = {str(k):str(v) for k,v in definition_unicode.iteritems()}
 
-                definition['url'] = unquote(definition['url'])
+                try:
+                    definition['url'] = unquote(definition['url'])
+                except KeyError:
+                    pass
 
                 if definition['name'] in mc.list_profiles(self.base_directory).keys():
                     raise KeyError('Profiles may not be modified once created')

@@ -284,7 +284,10 @@ class mc(object):
                 raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        if not self.profile_current:
+        if self.profile_config[self.profile:'type'] == 'unmanaged':
+            if not os.path.isfile(os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])):
+                raise RuntimeError('%s does not exist' % self.profile_config[self.profile:'run_as'])
+        elif not self.profile_current:
             raise RuntimeError('Assigned jar does not match copy in profile directory') 
         self._command_direct(self.command_start, self.env['cwd'])
 
@@ -416,10 +419,14 @@ class mc(object):
             }
 
         """
-        
-        self._make_directory(os.path.join(self.env['pwd']))
-        profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
+
         profile_dict['run_as'] = self.valid_filename(os.path.basename(profile_dict['run_as']))
+        
+        if profile_dict['type'] == 'unmanaged':
+            for i in ['save_as', 'url', 'ignore']:
+                profile_dict[i] = ''
+        else:
+            profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
 
         self._command_direct('touch %s' % self.env['pc'], self.env['pwd'])
         with self.profile_config as pc:
@@ -441,14 +448,15 @@ class mc(object):
         2) avoid unnecessary download if existing md5 == expected md5
         """
         self._make_directory(os.path.join(self.env['pwd'], profile))
-
-        with self.profile_config as pc:
-            pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
-            pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
-
         profile_dict = self.profile_config[profile:]
 
-        if profile_dict['type'] == 'standard_jar':
+        if profile_dict['type'] == 'unmanaged':
+            raise RuntimeWarning('No action taken; unmanaged profile')
+        elif profile_dict['type'] == 'standard_jar':
+            with self.profile_config as pc:
+                pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
+                pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
+            
             old_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'])
 
             try:
