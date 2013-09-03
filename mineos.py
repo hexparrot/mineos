@@ -13,7 +13,7 @@ import os
 from conf_reader import config_file
 from collections import namedtuple
 from distutils.spawn import find_executable
-from functools import wraps
+from functools import wraps, partial
 
 def sanitize(fn):
     """Checks that attempted CLI commands have all required fields.
@@ -89,12 +89,10 @@ class mc(object):
     
     def __init__(self,
                  server_name,
-                 owner=None,
                  base_directory=None):
         
         self._server_name = self.valid_server_name(server_name)
-        self._owner, self._base_directory = self.valid_user(owner, base_directory)
-
+        self._base_directory = base_directory
         self._set_environment()
         self._load_config()
 
@@ -497,7 +495,7 @@ class mc(object):
 #actual command execution methods
 
     @staticmethod
-    def _demote(user_uid, user_gid):
+    def _demote():
         """Closure for _command_direct and _command_stuff that changes
         current user to that of self._owner.pd_{uid,gid}
 
@@ -506,8 +504,6 @@ class mc(object):
         """
         def set_ids():
             os.umask(2)
-            os.setgid(user_gid)
-            os.setuid(user_uid)
         return set_ids
 
     def _command_direct(self, command, working_directory):
@@ -520,7 +516,7 @@ class mc(object):
         return check_output(split(command),
                             cwd=working_directory,
                             stderr=STDOUT,
-                            preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
+                            preexec_fn=self._demote())
 
     @server_exists(True)
     @server_up(True)
@@ -1037,6 +1033,17 @@ class mc(object):
         self._previous_arguments = required_arguments
         return 'rm -- %(archives)s' % required_arguments
 
+    @sanitize
+    def command_chgrp(self, group, path):
+        """Recursively chowns directory"""
+        required_arguments = {
+            'group': group,
+            'path': path
+            }
+
+        self._previous_arguments = required_arguments
+        return 'chgrp -hR %(group)s %(path)s' % required_arguments
+
 #generator expressions
 
     @classmethod
@@ -1197,29 +1204,17 @@ class mc(object):
 
 #filesystem functions
 
-    def _make_directory(self, path, do_raise=False):
-        """Creates a directory and chowns it to self._owner.
-        Fails silently.
-        """
+    @staticmethod
+    def _make_directory(path, do_raise=False):
+        """Creates a directory and chowns it to uid/gid. Fails silently. """
+        from stat import S_IWGRP
+        
         try:
             os.makedirs(path)
         except OSError:
             if do_raise: raise
         else:
-            os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
-
-    def chgrp(self, group):
-        """Change servers directories' ownership to new group"""
-        from grp import getgrnam
-        from stat import S_IWGRP
-
-        for d in ('cwd', 'bwd', 'awd'):
-            try:
-                if self.owner.pw_name in getgrnam(group).gr_mem:
-                    os.lchown(self.env[d], -1, getgrnam(group).gr_gid)
-            except KeyError:
-                pass
-            os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
+            os.chmod(path, os.stat(path).st_mode | S_IWGRP) 
 
     @staticmethod
     def _list_subdirs(directory):
@@ -1236,17 +1231,3 @@ class mc(object):
             return os.walk(directory).next()[2]
         except StopIteration:
             return []
-
-    @classmethod
-    def _make_skeleton(cls, base_directory=None):
-        """Creates the default paths at base_directory"""
-        import os
-        if base_directory is None:
-            base_directory = os.getcwd()
-            
-        for d in cls.DEFAULT_PATHS:
-            try:
-                os.makedirs(os.path.join(base_directory, d))
-            except OSError:
-                pass   
-

@@ -35,7 +35,7 @@ class ViewModel(object):
     def status(self):
         status = []
         for i in self.server_list():
-            instance = self.quick_create(i, owner=cherrypy.session['_cp_username'])
+            instance = self.quick_create(i)
 
             try:
                 ping_info = instance.ping
@@ -82,12 +82,12 @@ class ViewModel(object):
 
     @cherrypy.expose
     def increments(self, server_name):
-        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
+        instance = self.quick_create(server_name)
         return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
 
     @cherrypy.expose
     def archives(self, server_name):
-        instance = self.quick_create(server_name, owner=cherrypy.session['_cp_username'])
+        instance = self.quick_create(server_name)
         return dumps([dict(d._asdict()) for d in instance.list_archives()])
 
     @cherrypy.expose
@@ -173,7 +173,6 @@ class mc_server(object):
             }
 
         init_args = {
-            'owner': cherrypy.session['_cp_username'],
             'base_directory': self.base_directory
             }
 
@@ -221,7 +220,6 @@ class mc_server(object):
             }
 
         init_args = {
-            'owner': cherrypy.session['_cp_username'],
             'base_directory': self.base_directory
             }
 
@@ -281,7 +279,7 @@ class mc_server(object):
         args = {k:str(v) for k,v in args.iteritems()}
         server_name = args.pop('server_name')
         command = args.pop('cmd')
-        group = args.get('group', None)
+        group = args.get('group')
 
         retval = None
         response = {
@@ -294,10 +292,11 @@ class mc_server(object):
         from json import loads
         from collections import defaultdict
         from grp import getgrnam
+        from stat import S_IWGRP
 
         try:
             try:
-                if group and cherrypy.session['_cp_username'] not in getgrnam(group).gr_mem:
+                if cherrypy.session['_cp_username'] not in getgrnam(group).gr_mem:
                     raise OSError("Create server aborted: " \
                                   "%s does not belong to group '%s'" % (cherrypy.session['_cp_username'],
                                                                         group))
@@ -305,7 +304,6 @@ class mc_server(object):
                 raise OSError('Group not found: %s' % group)
             
             instance = mc(server_name,
-                          cherrypy.session['_cp_username'],
                           base_directory=self.base_directory)
             sp_unicode = loads(args['sp'])
             sc_unicode = loads(args['sc'])
@@ -317,8 +315,10 @@ class mc_server(object):
                 for key in sc_unicode[section].keys():
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
-            instance.create(dict(sc),sp)
-            instance.chgrp(group)
+            instance.create(dict(sc), sp)
+            for d in ('cwd', 'bwd', 'awd'):
+                #os.chown(instance.env[d], -1, getgrnam(group).gr_gid)
+                os.chmod(instance.env[d], os.stat(instance.env[d]).st_mode | S_IWGRP)
         except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message
@@ -352,7 +352,6 @@ class mc_server(object):
 
         try:
             instance = mc(server_name,
-                          cherrypy.session['_cp_username'],
                           base_directory=self.base_directory)
 
             instance.import_server(**args)
@@ -398,7 +397,6 @@ class mc_server(object):
             if approved_user:
                 path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server_name)
                 instance = mc(server_name,
-                              approved_user,
                               base_directory=self.base_directory)
             else:
                 raise OSError('%s does not have sufficient rights to %s' % \
@@ -479,7 +477,12 @@ if __name__ == "__main__":
     from getpass import getuser
     current_dir = os.path.dirname(os.path.abspath(__file__))
     base_dir = args.base_directory or mc.valid_user(getuser())[1]
-    mc._make_skeleton(base_dir) 
+
+    mc._make_directory(base_dir)
+    for d in mc.DEFAULT_PATHS:
+        path_ = os.path.join(base_dir, d)
+        mc._make_directory(path_)
+        os.chown(path_, 1001, 1002)
 
     log_error = '/var/log/mineos.log'
     
@@ -487,6 +490,8 @@ if __name__ == "__main__":
         with open(log_error, 'a'): pass
     except IOError:
         log_error = os.path.join(base_dir, 'mineos.log')
+    else:
+        os.chown(log_error, 1001, 1002)
 
     global_conf = {
         'server.socket_host': args.ip_address,
@@ -561,17 +566,13 @@ if __name__ == "__main__":
 
     p = Process(target=asyncore.loop)
     p.daemon = True
-    print(p, p.is_alive())
     p.start()
-    print(p, p.is_alive())
 
     from cherrypy.process.plugins import DropPrivileges
-    DropPrivileges(cherrypy.engine, umask=None, uid=65534, gid=65534).subscribe()
-    
+    DropPrivileges(cherrypy.engine, umask=None, uid=1001, gid=1002).subscribe()
+
     cherrypy.config.update(global_conf)
     cherrypy.tree.mount(mc_server(current_dir, base_dir), "/", config=static_conf)
     cherrypy.tree.mount(AuthController(current_dir), '/auth', config=auth_conf)
     cherrypy.engine.start()
-    print(p, p.is_alive())
     cherrypy.engine.block()
-    print(p, p.is_alive())
