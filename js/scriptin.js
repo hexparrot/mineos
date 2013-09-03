@@ -500,7 +500,6 @@ function webui() {
 
 		params = {
 			'server_name': server_name,
-			'cmd': 'create',
 			'sp': JSON.stringify(sp),
 			'sc': JSON.stringify(sc),
 			'group': group
@@ -618,7 +617,7 @@ function webui() {
 		profiles: function(data) {
 			self.vmdata.profiles.removeAll();
 			$.each(data, function(i,v) {
-				self.vmdata.profiles.push( $.extend({profile: i}, v));
+				self.vmdata.profiles.push(v);
 			})
 			self.vmdata.profiles(self.vmdata.profiles().ascending_by('profile'));
 		},

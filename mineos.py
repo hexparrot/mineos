@@ -627,18 +627,6 @@ class mc(object):
             raise OSError("user '%s' does not have permissions on %s" % (username,
                                                                          directory))
 
-    @classmethod
-    def has_server_rights(cls, username, server_name, base_directory):
-        has_rights = False
-        for d in ('servers', 'backup'):
-            try:
-                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS[d], server_name)
-                has_rights = cls.valid_owner(username, path_)
-                break
-            except OSError:
-                pass
-        return has_rights
-
     ''' properties '''
 
     @property
@@ -1224,6 +1212,37 @@ class mc(object):
             except KeyError:
                 pass
             os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
+
+    @staticmethod
+    def has_ownership(username, path):
+        from pwd import getpwuid, getpwnam
+        from grp import getgrgid, getgrnam
+
+        st = os.stat(path)
+        uid = st.st_uid
+        gid = st.st_gid
+
+        owner_user = getpwuid(uid)
+        owner_group = getgrgid(gid)
+
+        if username in [owner_user.pw_name, owner_group.gr_name]:
+            return owner_user.pw_name
+        elif username in owner_group.gr_mem:
+            return owner_user.pw_name
+        else:
+            raise OSError("user '%s' does not have permissions on %s" % (username, directory))
+
+    @classmethod
+    def has_server_rights(cls, username, server_name, base_directory):
+        has_rights = False
+        for d in ('servers', 'backup'):
+            try:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS[d], server_name)
+                has_rights = cls.has_ownership(username, path_)
+                break
+            except OSError:
+                pass
+        return has_rights
 
     @staticmethod
     def _list_subdirs(directory):
