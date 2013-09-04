@@ -171,7 +171,7 @@ class Root(object):
                 from json import loads
                 from urllib import unquote
 
-                definition_unicode = loads(args['profile'])
+                definition_unicode = loads(args['profile_dict'])
                 definition = {str(k):str(v) for k,v in definition_unicode.iteritems()}
 
                 try:
@@ -183,7 +183,7 @@ class Root(object):
                     raise KeyError('Profiles may not be modified once created')
 
                 instance = mc('throwaway', None, self.base_directory)
-                retval = instance.define_profile(**args)                
+                retval = instance.define_profile(definition)                
             elif command == 'update_profile':
                 mc.has_ownership(self.login, os.path.join(self.base_directory,
                                                            mc.DEFAULT_PATHS['profiles'],

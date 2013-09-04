@@ -532,7 +532,7 @@ function webui() {
 
 		params = {
 			'cmd': 'define_profile',
-			'profile': JSON.stringify(properties),
+			'profile_dict': JSON.stringify(properties),
 		}
 
 		$.getJSON('/host', params)

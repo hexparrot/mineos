@@ -430,7 +430,6 @@ class mc(object):
         else:
             profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
 
-        self._command_direct('touch %s' % self.env['pc'], self.env['pwd'])
         with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
             
