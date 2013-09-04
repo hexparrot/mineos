@@ -1146,19 +1146,6 @@ class mc(object):
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
 
-    def chgrp(self, group):
-        """Change servers directories' ownership to new group"""
-        from grp import getgrnam
-        from stat import S_IWGRP
-
-        for d in ('cwd', 'bwd', 'awd'):
-            try:
-                if self.owner.pw_name in getgrnam(group).gr_mem:
-                    os.lchown(self.env[d], -1, getgrnam(group).gr_gid)
-            except KeyError:
-                pass
-            os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
-
     @staticmethod
     def has_ownership(username, path):
         from pwd import getpwuid, getpwnam

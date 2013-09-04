@@ -48,10 +48,9 @@ if __name__ == "__main__":
                         default=None)
     args = parser.parse_args()
 
-    from getpass import getuser
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    base_dir = args.base_directory or mc.valid_user(getuser())[1]
-    mc._make_skeleton(base_dir) 
+    base_dir = args.base_directory or os.path.expanduser("~")
+    mc._make_skeleton(base_dir)
 
     log_error = '/var/log/mineos.log'
     

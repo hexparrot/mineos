@@ -339,8 +339,20 @@ class Root(object):
 
         from json import loads
         from collections import defaultdict
+        from grp import getgrnam
+        from stat import S_IWGRP
 
         try:
+            try:
+                group_info = getgrnam(group)
+            except TypeError:
+                pass
+            except KeyError:
+                raise KeyError("There is no group '%s'" % group)
+            else:
+                if not (self.login in group_info.gr_mem or self.login == group_info.gr_name):
+                    raise OSError("user '%s' is not part of group '%s'" % (self.login, group))
+            
             instance = mc(server_name, self.login, self.base_directory)
             sp_unicode = loads(args['sp'])
             sc_unicode = loads(args['sc'])
@@ -353,7 +365,15 @@ class Root(object):
                     sc[str(section)][str(key)] = str(sc_unicode[section][key])
             
             instance.create(dict(sc),sp)
-            #instance.chgrp(group)
+
+            if group:
+                for d in ('servers', 'backup', 'archive'):
+                    path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS[d], server_name)
+                    try:
+                        os.lchown(path_, -1, group_info.gr_gid)
+                    except KeyError:
+                        pass
+                    os.chmod(path_, os.stat(path_).st_mode | S_IWGRP) 
         except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message
