@@ -494,7 +494,13 @@ function webui() {
 			section = input.data('section');
 			if (!(section in sc))
 				sc[section] = {};
-			sc[section][input.attr('name')] = input.val();
+
+			if ($(input).is(':checkbox')) {
+				sc[section][input.attr('name')] = $(input).is(':checked');
+			} else{
+				sc[section][input.attr('name')] = input.val();
+			}
+			
 		})
 
 		params = {

@@ -215,8 +215,8 @@ class mc(object):
                 'profile': '',
                 },
             'crontabs': {
-                'archive': 'none',
-                'backup': 'none',
+                'archive_interval': 0,
+                'backup_interval': 0,
                 },
             'onreboot': {
                 'restore': False,
