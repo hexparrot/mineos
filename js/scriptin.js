@@ -290,7 +290,6 @@ function webui() {
 	self.remember_import = function(model, eventobj) {
 		var target = $(eventobj.currentTarget);
 		var params = {
-			cmd: 'import_server',
 			path: model['path'],
 			filename: model['filename']
 		}
@@ -500,7 +499,6 @@ function webui() {
 
 		params = {
 			'server_name': server_name,
-			'cmd': 'create',
 			'sp': JSON.stringify(sp),
 			'sc': JSON.stringify(sc),
 			'group': group
@@ -534,7 +532,7 @@ function webui() {
 
 		params = {
 			'cmd': 'define_profile',
-			'profile': JSON.stringify(properties),
+			'profile_dict': JSON.stringify(properties),
 		}
 
 		$.getJSON('/host', params)
@@ -618,7 +616,7 @@ function webui() {
 		profiles: function(data) {
 			self.vmdata.profiles.removeAll();
 			$.each(data, function(i,v) {
-				self.vmdata.profiles.push( $.extend({profile: i}, v));
+				self.vmdata.profiles.push(v);
 			})
 			self.vmdata.profiles(self.vmdata.profiles().ascending_by('profile'));
 		},

@@ -136,3 +136,4 @@ def tail(f, window=50):
         bytes -= BUFSIZ
         block -= 1
     return ''.join(data).splitlines()[-window:]
+
