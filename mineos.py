@@ -91,9 +91,11 @@ class mc(object):
                  server_name,
                  owner=None,
                  base_directory=None):
+        from getpass import getuser
         
         self._server_name = self.valid_server_name(server_name)
-        self._owner, self._base_directory = self.valid_user(owner, base_directory)
+        self._owner = owner or getuser()
+        self._base_directory = base_directory or os.path.expanduser("~")
 
         self._set_environment()
         self._load_config()
@@ -391,7 +393,7 @@ class mc(object):
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
         try:
-            if self.valid_owner(self._owner.pw_name, self.env['pc']):
+            if self.has_ownership(self._owner, self.env['pc']):
                 from shutil import rmtree
                 rmtree(os.path.join(self.env['pwd'], profile))
 
@@ -428,7 +430,6 @@ class mc(object):
         else:
             profile_dict['save_as'] = self.valid_filename(os.path.basename(profile_dict['save_as']))
 
-        self._command_direct('touch %s' % self.env['pc'], self.env['pwd'])
         with self.profile_config as pc:
             from ConfigParser import DuplicateSectionError
             
@@ -571,74 +572,6 @@ class mc(object):
             raise ValueError('Files should not be hidden: "%s"' % filename)
         return filename
 
-    @staticmethod
-    def valid_user(owner=None, base_directory=None):
-        """Returns the pwd struct for a user and
-        returns as a tuple including base_directory
-        
-        INFO: this might be refactored into two methods,
-        one for owner, one for base_directory
-        """
-        from pwd import getpwnam
-
-        try:
-            owner_info = getpwnam(owner)
-        except KeyError:
-            raise KeyError('No user found %s' % owner)
-        except TypeError:
-            if owner is None:
-                from getpass import getuser
-                owner_info = getpwnam(getuser())
-            else:
-                raise TypeError('Username must be string')
-
-        if base_directory is None:
-            base_directory = owner_info.pw_dir
-        else:
-            normalized = os.path.normpath(base_directory)
-            if os.path.exists(normalized):
-                base_directory = normalized
-            else:
-                raise ValueError('base_directory does not exist: %s' % normalized)
-
-        return (owner_info, base_directory)
-
-    @staticmethod
-    def valid_owner(username, directory):
-        """custom addition to check if current user
-        is a member of the group a directory is owned by
-        and returns the actual owner for further use"""
-        from pwd import getpwuid, getpwnam
-        from grp import getgrgid, getgrnam
-
-        uid = os.stat(directory).st_uid
-        gid = os.stat(directory).st_gid
-
-        actual_owner = getpwuid(uid).pw_name
-
-        if username == actual_owner:
-            return actual_owner
-        elif username in getgrgid(gid).gr_mem:
-            return actual_owner
-        elif getpwnam(username).pw_gid == getgrnam(username).gr_gid:
-            #^ raises KeyError: 'getgrnam(): name not found: root' on stock FreeBSD
-            return actual_owner
-        else:
-            raise OSError("user '%s' does not have permissions on %s" % (username,
-                                                                         directory))
-
-    @classmethod
-    def has_server_rights(cls, username, server_name, base_directory):
-        has_rights = False
-        for d in ('servers', 'backup'):
-            try:
-                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS[d], server_name)
-                has_rights = cls.valid_owner(username, path_)
-                break
-            except OSError:
-                pass
-        return has_rights
-
     ''' properties '''
 
     @property
@@ -654,7 +587,8 @@ class mc(object):
     @property
     def owner(self):
         """Returns pwd named tuple"""
-        return self._owner
+        from pwd import getpwnam
+        return getpwnam(self._owner)
 
     @property
     def up(self):
@@ -1212,18 +1146,36 @@ class mc(object):
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
 
-    def chgrp(self, group):
-        """Change servers directories' ownership to new group"""
-        from grp import getgrnam
-        from stat import S_IWGRP
+    @staticmethod
+    def has_ownership(username, path):
+        from pwd import getpwuid, getpwnam
+        from grp import getgrgid, getgrnam
 
-        for d in ('cwd', 'bwd', 'awd'):
+        st = os.stat(path)
+        uid = st.st_uid
+        gid = st.st_gid
+
+        owner_user = getpwuid(uid)
+        owner_group = getgrgid(gid)
+
+        if username in [owner_user.pw_name, owner_group.gr_name]:
+            return owner_user.pw_name
+        elif username in owner_group.gr_mem:
+            return owner_user.pw_name
+        else:
+            raise OSError("user '%s' does not have permissions on %s" % (username, path))
+
+    @classmethod
+    def has_server_rights(cls, username, server_name, base_directory):
+        has_rights = False
+        for d in ('servers', 'backup'):
             try:
-                if self.owner.pw_name in getgrnam(group).gr_mem:
-                    os.lchown(self.env[d], -1, getgrnam(group).gr_gid)
-            except KeyError:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS[d], server_name)
+                has_rights = cls.has_ownership(username, path_)
+                break
+            except OSError:
                 pass
-            os.chmod(self.env[d], os.stat(self.env[d]).st_mode | S_IWGRP) 
+        return has_rights
 
     @staticmethod
     def _list_subdirs(directory):

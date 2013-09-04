@@ -74,46 +74,6 @@ def require(*conditions):
         return f
     return decorate
 
-
-# Conditions are callables that return True
-# if the user fulfills the conditions they define, False otherwise
-#
-# They can access the current username as cherrypy.request.login
-#
-# Define those at will however suits the application.
-
-def member_of(groupname):
-    def check():
-        # replace with actual check if <username> is in <groupname>
-        return cherrypy.request.login == 'joe' and groupname == 'admin'
-    return check
-
-def name_is(reqd_username):
-    return lambda: reqd_username == cherrypy.request.login
-
-# These might be handy
-
-def any_of(*conditions):
-    """Returns True if any of the conditions match"""
-    def check():
-        for c in conditions:
-            if c():
-                return True
-        return False
-    return check
-
-# By default all conditions are required, but this might still be
-# needed if you want to use it inside of an any_of(...) condition
-def all_of(*conditions):
-    """Returns True if all of the conditions match"""
-    def check():
-        for c in conditions:
-            if not c():
-                return False
-        return True
-    return check
-
-
 # Controller to provide login and logout actions
 
 class AuthController(object):
