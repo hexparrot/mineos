@@ -253,7 +253,7 @@ class mc(object):
     def create(self, sc={}, sp={}):
         """Creates a server's directories and generates configurations."""
         for d in ('cwd', 'bwd', 'awd'):
-            self._make_directory(self.env[d])
+            self._make_directory(self.env[d], True)
 
         sc = sc if type(sc) is dict else {}
         sp = sp if type(sp) is dict else {}
@@ -1177,17 +1177,19 @@ class mc(object):
         """Creates a directory and chowns it to self._owner.
         Fails silently.
         """
+        import stat
         try:
             os.makedirs(path)
         except OSError:
             if do_raise: raise
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
+            os.chmod(path, os.stat(path).st_mode | stat.S_IWGRP)
 
     @staticmethod
     def has_ownership(username, path):
-        from pwd import getpwuid, getpwnam
-        from grp import getgrgid, getgrnam
+        from pwd import getpwuid
+        from grp import getgrgid
 
         st = os.stat(path)
         uid = st.st_uid
