@@ -648,7 +648,7 @@ function webui() {
 	        });
 		},
 		sc: function(data) {
-			self.vmdata.sp.removeAll();
+			self.vmdata.sc.removeAll();
 			$.each(data.payload, function(section, option_value_pair){
 				$.each(option_value_pair, function(option, value){
 					self.vmdata.sc.push(new model_property(self.server().server_name, option, value, section))

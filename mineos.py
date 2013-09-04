@@ -1038,7 +1038,7 @@ class mc(object):
         except (CalledProcessError, AssertionError):
             raise StopIteration
 
-        regex = re.compile(r'^(\w.*?) {2,}(.*?) {2,}([^ ]+ \w*)')
+        regex = re.compile(r'^(\w.*?) {3,}(.*?) {2,}([^ ]+ \w*)')
         count = 0
 
         for line in output.split('\n'):
