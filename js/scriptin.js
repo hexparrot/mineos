@@ -513,6 +513,21 @@ function webui() {
 		});
 	}
 
+    self.console_command = function(form) {
+        var user_input = $(form).find('input[name=console_command]');
+
+        params = {
+            cmd: user_input.val(),
+            server_name: self.server().server_name
+        }
+
+        $.getJSON('/server', params)
+        .then(self.ajax.received, self.ajax.lost).then(function() {
+            self.ajax.refresh(null);
+            user_input.val('');
+        });
+    }
+
 	self.define_profile = function(form) {
 		var step1 = $(form).find('fieldset :input').filter(function() {
 			return ($(this).val() ? true : false);
