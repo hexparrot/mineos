@@ -348,7 +348,10 @@ class Root(object):
             except TypeError:
                 pass
             except KeyError:
-                raise KeyError("There is no group '%s'" % group)
+                if group:
+                    raise KeyError("There is no group '%s'" % group)
+                else:
+                    group_info = None
             else:
                 if not (self.login in group_info.gr_mem or self.login == group_info.gr_name):
                     raise OSError("user '%s' is not part of group '%s'" % (self.login, group))
@@ -366,7 +369,7 @@ class Root(object):
             
             instance.create(dict(sc),sp)
 
-            if group:
+            if group_info:
                 for d in ('servers', 'backup', 'archive'):
                     path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS[d], server_name)
                     try:
