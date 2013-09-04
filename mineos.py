@@ -1107,6 +1107,44 @@ class mc(object):
             return tail(log, int(lines))
 
     @classmethod
+    def list_servers_to_act(cls, action, base_directory):
+        def minutes_since_midnight():
+            from datetime import datetime
+            now = datetime.now()
+            return int(((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()) / 60)
+
+        from procfs_reader import path_owner
+        
+        hits = []
+        msm = minutes_since_midnight()
+
+        if action == 'archive':
+            section_option = ('crontabs', 'archive_interval')
+        elif action == 'backup':
+            section_option = ('crontabs', 'backup_interval')
+        else:
+            raise NotImplementedError
+
+        for i in cls.list_servers(base_directory):
+            path_ = os.path.join(base_directory, mc.DEFAULT_PATHS['servers'], i)
+            owner_ = path_owner(path_)
+            instance = mc(i, owner_, base_directory)
+
+            try:
+                interval = int(instance.server_config[section_option[0]:section_option[1]])
+                '''at midnight, always archive. this works because
+                if archive_interval is not type(int), e.g., 'skip' or '',
+                it'll except ValueError, skipping the test altogether'''
+                if msm == 0:
+                    hits.append(i)
+                elif msm % interval == 0:
+                    hits.append(i)
+            except (ZeroDivisionError, KeyError, ValueError):
+                pass
+
+        return hits
+
+    @classmethod
     def list_profiles(cls, base_directory=None):
         """Lists all profiles found in profile.config at the base_directory root"""
         if base_directory is None:

@@ -46,6 +46,12 @@ def entries(pid, page):
             split = b2a_qp(line).partition(':')
             yield (split[0].strip(), split[2].strip())
 
+def path_owner(path):
+    from pwd import getpwuid
+    st = os.stat(path)
+    uid = st.st_uid
+    return getpwuid(uid).pw_name
+
 def pid_owner(pid):
     from pwd import getpwuid
     

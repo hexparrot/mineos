@@ -17,53 +17,12 @@ class cron(cherrypy.process.plugins.SimplePlugin):
         self.base_directory = base_directory
         
     def check_interval(self):
-        def find_owner(path):
-            from pwd import getpwuid
-            st = os.stat(path)
-            uid = st.st_uid
-            return getpwuid(uid).pw_name
-
-        def minutes_since_midnight():
-            from datetime import datetime
-            now = datetime.now()
-            return int(((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()) / 60)
+        from procfs_reader import path_owner
         
-        to_archive = []
-        to_backup = []
-        msm = minutes_since_midnight()
-
-        for i in mc.list_servers(self.base_directory):
-            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], i)
-            owner_ = find_owner(path_)
-            instance = mc(i, owner_, self.base_directory)
-
-            try:
-                interval = int(instance.server_config['crontabs':'archive_interval':0])
-                if msm % interval == 0:
-                    to_archive.append(i)
-            except ZeroDivisionError:
-                pass
-            
-            try:
-                interval = int(instance.server_config['crontabs':'backup_interval':0])
-                if msm % interval == 0:
-                    to_backup.append(i)
-            except ZeroDivisionError:
-                pass
-
-        for i in to_archive:
-            try:
+        for action in ('backup','archive'):
+            for i in mc.list_servers_to_act(action, self.base_directory):
                 path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], i)
-                mc(i, find_owner(path_), self.base_directory).archive()
-            except:
-                pass
-
-        for i in to_backup:
-            try:
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], i)
-                mc(i, find_owner(path_), self.base_directory).backup()
-            except:
-                pass
+                getattr(mc(i, path_owner(path_), self.base_directory), action)()
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
