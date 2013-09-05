@@ -92,7 +92,7 @@ class mc(object):
                  owner=None,
                  base_directory=None):
         from getpass import getuser
-        
+
         self._server_name = self.valid_server_name(server_name)
         self._owner = owner or getuser()
         self._base_directory = base_directory or os.path.expanduser("~")
@@ -286,11 +286,14 @@ class mc(object):
                 raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        if self.profile_config[self.profile:'type'] == 'unmanaged':
-            if not os.path.isfile(os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])):
-                raise RuntimeError('%s does not exist' % self.profile_config[self.profile:'run_as'])
-        elif not self.profile_current:
-            raise RuntimeError('Assigned jar does not match copy in profile directory') 
+        try:
+            if self.profile_config[self.profile:'type'] == 'unmanaged':
+                if not os.path.isfile(os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])):
+                    raise RuntimeError('%s does not exist' % self.profile_config[self.profile:'run_as'])
+            elif not self.profile_current:
+                raise RuntimeError('Assigned jar does not match copy in profile directory')
+        except TypeError:
+            raise RuntimeError('Ignoring {start}; profile is not set')
         self._command_direct(self.command_start, self.env['cwd'])
 
     @server_exists(True)
@@ -361,8 +364,8 @@ class mc(object):
             members_ = archive_.getnames()
             prefix_ = os.path.commonprefix(members_)
         else:
-            raise RuntimeError('Ignoring command {import_server};'
-                               'archive file must be compressed tar or zip')
+            raise NotImplementedError('Ignoring command {import_server};'
+                                      'archive file must be compressed tar or zip')
 
         if any(f for f in members_ if f.startswith('/') or '..' in f):
             raise RuntimeError('Ignoring command {import_server};'
@@ -382,7 +385,7 @@ class mc(object):
         self._load_config(generate_missing=True)
 
     @server_exists(True)
-    def prune(self, steps=None):
+    def prune(self, steps):
         """Removes old rdiff-backup data/metadata."""
         self._command_direct(self.command_prune(steps), self.env['bwd'])
 
@@ -497,7 +500,7 @@ class mc(object):
 
             return active_md5
         else:
-            raise NotImplementedError
+            raise NotImplementedError("This type of profile is not implemented yet.")
 
 #actual command execution methods
 
@@ -978,15 +981,15 @@ class mc(object):
 #generator expressions
 
     @classmethod
-    def list_servers(cls, base_directory=None):
+    def list_servers(cls, base_directory):
         """Lists all directories in /servers/ and /backup/.
         Note: not all listings may be servers.
         """        
         from itertools import chain
 
-        if base_directory is None:
-            base_directory = cls.valid_user()[1]
-        
+        if not base_directory:
+            raise ValueError('Must specify which base_directory to list servers for.')
+
         return list(set(chain(
             cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
             cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
@@ -1108,30 +1111,27 @@ class mc(object):
 
     @classmethod
     def list_servers_to_act(cls, action, base_directory):
-        def minutes_since_midnight():
-            from datetime import datetime
-            now = datetime.now()
-            return int(((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()) / 60)
-
+        """Generator listing all servers doing action at this minute in time"""
         from procfs_reader import path_owner
+        from ConfigParser import NoOptionError
         
         hits = []
-        msm = minutes_since_midnight()
+        msm = cls.minutes_since_midnight()
 
         if action == 'archive':
             section_option = ('crontabs', 'archive_interval')
         elif action == 'backup':
             section_option = ('crontabs', 'backup_interval')
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Requested action is not yet implemented.")
 
         for i in cls.list_servers(base_directory):
-            path_ = os.path.join(base_directory, mc.DEFAULT_PATHS['servers'], i)
+            path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
             owner_ = path_owner(path_)
-            instance = mc(i, owner_, base_directory)
+            instance = cls(i, owner_, base_directory)
 
             try:
-                interval = int(instance.server_config[section_option[0]:section_option[1]])
+                interval = instance.server_config.getint(section_option[0],section_option[1])
                 '''at midnight, always archive. this works because
                 if archive_interval is not type(int), e.g., 'skip' or '',
                 it'll except ValueError, skipping the test altogether'''
@@ -1139,17 +1139,38 @@ class mc(object):
                     hits.append(i)
                 elif msm % interval == 0:
                     hits.append(i)
-            except (ZeroDivisionError, KeyError, ValueError):
+            except (ZeroDivisionError, KeyError, ValueError, NoOptionError):
                 pass
 
         return hits
 
     @classmethod
-    def list_profiles(cls, base_directory=None):
-        """Lists all profiles found in profile.config at the base_directory root"""
-        if base_directory is None:
-            base_directory = cls.valid_user()[1]
+    def list_servers_start_at_boot(cls, base_directory):
+        from procfs_reader import path_owner
+        from ConfigParser import NoOptionError
+        
+        hits = []
+        msm = cls.minutes_since_midnight()
 
+        for i in cls.list_servers(base_directory):
+            path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
+            owner_ = path_owner(path_)
+            instance = cls(i, owner_, base_directory)
+
+            try:
+                if instance.server_config.getboolean('onreboot', 'start'):
+                    hits.append(i)
+            except (ValueError, KeyError, NoOptionError):
+                pass
+
+        return hits
+
+    @classmethod
+    def list_profiles(cls, base_directory):
+        """Lists all profiles found in profile.config at the base_directory root"""
+        if not base_directory:
+            raise ValueError('Must provide base_directory to list profiles for.')
+        
         pc = config_file(os.path.join(base_directory, 'profiles', 'profile.config'))
         return pc[:]
 
@@ -1234,11 +1255,10 @@ class mc(object):
             return []
 
     @classmethod
-    def _make_skeleton(cls, base_directory=None):
+    def _make_skeleton(cls, base_directory):
         """Creates the default paths at base_directory"""
-        import os
-        if base_directory is None:
-            base_directory = os.getcwd()
+        if not base_directory:
+            raise ValueError('Skeleton must have base_directory provided.')
             
         for d in cls.DEFAULT_PATHS:
             try:
@@ -1246,5 +1266,10 @@ class mc(object):
             except OSError:
                 pass
 
-        with open(os.path.join(base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config'), 'a'): pass
+        with open(os.path.join(base_directory, cls.DEFAULT_PATHS['profiles'], 'profile.config'), 'a'): pass
 
+    @staticmethod
+    def minutes_since_midnight():
+        from datetime import datetime
+        now = datetime.now()
+        return int(((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()) / 60)

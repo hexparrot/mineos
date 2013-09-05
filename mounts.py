@@ -31,7 +31,7 @@ class ViewModel(object):
 
     @property
     def login(self):
-        return cherrypy.session['_cp_username']
+        return str(cherrypy.session['_cp_username'])
 
     def server_list(self):
         for i in mc.list_servers(self.base_directory):
@@ -141,7 +141,7 @@ class Root(object):
 
     @property
     def login(self):
-        return cherrypy.session['_cp_username']
+        return str(cherrypy.session['_cp_username'])
 
     @cherrypy.expose
     @require()
@@ -216,7 +216,7 @@ class Root(object):
                     raise RuntimeError(ex.message)
             else:
                 raise RuntimeWarning('Command not found: should this be to a server?')
-        except (RuntimeError, KeyError, OSError) as ex:
+        except (RuntimeError, KeyError, OSError, NotImplementedError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except CalledProcessError as ex:
@@ -266,7 +266,7 @@ class Root(object):
             else:
                 instance._command_stuff(command)
                 retval = '"%s" successfully sent to server.' % command
-        except (RuntimeError, KeyError) as ex:
+        except (RuntimeError, KeyError, NotImplementedError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except CalledProcessError as ex:

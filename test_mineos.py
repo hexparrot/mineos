@@ -90,7 +90,7 @@ class TestMineOS(unittest.TestCase):
     def test_bare_environment(self):
         with self.assertRaises(TypeError): instance = mc()
             
-        for s in (None, '', False):
+        for s in (False,):
             with self.assertRaises(ValueError): instance = mc(s)
 
     def test_binary_paths(self):
@@ -116,15 +116,15 @@ class TestMineOS(unittest.TestCase):
             self.assertIsNotNone(instance.server_name)
 
     def test_set_owner(self):
-        with self.assertRaises(KeyError): instance = mc('a', owner='fake')
-        with self.assertRaises(TypeError): instance = mc('b', owner=123)
-        with self.assertRaises(TypeError): instance = mc('c', owner={})
-        instance = mc('d', owner='mc', base_directory='/home/mc')
-        instance = mc('e', owner='mc', base_directory='/var/games/minecraft')
-        instance = mc('f', owner='mc')
-        instance = mc('g', owner='root')
-        instance = mc('h', owner='root', base_directory='/home/mc')
-        instance = mc('i', owner='root', base_directory='/var/games/minecraft')
+        mc('a', owner='fake')
+        mc('b', owner=123)
+        mc('c', owner={})
+        mc('d', owner='mc', base_directory='/home/mc')
+        mc('e', owner='mc', base_directory='/var/games/minecraft')
+        mc('f', owner='mc')
+        mc('g', owner='root')
+        mc('h', owner='root', base_directory='/home/mc')
+        mc('i', owner='root', base_directory='/var/games/minecraft')
 
     def test_load_config(self):
         from conf_reader import config_file
@@ -303,7 +303,8 @@ class TestMineOS(unittest.TestCase):
     @online_test
     def test_profiles(self):
         global VANILLA_PROFILE
-        
+
+        mc._make_skeleton(self.instance_arguments['base_directory'])
         instance = mc('one', **self.instance_arguments)
         instance.create()
 
@@ -335,7 +336,8 @@ class TestMineOS(unittest.TestCase):
     @online_test
     def test_update_profile(self):
         global VANILLA_PROFILE
-        
+
+        mc._make_skeleton(self.instance_arguments['base_directory'])
         instance = mc('one', **self.instance_arguments)
         instance.define_profile(VANILLA_PROFILE)
 
@@ -353,7 +355,8 @@ class TestMineOS(unittest.TestCase):
     @online_test
     def test_profile_jar_match_md5(self):
         global VANILLA_PROFILE
-        
+
+        mc._make_skeleton(self.instance_arguments['base_directory'])
         instance = mc('one', **self.instance_arguments)
         instance.create()
         
@@ -369,7 +372,8 @@ class TestMineOS(unittest.TestCase):
     @online_test
     def test_start_home_server(self):
         global VANILLA_PROFILE
-        
+
+        mc._make_skeleton(self.instance_arguments['base_directory'])
         instance = mc('one', **self.instance_arguments)
         instance.create()
 

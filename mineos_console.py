@@ -41,25 +41,15 @@ if __name__=="__main__":
     import pprint, types
     pp = pprint.PrettyPrinter(indent=4)
 
-    if args.base_directory:
-         mc._make_skeleton(args.base_directory)
+    args.base_directory = args.base_directory or os.path.expanduser("~")
+    mc._make_skeleton(args.base_directory)
 
     if args.server_name:
-        init_args = {
-            'server_name': args.server_name,
-            'owner': getuser(),
-            'base_directory': args.base_directory
-            }
-
-        instance = mc(**init_args)
-        for d in ['cwd', 'bwd']:
-            try:
-                instance = mc(init_args['server_name'],
-                              owner=mc.valid_owner(init_args['owner'], instance.env[d]),
-                              base_directory=init_args['base_directory'])
-                break
-            except OSError:
-                continue
+        owner = mc.has_server_rights(getuser(), args.server_name, args.base_directory)
+        if not owner:
+            raise OSError("User '%s' does not have rights to %s" % (getuser(), args.server_name))
+        else:
+            instance = mc(args.server_name, owner, args.base_directory)
 
         if args.cmd in ['screen', 'console']:
             instance._command_direct('screen -r %s' % instance.screen_pid, instance.env['cwd'])
@@ -86,7 +76,7 @@ if __name__=="__main__":
             text = '%s %s' % (args.cmd, ' '.join(arguments))
             instance._command_stuff(text)
             print '{%s} sent to gameserver console [screen_pid:%s] successfully.' % (text,
-                                                                                    instance.screen_pid)
+                                                                                     instance.screen_pid)
     else:
         init_args = {
             'server_name': 'throwaway',
@@ -110,6 +100,26 @@ if __name__=="__main__":
                 profile[k] = raw_input('%s: ' % k)
             
             mc(**init_args).define_profile(profile)
+        elif args.cmd == 'start':
+            from procfs_reader import path_owner
+            for i in mc.list_servers_start_at_boot(args.base_directory):
+                try:
+                    owner = path_owner(os.path.join(args.base_directory, mc.DEFAULT_PATHS['servers'], i))
+                    print 'starting %s...' % i,
+                    mc(i, owner, args.base_directory).start()
+                    print ' done'
+                except Exception as ex:
+                    print i, ex.message
+        elif args.cmd in ['backup', 'archive']:
+            from procfs_reader import path_owner
+            for i in mc.list_servers_to_act(args.cmd, args.base_directory):
+                try:
+                    owner = path_owner(os.path.join(args.base_directory, mc.DEFAULT_PATHS['servers'], i))
+                    print 'starting %s for %s...' % (args.cmd, i),
+                    getattr(mc, args.cmd)(i, owner, args.base_directory)
+                    print ' done'
+                except Exception as ex:
+                    print i, ex.message
         elif args.cmd in available_methods:
             retval = getattr(mc, args.cmd)(*arguments)
             if retval:
