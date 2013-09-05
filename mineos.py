@@ -301,6 +301,7 @@ class mc(object):
     @server_up(False)
     def archive(self):
         """Creates a timestamped, gzipped tarball of the server contents."""
+        self._make_directory(self.env['awd'])
         if self.up:
             self._command_stuff('save-off')
             self._command_stuff('save-all')
@@ -312,6 +313,7 @@ class mc(object):
     @server_exists(True)
     def backup(self):
         """Creates an rdiff-backup of a server."""
+        self._make_directory(self.env['bwd'])
         if self.up:
             self._command_stuff('save-off')
             self._command_stuff('save-all')
