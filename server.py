@@ -49,6 +49,10 @@ if __name__ == "__main__":
                         action='store_true',
                         default=False,
                         help='run server as a daemon')
+    parser.add_argument('--nopid',
+                        action='store_true',
+                        default=False,
+                        help='do not use a PID file')
     parser.add_argument('-s',
                         dest='cert_files',
                         help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
@@ -132,6 +136,15 @@ if __name__ == "__main__":
     if args.daemon:
         from cherrypy.process.plugins import Daemonizer
         Daemonizer(cherrypy.engine).subscribe()
+
+    if args.nopid is False:
+        from cherrypy.process.plugins import PIDFile
+        PIDFile(cherrypy.engine, '/var/run/mineos.pid').subscribe()
+
+    if os.path.isfile('/var/run/mineos.pid'):
+        import sys
+        print 'MineOS instance already running (PID found)'
+        sys.exit(1)
 
     minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine, cron(base_dir).check_interval, 60)
     minute_crontab.subscribe()

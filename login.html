@@ -66,14 +66,14 @@
                                 <!--/ END Logo -->
                                 
                                 <!-- Avatar -->
-                                <div class="avatar">
-                                    <h5 align="center">Admin Login</h5>
+                                <div class="">
+                                    <h5 align="center">Web User Interface Login</h5>
                                 </div><!--/ Avatar -->
 
                                 <!-- Username -->
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input type="text" name="username" placeholder="Username" class="span12"><i class="icon-user input-icon"></i>
+                                        <input type="text" name="username" autocomplete="off" placeholder="Username" class="span12"><i class="icon-user input-icon"></i>
                                     </div>
                                 </div><!--/ Username -->
 
@@ -87,12 +87,15 @@
                                 <!-- Checkbox -->
                                 <div class="control-group">
                                     <div class="controls">
-                                        <label class="checkbox styled">
-                                            <input type="checkbox" name="hide"> Hide password
-                                        </label>
+                                        <span>
+                                            <label class="checkbox styled pull-left">
+                                                <input type="checkbox" name="hide"> Hide password 
+                                            </label>
+                                            <a class="pull-left" href="http://www.nngroup.com/articles/stop-password-masking/">&nbsp;(?)</a>
+                                        </span>
+
                                     </div>
                                 </div><!--/ Checkbox -->
-
                             </div>
                             <!-- Form Action -->
                             <!-- Place out form `.body-inner` -->
@@ -100,6 +103,8 @@
                                 <button type="submit" class="btn btn-primary span12">Login</button>
                             </div>
                             <!--/ Form Action -->
+
+                            <p align="center">The web user interface authenticates on your SSH username/password.</p>
                         </section>
                     </form>
                     <!--/ END Login Widget Form -->

@@ -1,0 +1,76 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          mineos
+# Required-Start:    $all
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: MineOS webui
+# Description:       A web-based administration interface for Unix systems
+### END INIT INFO
+
+NAME=mineos
+PIDFILE=/var/run/mineos.pid
+SERVER=/usr/games/minecraft/server.py
+DATAPATH=/var/games/minecraft
+
+set -e
+. /lib/lsb/init-functions
+
+case "$1" in
+    'start')
+        if [ -s $PIDFILE ]; then
+            kill -0 `cat $PIDFILE` >/dev/null 2>&1
+            if [ "$?" = "0" ]; then
+                echo "$NAME (pid `cat $PIDFILE`) is already running."
+                RETVAL=0
+            else
+                rm -- $PIDFILE
+                log_begin_msg "Starting $NAME... "
+                python $SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+                RETVAL=$?
+                log_action_end_msg $RETVAL
+            fi
+        else
+            log_begin_msg "Starting $NAME... "
+            python $SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+            RETVAL=$?
+            log_action_end_msg $RETVAL
+        fi
+        ;;
+
+    'stop')
+        if [ -s $PIDFILE ]; then
+            log_begin_msg "Stopping $NAME... "
+            kill -s INT `cat $PIDFILE` >/dev/null 2>&1
+            rm -- $PIDFILE
+            RETVAL=$?
+            log_action_end_msg $RETVAL
+        else
+            echo "$NAME is not running."
+        fi
+        ;;
+
+    'status')
+        if [ -s $PIDFILE ]; then
+            kill -0 `cat $PIDFILE` >/dev/null 2>&1
+            if [ "$?" = "0" ]; then
+                echo "$NAME (pid `cat $PIDFILE`) is running."
+                RETVAL=0
+            else
+                echo "$NAME is stopped."
+                RETVAL=1
+            fi
+        else
+            echo "$NAME is stopped."
+            RETVAL=1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 { start | stop }"
+        RETVAL=1
+        ;;
+esac
+exit $RETVAL
+
