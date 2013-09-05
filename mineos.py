@@ -286,14 +286,9 @@ class mc(object):
                 raise RuntimeError('Ignoring {start}; server already listening on ip address (0.0.0.0).')
 
         self._load_config(generate_missing=True)
-        try:
-            if self.profile_config[self.profile:'type'] == 'unmanaged':
-                if not os.path.isfile(os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])):
-                    raise RuntimeError('%s does not exist' % self.profile_config[self.profile:'run_as'])
-            elif not self.profile_current:
-                raise RuntimeError('Assigned jar does not match copy in profile directory')
-        except TypeError:
-            raise RuntimeError('Ignoring {start}; profile is not set')
+        if not self.profile_current:
+            raise RuntimeError('Assigned jar does not match copy in profile directory')
+
         self._command_direct(self.command_start, self.env['cwd'])
 
     @server_exists(True)
@@ -659,6 +654,12 @@ class mc(object):
         
         try:
             current = self.profile
+            if current == 'unmanaged':
+                path_ = os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])
+                if not os.path.isfile(path):
+                    raise RuntimeError('%s does not exist' % path_)
+                else:
+                    return True
             return compare(current)
         except TypeError:
             raise RuntimeError('Server is not assigned a valid profile.')
@@ -987,9 +988,6 @@ class mc(object):
         """        
         from itertools import chain
 
-        if not base_directory:
-            raise ValueError('Must specify which base_directory to list servers for.')
-
         return list(set(chain(
             cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['servers'])),
             cls._list_subdirs(os.path.join(base_directory, cls.DEFAULT_PATHS['backup']))
@@ -1168,9 +1166,6 @@ class mc(object):
     @classmethod
     def list_profiles(cls, base_directory):
         """Lists all profiles found in profile.config at the base_directory root"""
-        if not base_directory:
-            raise ValueError('Must provide base_directory to list profiles for.')
-        
         pc = config_file(os.path.join(base_directory, 'profiles', 'profile.config'))
         return pc[:]
 
@@ -1257,16 +1252,17 @@ class mc(object):
     @classmethod
     def _make_skeleton(cls, base_directory):
         """Creates the default paths at base_directory"""
-        if not base_directory:
-            raise ValueError('Skeleton must have base_directory provided.')
-            
         for d in cls.DEFAULT_PATHS:
             try:
                 os.makedirs(os.path.join(base_directory, d))
             except OSError:
                 pass
 
-        with open(os.path.join(base_directory, cls.DEFAULT_PATHS['profiles'], 'profile.config'), 'a'): pass
+        try:
+            path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['profiles'], 'profile.config')
+            with open(path_, 'a'): pass
+        except IOError:
+            raise IOError('Unable to write to %s' % path_)
 
     @staticmethod
     def minutes_since_midnight():
