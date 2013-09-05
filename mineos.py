@@ -271,6 +271,14 @@ class mc(object):
             with self.server_properties as sp:
                 sp[option] = value
 
+    def modify_profile(self, option, value, section):
+        """Modifies a value in profile.config
+        Whitelisted values that can be changed.
+        """
+        if option in ['desc']:
+            with self.profile_config as pc:
+                pc[section:option] = value
+
     @server_exists(True)
     @server_up(False)
     def start(self):

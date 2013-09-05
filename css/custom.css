@@ -10,7 +10,7 @@
 li.accordion-group a, ul.nav  {
     cursor: pointer;
 }
-#table_status tr td:first-child {
+#table_status tr td:first-child, #table_profiles_view tr td:first-child{
     cursor: pointer;
 }
 #create_server .help-block {

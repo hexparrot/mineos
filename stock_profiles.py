@@ -15,6 +15,7 @@ STOCK_PROFILES = {
         'save_as': 'minecraft_server.jar',
         'run_as': 'minecraft_server.jar',
         'ignore': '',
+        'desc': 'official minecraft_server.jar'
         }, 
     'bukkit-recommended': {
         'name': 'bukkit-recommended',

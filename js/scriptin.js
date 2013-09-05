@@ -122,11 +122,30 @@ function model_logline(str) {
 	self.entry = str;
 }
 
+function model_profile(data) {
+	var self = this;
+	$.extend(self, data);
+
+	self.description = ko.observable(self.desc);
+	self.success = ko.observable(null);
+
+	self.description.subscribe(function(value) {
+		var params = {
+			cmd: 'modify_profile',
+			option: 'desc',
+			value: self.description(),
+			section: self.profile
+		}
+		$.getJSON('/host', params)
+	}, self)
+}
+
 function webui() {
 	var self = this;
 
 	self.server = ko.observable({});
 	self.page = ko.observable();
+	self.profile = ko.observable({});
 
 	self.server.extend({ notify: 'always' });
 	self.page.extend({ notify: 'always' });
@@ -261,6 +280,11 @@ function webui() {
 		self.show_page('server_status');
 	}
 
+	self.select_profile = function(model) {
+		self.profile(model);
+		self.show_page('profile_view');
+	}
+
 	self.show_page = function(vm, event) {
 		try {
 			self.page($(event.currentTarget).data('page'));
@@ -388,6 +412,9 @@ function webui() {
 				$.getJSON('/vm/archives', params).then(self.refresh.archives);
 				break;
 			case 'profiles':
+				$.getJSON('/vm/profiles').then(self.refresh.profiles);
+				break;
+			case 'profile_view':
 				$.getJSON('/vm/profiles').then(self.refresh.profiles);
 				break;
 			case 'create_server':
@@ -637,7 +664,10 @@ function webui() {
 		profiles: function(data) {
 			self.vmdata.profiles.removeAll();
 			$.each(data, function(i,v) {
-				self.vmdata.profiles.push(v);
+				self.vmdata.profiles.push( new model_profile(v) );
+
+				if (self.profile().profile == v.profile)
+					self.profile(new model_profile(v));
 			})
 			self.vmdata.profiles(self.vmdata.profiles().ascending_by('profile'));
 		},

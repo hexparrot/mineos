@@ -674,14 +674,13 @@
                     <!--/ END Row -->
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <table id="table_profiles" class="table table-hover">
+                        <table id="table_profiles_view" class="table table-hover">
                           <thead>
                             <tr>
                               <th scope="col">Profile</th>
                               <th scope="col">Runnable Jar</th>
-                              <th scope="col">Downloaded</th>
-                              <th scope="col">MD5 (download)</th>
-                              <th scope="col">mtime (download)</th>
+                              <th scope="col">URL</th>
+                              <th scope="col">OK</th>
                               <th scope="col"></th>
                             </tr>
                           </thead>
@@ -689,11 +688,10 @@
                           </tfoot>
                           <tbody data-bind="foreach: vmdata.profiles">
                             <tr>
-                                <td data-bind="text: profile"></td>
+                                <td class="pointer" data-bind="text: profile, click: $root.select_profile"></td>
                                 <td data-bind="text: run_as"></td>
-                                <td data-bind="text: save_as"></td>
-                                <td data-bind="text: save_as_md5"></td>
-                                <td data-bind="text: save_as_mtime"></td>
+                                <td data-bind="text: url"></td>
+                                <td data-bind=""><span class="icon" data-bind="css: {'icon-ok': run_as_md5, 'icon-remove': !run_as_md5}"></span></td>
                                 <td>
                                 	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
                                     <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
@@ -718,6 +716,69 @@
                         </table>
                     </div>
                     <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="profile_view" class="container-fluid" data-bind="if: profile().profile">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget" data-bind="with: profile()">
+                            <header>
+                                <h4 class="title">Profile Definition</h4>
+                                <!-- START Toolbar -->
+                                <!--/ END Toolbar -->
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <div class="span12 pull-left">
+                                        <!-- START Summary -->
+                                        <figure class="stats summary pull-left">
+                                            <div data-bind="css: {'green': run_as_md5, 'red': !run_as_md5}" class="icon circle"><span data-bind="css: {'icone-ok': run_as_md5, 'icone-off': !run_as_md5}"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: run_as"></span><small><a class="pointer" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Download Now</a></small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle lime"><span class="icone-time"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: run_as_mtime + '&nbsp;'"></span><small data-bind="text: 'MD5: ' + run_as_md5"></small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <div class="row-fluid">
+                        <!-- START General Elements -->
+                        <div class="span12 widget dark" data-bind="with: profile()">
+                            <header>
+                                <h4 class="title"><span class="icon icone-keyboard"></span> Profile Notes</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <!-- Autosize Textarea -->
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <textarea data-bind="value: description" class="span12 autosize" rows="4" style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 90px;"></textarea>
+                                        </div>
+                                    </div><!--/ Autosize Textarea -->
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+                    </div>
+
                 </div>
                 <!--/ END Content -->
 

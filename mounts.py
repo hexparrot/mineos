@@ -68,11 +68,9 @@ class ViewModel(object):
         def pdict():
             for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
                 path_ = os.path.join(self.base_directory, 'profiles', profile)
-                profile_info = {
-                    'profile': profile,
-                    'save_as': opt_dict['save_as'],
-                    'run_as': opt_dict['run_as']
-                    }
+                profile_info = opt_dict
+                profile_info['profile'] = profile
+                
                 try:
                     profile_info['save_as_md5'] = mc._md5sum(os.path.join(path_,opt_dict['save_as']))
                     profile_info['save_as_mtime'] = mc._mtime(os.path.join(path_,opt_dict['save_as']))
@@ -204,6 +202,9 @@ class Root(object):
                 profile = STOCK_PROFILES[args['profile']]
                 mc('throwaway', None, self.base_directory).define_profile(profile)
                 retval = '%s profile created' % profile['name']
+            elif command == 'modify_profile':
+                mc('throwaway', None, self.base_directory).modify_profile(args['option'],args['value'],args['section'])
+                retval = '%s profile updated' % args['section']
             elif command in self.METHODS:
                 import inspect
                 try:
