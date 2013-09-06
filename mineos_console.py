@@ -47,7 +47,9 @@ if __name__=="__main__":
     if args.server_name:
         owner = mc.has_server_rights(getuser(), args.server_name, args.base_directory)
         if not owner:
-            raise OSError("User '%s' does not have rights to %s" % (getuser(), args.server_name))
+            raise OSError("User '%s' does not have rights to %s" % (getuser(),
+                                                                    os.path.join(args.base_directory,
+                                                                                 args.server_name)))
         else:
             instance = mc(args.server_name, owner, args.base_directory)
 
@@ -109,7 +111,19 @@ if __name__=="__main__":
                     mc(i, owner, args.base_directory).start()
                     print ' done'
                 except Exception as ex:
-                    print i, ex.message
+                    print ex.message
+        elif args.cmd == 'stop':
+            from procfs_reader import path_owner
+            for i in mc.list_servers_up():
+                if os.path.samefile(i.base_dir, args.base_directory):
+                    try:
+                        srv_ = i.server_name
+                        owner = path_owner(os.path.join(i.base_dir, mc.DEFAULT_PATHS['servers'], srv_))
+                        print "sending '%s' to %s..." % (args.cmd, srv_),
+                        instance = mc(srv_, owner, i.base_dir)._command_stuff(args.cmd)
+                        print ' done'
+                    except Exception as ex:
+                        print ex.message               
         elif args.cmd in ['backup', 'archive']:
             from procfs_reader import path_owner
             for i in mc.list_servers_to_act(args.cmd, args.base_directory):
@@ -119,7 +133,11 @@ if __name__=="__main__":
                     getattr(mc, args.cmd)(i, owner, args.base_directory)
                     print ' done'
                 except Exception as ex:
-                    print i, ex.message
+                    print ex.message
+        elif args.cmd in available_properties:
+            for i in sorted(mc.list_servers(args.base_directory)):
+                prop_ = getattr(mc(i, None, args.base_directory), args.cmd)
+                print '%s: %s' % (i, prop_) 
         elif args.cmd in available_methods:
             retval = getattr(mc, args.cmd)(*arguments)
             if retval:
