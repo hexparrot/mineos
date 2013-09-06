@@ -760,13 +760,11 @@ class mc(object):
                 s.close()
 
             assert d[0] == '\xff'
+            d = d[3:].decode('utf-16be')
+            assert d[:3] == u'\xa7\x31\x00'
+            segments = d[3:].split('\x00')
 
-            segments = d[3:].decode('utf-16be')
-
-            if segments[0] == u'\xa7': #1.5.2
-                return server_ping(*[str(c) for c in segments[3:].split('\x00')])
-            else:
-                return server_ping(*[str(c) for c in segments.split(u'\xa7')])
+            return server_ping(*segments)
         else:
             if self.server_name in self.list_servers(self.base):
                 return server_ping(None,None,self.server_properties['motd'::''],
