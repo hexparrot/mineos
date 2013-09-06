@@ -1272,7 +1272,7 @@ class mc(object):
             path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['profiles'], 'profile.config')
             with open(path_, 'a'): pass
         except IOError:
-            raise IOError('Unable to write to %s' % path_)
+            pass
         else:
             os.chmod(path_, 0775)
 
