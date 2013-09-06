@@ -154,12 +154,10 @@ function webui() {
 	self.refresh_loadavg = 2000;
 
 	self.dashboard = {
-		whoami: ko.observable(),
+		whoami: ko.observable(''),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
-		servers_up: ko.computed(function() {		
-			try { return self.vmdata.pings().filter(function(i) {return i.up}).length; } catch (e) { return 0; }
-		}),
+		servers_up: ko.observable(0),
 		disk_usage: ko.observable(),
 		disk_usage_pct: ko.observable(),
 	}
@@ -636,11 +634,15 @@ function webui() {
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();
+			self.dashboard.servers_up(0);
 			$.each(data.ascending_by('server_name'), function(i,v) {
 				self.vmdata.pings.push( new model_server(v) );
 
 				if (self.server().server_name == v.server_name)
 					self.server(new model_server(v));
+
+				if (v.up)
+					self.dashboard.servers_up(self.dashboard.servers_up()+1)
 			})
 		},
 		archives: function(data) {
