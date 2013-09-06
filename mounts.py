@@ -309,13 +309,10 @@ class Root(object):
                     log.seek(cherrypy.session['log_offset'], 0)
                     retval = log.readlines()
                     cherrypy.session['log_offset'] = os.stat(instance.env['log']).st_size
-        except (RuntimeError, KeyError) as ex:
+        except (RuntimeError, KeyError, CalledProcessError) as ex:
             response['result'] = 'error'
             retval = ex.message
-        except CalledProcessError as ex:
-            response['result'] = 'error'
-            retval = ex.message
-        except RuntimeWarning as ex:
+        except (RuntimeWarning, OSError) as ex:
             response['result'] = 'warning'
             retval = ex.message
         else:
