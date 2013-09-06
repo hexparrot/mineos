@@ -1204,14 +1204,13 @@ class mc(object):
         """Creates a directory and chowns it to self._owner.
         Fails silently.
         """
-        import stat
         try:
             os.makedirs(path)
         except OSError:
             if do_raise: raise
         else:
             os.chown(path, self.owner.pw_uid, self.owner.pw_gid)
-            os.chmod(path, os.stat(path).st_mode | stat.S_IWGRP)
+            os.chmod(path, 0775)
 
     @staticmethod
     def has_ownership(username, path):
@@ -1274,6 +1273,8 @@ class mc(object):
             with open(path_, 'a'): pass
         except IOError:
             raise IOError('Unable to write to %s' % path_)
+        else:
+            os.chmod(path_, 0775)
 
     @staticmethod
     def minutes_since_midnight():
