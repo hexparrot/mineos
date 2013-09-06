@@ -354,7 +354,7 @@
                               <td data-bind="text: port"></td>
                               <td data-bind=""><span class="label" data-bind="text: (up ? 'online' : 'offline'), css: {'label-success': up, 'label-important': !up}"></span></td>
                               <td data-bind="text: capacity"></td>
-                              <td data-bind="text: mem_utilization"></td>
+                              <td data-bind="text: mem_utilization, style: {color: overextended() ? 'orange' : 'black'}"></td>
                             </tr>
                           </tbody>
                         </table>
@@ -407,10 +407,10 @@
                                     <!-- START Circular 2 -->
                                     <figure class="stats circular stacked">
                                         <div class="gauge" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
-                                            <span><span class="text" data-bind="text: memory_pct"></span>%</span>
+                                            <span class="text" data-bind="text: memory_pct() + '%', style: {color: overextended() ? 'orange' : 'black'}"></span>
                                         </div>
                                         <figcaption>
-                                            <h4><span data-bind="text: mem_utilization"></span><small>Heap Usage</small></h4>
+                                            <h4><span data-bind="text: mem_utilization, style: {color: overextended() ? 'orange' : 'black'}"></span><small>Heap Usage</small></h4>
                                         </figcaption>
                                     </figure><!--/ END Circular 2 -->
 
