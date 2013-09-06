@@ -1104,8 +1104,11 @@ class mc(object):
                         java = int(pid)
                     if java and screen:
                         break
-            yield instance_pids(name, java, screen, os.path.dirname(os.path.dirname(base)))
-            '''dirname x2 truncates /servers/ from the string.  all these scripts operate
+            yield instance_pids(name,
+                                java,
+                                screen,
+                                os.path.dirname(os.path.dirname(os.path.dirname(base))))
+            '''dirname x3 truncates /servers/name from the string.  all these scripts operate
             on the assumption of child directories anyway, so this is hardcoded'''
 
     def list_last_loglines(self, lines=100):
