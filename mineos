@@ -12,7 +12,8 @@
 
 NAME=mineos
 PIDFILE=/var/run/mineos.pid
-SERVER=/usr/games/minecraft/server.py
+SCRIPTPATH=/usr/games/minecraft
+SERVER=server.py
 DATAPATH=/var/games/minecraft
 
 set -e
@@ -28,13 +29,13 @@ case "$1" in
             else
                 rm -- $PIDFILE
                 log_begin_msg "Starting $NAME... "
-                python $SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+                python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
                 RETVAL=$?
                 log_action_end_msg $RETVAL
             fi
         else
             log_begin_msg "Starting $NAME... "
-            python $SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+            python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
             RETVAL=$?
             log_action_end_msg $RETVAL
         fi

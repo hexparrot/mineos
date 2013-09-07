@@ -1092,6 +1092,15 @@ class mc(object):
                     except AttributeError:
                         continue
 
+        def find_base(directory, match_dir):
+            pair = os.path.split(directory.rstrip('/'))
+            if pair[1] == match_dir:
+                return pair[0]
+            elif not pair[1]:
+                return ''
+            else:
+                return find_base(pair[0], match_dir)
+
         for name, base in name_base():
             java = None
             screen = None
@@ -1107,9 +1116,7 @@ class mc(object):
             yield instance_pids(name,
                                 java,
                                 screen,
-                                os.path.dirname(os.path.dirname(os.path.dirname(base))))
-            '''dirname x3 truncates /servers/name from the string.  all these scripts operate
-            on the assumption of child directories anyway, so this is hardcoded'''
+                                find_base(base, cls.DEFAULT_PATHS['servers']))
 
     def list_last_loglines(self, lines=100):
         """Returns last n lines from logfile"""

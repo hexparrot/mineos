@@ -1,0 +1,51 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          minecraft
+# Required-Start:    $all
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: minecraft servers
+# Description:       starts/stops servers from CLI
+### END INIT INFO
+
+NAME=minecraft
+SCRIPTPATH=/usr/games/minecraft
+SERVER=mineos_console.py
+DATAPATH=/var/games/minecraft
+LOGFILE=/var/log/mineos.log
+
+set -e
+. /lib/lsb/init-functions
+
+case "$1" in
+    'start')
+        log_begin_msg "Starting MineOS servers... "
+        echo ''
+        python $SCRIPTPATH/$SERVER -d $DATAPATH start
+        RETVAL=$?
+        log_action_end_msg $RETVAL
+        ;;
+    'stop')
+        log_begin_msg "Stopping MineOS Servers... "
+        echo ''
+        python $SCRIPTPATH/$SERVER -d $DATAPATH stop
+        RETVAL=$?
+        log_action_end_msg $RETVAL
+        ;;
+    'status')
+        log_begin_msg "MineOS Server Status"
+        echo ''
+        python $SCRIPTPATH/$SERVER -d $DATAPATH up
+        RETVAL=$?
+        log_action_end_msg $RETVAL
+        ;;
+    *)
+        echo "Usage: $0 { start | stop | status | [property]}"
+        echo ''
+        python $SCRIPTPATH/$SERVER -d $DATAPATH $1
+        RETVAL=$?
+        ;;
+esac
+exit $RETVAL
