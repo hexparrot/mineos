@@ -1281,7 +1281,10 @@ class mc(object):
         except IOError:
             pass
         else:
-            os.chmod(path_, 0775)
+            try:
+                os.chmod(path_, 0775)
+            except OSError:
+                pass
 
     @staticmethod
     def minutes_since_midnight():

@@ -28,13 +28,13 @@ case "$1" in
                 RETVAL=0
             else
                 rm -- $PIDFILE
-                log_begin_msg "Starting $NAME... "
+                log_begin_msg "Starting $NAME..."
                 python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
                 RETVAL=$?
                 log_action_end_msg $RETVAL
             fi
         else
-            log_begin_msg "Starting $NAME... "
+            log_begin_msg "Starting $NAME..."
             python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
             RETVAL=$?
             log_action_end_msg $RETVAL
@@ -43,7 +43,7 @@ case "$1" in
 
     'stop')
         if [ -s $PIDFILE ]; then
-            log_begin_msg "Stopping $NAME... "
+            log_begin_msg "Stopping $NAME..."
             kill -s INT `cat $PIDFILE` >/dev/null 2>&1
             rm -- $PIDFILE
             RETVAL=$?

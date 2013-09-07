@@ -21,14 +21,14 @@ set -e
 
 case "$1" in
     'start')
-        log_begin_msg "Starting MineOS servers... "
+        log_begin_msg "Starting MineOS servers..."
         echo ''
         python $SCRIPTPATH/$SERVER -d $DATAPATH start
         RETVAL=$?
         log_action_end_msg $RETVAL
         ;;
     'stop')
-        log_begin_msg "Stopping MineOS Servers... "
+        log_begin_msg "Stopping MineOS Servers..."
         echo ''
         python $SCRIPTPATH/$SERVER -d $DATAPATH stop
         RETVAL=$?
