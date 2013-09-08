@@ -29,13 +29,14 @@ function model_server(data) {
 	})
 }
 
-function model_property(server_name, option, value, section) {
+function model_property(server_name, option, value, section, new_prop) {
 	var self = this;
 
-	self.option = option;
+	self.option = ko.observable(option);
 	self.val = ko.observable(value);
-	self.section = section;
+	self.section = ko.observable(section);
 	self.success = ko.observable(null);
+	self.newly_created = ko.observable(new_prop || false);
 
 	if (section) {
 		var true_false = [
@@ -44,7 +45,7 @@ function model_property(server_name, option, value, section) {
 		];
 
 		var match = true_false.filter(function(v) {
-		  return self.section == v[0] && self.option == v[1]
+		  return self.section() == v[0] && self.option() == v[1]
 		})
 
 		if (match.length) {
@@ -93,6 +94,7 @@ function model_property(server_name, option, value, section) {
 	self.val.subscribe(function(value) {
 		function flash_success(data) {
 			if (data.result == 'success') {
+				self.newly_created(false);
 				self.success(true);
 				setTimeout(function() {self.success(null)}, 5000)
 			} else {
@@ -107,9 +109,9 @@ function model_property(server_name, option, value, section) {
 		var params = {
 			server_name: server_name,
 			cmd: 'modify_config',
-			option: self.option,
+			option: self.option(),
 			value: self.val(),
-			section: self.section
+			section: self.section()
 		}
 		$.getJSON('/server', params).then(flash_success, flash_failure)
 	}, self)
@@ -281,6 +283,16 @@ function webui() {
 	self.select_profile = function(model) {
 		self.profile(model);
 		self.show_page('profile_view');
+	}
+
+	self.new_property = function(vm, event) {
+		var config = $(event.target).data('config');
+
+		if (config == 'sp') {
+			self.vmdata.sp.push(new model_property(self.server().server_name, null, null, null, true))
+		} else if (config == 'sc') {
+			self.vmdata.sc.push(new model_property(self.server().server_name, null, null, null, true))
+		}
 	}
 
 	self.show_page = function(vm, event) {

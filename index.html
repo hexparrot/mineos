@@ -619,8 +619,9 @@
                                 <div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
-                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
                                         <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
+                                        <li>&nbsp;</li>
+                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -981,17 +982,25 @@
                         <table id="table_properties" class="table table-hover">
                           <thead>
                             <tr>
-                              <th scope="col">Option</th>
+                              <th scope="col" class="span4">Option</th>
                               <th scope="col">Value</th>
                             </tr>
                           </thead>
                           <tfoot>
+                            <tr>
+                            	<td><button class="btn btn-primary" data-config="sp" data-bind="click: new_property"><span class="icone-edit"></span> New Property</button></td>
+                            </tr>
                           </tfoot>
                           <tbody data-bind="foreach: vmdata.sp">
                             <tr>
-                              <td data-bind="text: option" class="span4"></td>
                               <td>
-                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
+                                <div class="">
+                                  <span data-bind="text: option, visible: !$data.newly_created()" class=""></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: option" class="input-large">
+                              	</div>
+                              </td>
+                              <td>
+                                <div class="" data-bind="css: {'success': success, 'error': success == false}">
                                     <div class="controls">
                                         <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
                                         <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
@@ -1026,19 +1035,26 @@
                         <table id="table_config" class="table table-hover">
                           <thead>
                             <tr>
-                              <th scope="col">Section</th>
-                              <th scope="col">Option</th>
+                              <th scope="col" class="span3">Section</th>
+                              <th scope="col" class="span4">Option</th>
                               <th scope="col">Value</th>
                             </tr>
                           </thead>
                           <tfoot>
+                            <tr>
+                            	<td><button class="btn btn-primary" data-config="sc" data-bind="click: new_property"><span class="icone-edit"></span> New Property</button></td>
+                            </tr>
                           </tfoot>
                           <tbody data-bind="foreach: vmdata.sc">
                             <tr>
-                              <td data-bind="text: section" class="span2"></td>
-                              <td data-bind="text: option" class="span4"></td>
+                              <td><span data-bind="text: section, visible: !$data.newly_created()"></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: section" class="input-large">
+                              </td>
+                              <td><span data-bind="text: option, visible: !$data.newly_created()" class=""></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: option" class="input-large">
+                              </td>
                               <td>
-                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
+                                <div class="" data-bind="css: {'success': success, 'error': success == false}">
                                     <div class="controls">
                                         <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
                                         <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
