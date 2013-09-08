@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+
+# PROVIDE: mineos
+# REQUIRE: DAEMON NETWORKING SERVERS
+
+# Add the following lines to /etc/rc.conf to enable `mineos':
+#
+# mineos_enable="YES"
+# mineos_flags="<set as needed>"
+#
+#
+
+. /etc/rc.subr
+
+name=mineos
+rcvar=mineos_enable
+
+command="/usr/local/bin/python"
+command_args="/usr/local/games/minecraft/server.py -d /var/games/minecraft --daemon"
+pidfile="/var/run/mineos.pid"
+
+# read configuration and set defaults
+load_rc_config "$name"
+: ${mineos_enable="NO"}
+
+run_rc_command "$1"

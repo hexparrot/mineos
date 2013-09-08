@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+
+# PROVIDE: minecraft
+# REQUIRE: NETWORKING SERVERS
+
+# Add the following lines to /etc/rc.conf to enable `minecraft':
+#
+# minecraft_enable="YES"
+# minecraft_flags="<set as needed>"
+#
+#
+
+. /etc/rc.subr
+
+name=minecraft
+rcvar=minecraft_enable
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+
+minecraft_start()
+{
+	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+	cd /usr/local/games/minecraft && /usr/local/bin/python mineos_console.py -d /var/games/minecraft start
+}
+
+minecraft_stop()
+{
+	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+	cd /usr/local/games/minecraft && /usr/local/bin/python mineos_console.py -d /var/games/minecraft stop
+}
+
+# read configuration and set defaults
+load_rc_config "$name"
+: ${minecraft_enable="NO"}
+
+run_rc_command "$1"
