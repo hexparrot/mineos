@@ -679,6 +679,8 @@ function webui() {
 				self.vmdata.sp.push( new model_property(self.server().server_name, option, value) )
 			})
 
+			self.vmdata.sp(self.vmdata.sp().ascending_by('option'));
+
 			$('table#table_properties input[type="checkbox"]').not('.nostyle').iCheck({
 	            checkboxClass: 'icheckbox_minimal-grey',
 	            radioClass: 'iradio_minimal-grey',
@@ -692,6 +694,8 @@ function webui() {
 					self.vmdata.sc.push(new model_property(self.server().server_name, option, value, section))
 				})
 			})
+
+			self.vmdata.sc(self.vmdata.sc().ascending_by('section'));
 
 			$('table#table_config input[type="checkbox"]').not('.nostyle').iCheck({
 	            checkboxClass: 'icheckbox_minimal-grey',
