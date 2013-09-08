@@ -62,7 +62,10 @@ def server_up(up):
             if self.up == up:
                 fn(self, *args, **kwargs)
             else:
-                raise RuntimeError('Ignoring {%s}: server.up must be %s' % (fn.__name__, up))
+                if up:
+                    raise RuntimeError('Server must be running to perform this action.')
+                else:
+                    raise RuntimeError('Server may not be running when performing this action.')
         return wrapper
     return dec
 
