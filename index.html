@@ -1204,23 +1204,23 @@
                     <div class="modal-body" data-bind="if: $root.import_information()">
                         <p><strong data-bind="text: $root.import_information().filename"></strong> will be extracted.</p>
                         <p>Please enter the name of the new server to create:</p>
-                        <input type="text" name="newname" class="input-medium required" placeholder="imported">
+                        <input type="text" name="newname" class="input-medium required" placeholder="server_name">
                     </div>
                     <div class="modal-footer">
-                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
                         <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Create new Server</button>
                     </div>
                 </div>
 
                 <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
                     <div class="modal-header">
-                        <h4>You are about to delete <span data-bind="text: pruning.profiles.profile"></span>!</h4>
+                        <h4>Remove <span data-bind="text: pruning.profiles.profile"></span> from available profiles?</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Servers that depend on this profile will need to be adjusted to a different, working profile to work.</p>
+                        <p>All downloaded files for this profile will be deleted.</p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Keep this Profile</button>
                         <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Remove Profile</button>
                     </div>
                 </div>
