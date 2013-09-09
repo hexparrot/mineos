@@ -133,8 +133,8 @@ class Root(object):
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
 
-    def __init__(self, script_directory, base_directory):
-        self.script_directory = script_directory
+    def __init__(self, html_directory, base_directory):
+        self.html_directory = html_directory
         self.base_directory = base_directory
 
     @property
@@ -145,7 +145,7 @@ class Root(object):
     @require()
     def index(self):
         from cherrypy.lib.static import serve_file
-        return serve_file(os.path.join(self.script_directory, 'index.html'))
+        return serve_file(os.path.join(self.html_directory, 'index.html'))
 
     @cherrypy.expose
     @require()

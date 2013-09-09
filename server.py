@@ -63,7 +63,7 @@ if __name__ == "__main__":
                         default=None)
     args = parser.parse_args()
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    html_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
     base_dir = args.base_directory or os.path.expanduser("~")
     mc._make_skeleton(base_dir)
 
@@ -113,19 +113,19 @@ if __name__ == "__main__":
     root_conf = {
         '/assets': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'assets')
+            'tools.staticdir.dir': os.path.join(html_dir, 'assets')
             },
         '/css': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'css')
+            'tools.staticdir.dir': os.path.join(html_dir, 'css')
             },
         '/img': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'img')
+            'tools.staticdir.dir': os.path.join(html_dir, 'img')
             },
         '/js': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(current_dir, 'js')
+            'tools.staticdir.dir': os.path.join(html_dir, 'js')
             }
         }
 
@@ -152,8 +152,8 @@ if __name__ == "__main__":
     import mounts, auth
 
     cherrypy.config.update(global_conf)
-    cherrypy.tree.mount(mounts.Root(current_dir, base_dir), "/", config=root_conf)
+    cherrypy.tree.mount(mounts.Root(html_dir, base_dir), "/", config=root_conf)
     cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
-    cherrypy.tree.mount(auth.AuthController(current_dir), '/auth', config=empty_conf)
+    cherrypy.tree.mount(auth.AuthController(html_dir), '/auth', config=empty_conf)
     cherrypy.engine.start()
     cherrypy.engine.block()
