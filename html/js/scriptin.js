@@ -237,7 +237,12 @@ function webui() {
 			cumulative: ko.computed(function() {
 				return bytes_to_mb(self.vmdata.archives().sum('size'))
 			})
-		}
+		},
+		owner: ko.observable(''),
+		group: ko.observable(''),
+		du_cwd: ko.observable(0),
+		du_bwd: ko.observable(0),
+		du_awd: ko.observable(0)
 	}
 
 	self.pruning = {
@@ -420,6 +425,7 @@ function webui() {
 				$.getJSON('/vm/status').then(self.refresh.pings).then(self.redraw.gauges);
 				$.getJSON('/vm/increments', params).then(self.refresh.increments);
 				$.getJSON('/vm/archives', params).then(self.refresh.archives);
+				$.getJSON('/vm/server_summary', params).then(self.refresh.summary);
 				break;
 			case 'profiles':
 				$.getJSON('/vm/profiles').then(self.refresh.profiles);
@@ -674,6 +680,13 @@ function webui() {
 				  return i.timestamp
 				})
 	        });
+		},
+		summary: function(data) {
+			self.summary.owner(data.owner);
+			self.summary.group(data.group);
+			self.summary.du_cwd(bytes_to_mb(data.du_cwd));
+			self.summary.du_bwd(bytes_to_mb(data.du_bwd));
+			self.summary.du_awd(bytes_to_mb(data.du_awd));
 		},
 		profiles: function(data) {
 			self.vmdata.profiles.removeAll();

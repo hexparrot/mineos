@@ -91,9 +91,9 @@ def human_readable(n):
             return '%.1f%s' % (value, s)
     return "%sB" % n
 
-def disk_usage(path):
+def disk_free(path):
     """
-    Disk usage stats of filesystem.
+    df stats of filesystem.
     Keyword Arguments:
     path -- path to filesystem to poll
     
@@ -114,6 +114,11 @@ def disk_usage(path):
     return _ntuple_diskusage(human_readable(total),
                              human_readable(used),
                              human_readable(free))
+
+def disk_usage(path):
+    return sum(os.path.getsize(os.path.join(dirpath,filename))
+               for dirpath, dirnames, filenames in os.walk(path)
+               for filename in filenames)
 
 def tail(f, window=50):
     """

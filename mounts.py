@@ -98,7 +98,32 @@ class ViewModel(object):
     def archives(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
         return dumps([dict(d._asdict()) for d in instance.list_archives()])
-                    
+
+    @cherrypy.expose
+    def server_summary(self, server_name):
+        from procfs_reader import disk_usage
+        from pwd import getpwuid
+        from grp import getgrgid
+
+        cwd = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server_name)
+        bwd = os.path.join(self.base_directory, mc.DEFAULT_PATHS['backup'], server_name)
+        awd = os.path.join(self.base_directory, mc.DEFAULT_PATHS['archive'], server_name)
+        st = os.stat(cwd)
+
+        dir_info = {
+            'owner': getpwuid(st.st_uid).pw_name,
+            'group': getgrgid(st.st_gid).gr_name
+            #'du_bwd': disk_usage(bwd),
+            #'du_awd': disk_usage(awd)
+            }
+
+        try:
+            dir_info['du_cwd'] = disk_usage(cwd)
+        except:
+            dir_info['du_cwd'] = 0
+
+        return dumps(dir_info)
+    
     @cherrypy.expose
     def loadavg(self):
         from procfs_reader import proc_loadavg
@@ -106,7 +131,7 @@ class ViewModel(object):
                     
     @cherrypy.expose
     def dashboard(self):
-        from procfs_reader import entries, proc_uptime, disk_usage
+        from procfs_reader import entries, proc_uptime, disk_free
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
@@ -115,7 +140,7 @@ class ViewModel(object):
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': cherrypy.session['_cp_username'],
-            'df': dict(disk_usage('/')._asdict())
+            'df': dict(disk_free('/')._asdict())
             })
 
     @cherrypy.expose

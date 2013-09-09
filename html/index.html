@@ -452,6 +452,25 @@
                     </div>
                     <!--/ END Row -->
 
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Default Widget -->
+                        <div class="span6 widget" data-bind="">
+                            <header>
+                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Ownership and Disk Usage</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Server Owner: <strong data-bind="text: summary.owner"></strong></p>
+                                    <p>Group Owner: <strong data-bind="text: summary.group"></strong></p>
+                                    <p>Space used by live server files: <strong data-bind="text: summary.du_cwd"></strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+                    </div>
+                    <!--/ END Row -->
+
                 </div>
                 <!--/ END Content -->
 
