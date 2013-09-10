@@ -101,7 +101,8 @@ class mc(object):
         self._base_directory = base_directory or os.path.expanduser("~")
 
         self._set_environment()
-        self._load_config()
+        self._load_config(generate_missing=True)
+        self.detect_old_config()
 
     def _set_environment(self):
         """Sets the most common short-hand paths for the minecraft directories
@@ -165,8 +166,7 @@ class mc(object):
 
     def detect_old_config(self):
         """Checks server.config for obsolete attributes from previous versions"""
-
-        def upgrade(sc):
+        def upgrade():
             """Extracts relevant attributes from old config"""
             from ConfigParser import NoOptionError, NoSectionError
             from collections import defaultdict
@@ -180,20 +180,15 @@ class mc(object):
             for section in kept_attributes:
                 for option in kept_attributes[section]:
                     try:
-                        new_config[section][option] = sc[section:option]
+                        new_config[section][option] = self.server_config[section:option]
                     except (KeyError, NoOptionError, NoSectionError):
                         pass
             return dict(new_config)
     
-        sc = config_file(self.env['sc'])
-        try:
-            sc['java']['java_bin']
-            sc['java']['java_path']
-        except:
-            pass
-        else:
+        if self.server_config.has_option('java', 'java_bin'):
             self._command_direct('rm -- %s' % self.env['sc'], self.env['cwd'])
-            self._create_sc(upgrade(sc))
+            self._create_sc(upgrade())
+            self._load_config()
 
     @server_exists(True)
     def _create_sp(self, startup_values={}):
