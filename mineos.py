@@ -101,7 +101,13 @@ class mc(object):
         self._base_directory = base_directory or os.path.expanduser("~")
 
         self._set_environment()
-        self._load_config()
+        try:
+            self._load_config(generate_missing=True)
+        except RuntimeError:
+            pass
+        else:
+            if self.server_config[:]:
+                self.upgrade_old_config()
 
     def _set_environment(self):
         """Sets the most common short-hand paths for the minecraft directories
@@ -163,9 +169,9 @@ class mc(object):
             else:
                 raise RuntimeError('No config files found: server.properties or server.config')   
 
-    def detect_old_config(self):
+    def upgrade_old_config(self):
         """Checks server.config for obsolete attributes from previous versions"""
-        def upgrade():
+        def extract():
             """Extracts relevant attributes from old config"""
             from ConfigParser import NoOptionError, NoSectionError
             from collections import defaultdict
@@ -186,7 +192,7 @@ class mc(object):
     
         if self.server_config.has_option('java', 'java_bin'):
             self._command_direct('rm -- %s' % self.env['sc'], self.env['cwd'])
-            self._create_sc(upgrade())
+            self._create_sc(extract())
             self._load_config()
 
     @server_exists(True)
