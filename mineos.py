@@ -101,8 +101,7 @@ class mc(object):
         self._base_directory = base_directory or os.path.expanduser("~")
 
         self._set_environment()
-        self._load_config(generate_missing=True)
-        self.detect_old_config()
+        self._load_config()
 
     def _set_environment(self):
         """Sets the most common short-hand paths for the minecraft directories
