@@ -56,8 +56,16 @@ class ViewModel(object):
                     'ip_address': instance.ip_address,
                     'port': instance.port,
                     'memory': instance.memory,
-                    'java_xmx': instance.server_config['java':'java_xmx':'']
                     }
+                try:
+                    srv['java_xmx'] = instance.server_config['java':'java_xmx']
+                except KeyError:
+                    instance._load_config(generate_missing=True)
+                    try:
+                        srv['java_xmx'] = instance.server_config['java':'java_xmx']
+                    except:
+                        continue
+                
                 srv.update(dict(instance.ping._asdict()))
                 servers.append(srv)
 

@@ -163,6 +163,38 @@ class mc(object):
             else:
                 raise RuntimeError('No config files found: server.properties or server.config')   
 
+    def detect_old_config(self):
+        """Checks server.config for obsolete attributes from previous versions"""
+
+        def upgrade(sc):
+            """Extracts relevant attributes from old config"""
+            from ConfigParser import NoOptionError, NoSectionError
+            from collections import defaultdict
+
+            new_config = defaultdict(dict)
+            kept_attributes = {
+                'onreboot': ['restore', 'start'],
+                'java': ['java_tweaks', 'java_xmx', 'java_xms']
+                }
+
+            for section in kept_attributes:
+                for option in kept_attributes[section]:
+                    try:
+                        new_config[section][option] = sc[section:option]
+                    except (KeyError, NoOptionError, NoSectionError):
+                        pass
+            return dict(new_config)
+    
+        sc = config_file(self.env['sc'])
+        try:
+            sc['java']['java_bin']
+            sc['java']['java_path']
+        except:
+            pass
+        else:
+            self._command_direct('rm -- %s' % self.env['sc'], self.env['cwd'])
+            self._create_sc(upgrade(sc))
+
     @server_exists(True)
     def _create_sp(self, startup_values={}):
         """Creates a server.properties file for the server given a dict.
