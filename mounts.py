@@ -48,26 +48,19 @@ class ViewModel(object):
                 ping = instance.ping
             except KeyError:
                 continue
-            else:
-                srv = {
-                    'server_name': i,
-                    'profile': instance.profile,
-                    'up': instance.up,
-                    'ip_address': instance.ip_address,
-                    'port': instance.port,
-                    'memory': instance.memory,
-                    }
-                try:
-                    srv['java_xmx'] = instance.server_config['java':'java_xmx']
-                except KeyError:
-                    instance._load_config(generate_missing=True)
-                    try:
-                        srv['java_xmx'] = instance.server_config['java':'java_xmx']
-                    except:
-                        continue
-                
-                srv.update(dict(instance.ping._asdict()))
-                servers.append(srv)
+            
+            srv = {
+                'server_name': i,
+                'profile': instance.profile,
+                'up': instance.up,
+                'ip_address': instance.ip_address,
+                'port': instance.port,
+                'memory': instance.memory,
+                'java_xmx': instance.server_config['java':'java_xmx']
+                }
+            
+            srv.update(dict(instance.ping._asdict()))
+            servers.append(srv)
 
         return dumps(servers)
 
