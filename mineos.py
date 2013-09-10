@@ -1132,7 +1132,7 @@ class mc(object):
     def list_servers_to_act(cls, action, base_directory):
         """Generator listing all servers doing action at this minute in time"""
         from procfs_reader import path_owner
-        from ConfigParser import NoOptionError
+        from ConfigParser import NoOptionError, NoSectionError
         
         hits = []
         msm = cls.minutes_since_midnight()
@@ -1158,7 +1158,7 @@ class mc(object):
                     hits.append(i)
                 elif msm % interval == 0:
                     hits.append(i)
-            except (ZeroDivisionError, KeyError, ValueError, NoOptionError):
+            except (ZeroDivisionError, KeyError, ValueError, NoOptionError, NoSectionError):
                 pass
 
         return hits
@@ -1166,7 +1166,7 @@ class mc(object):
     @classmethod
     def list_servers_start_at_boot(cls, base_directory):
         from procfs_reader import path_owner
-        from ConfigParser import NoOptionError
+        from ConfigParser import NoOptionError, NoSectionError
         
         hits = []
         msm = cls.minutes_since_midnight()
@@ -1179,7 +1179,7 @@ class mc(object):
             try:
                 if instance.server_config.getboolean('onreboot', 'start'):
                     hits.append(i)
-            except (ValueError, KeyError, NoOptionError):
+            except (ValueError, KeyError, NoSectionError, NoOptionError):
                 pass
 
         return hits
