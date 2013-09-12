@@ -133,6 +133,7 @@ class ViewModel(object):
     @cherrypy.expose
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free
+        from grp import getgrall
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
@@ -141,7 +142,10 @@ class ViewModel(object):
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': cherrypy.session['_cp_username'],
-            'df': dict(disk_free('/')._asdict())
+            'df': dict(disk_free('/')._asdict()),
+            'groups': [i.gr_name for i in getgrall()
+                       if cherrypy.session['_cp_username']==i.gr_name or \
+                          cherrypy.session['_cp_username'] in i.gr_mem],
             })
 
     @cherrypy.expose
@@ -151,7 +155,6 @@ class ViewModel(object):
             'path': path,
             'filename': f
             } for f in mc._list_files(path)])
-
 
 class Root(object):
     METHODS = list(m for m in dir(mc) if callable(getattr(mc,m)) \
@@ -421,9 +424,6 @@ class Root(object):
             'payload': None
             }
 
-        from json import loads
-        from collections import defaultdict
-
         try:
             instance = mc(server_name, self.login, self.base_directory)
             instance.import_server(**args)
@@ -442,3 +442,40 @@ class Root(object):
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)  
+
+    @cherrypy.expose
+    @require()
+    def change_group(self, **raw_args):
+        args = {k:str(v) for k,v in raw_args.iteritems()}
+        server_name = args.pop('server_name')
+        group = args.pop('group')
+        retval = None
+
+        response = {
+            'result': None,
+            'cmd': 'chgrp',
+            'payload': None
+            }
+
+        try:
+            if mc.has_server_rights(self.login, server_name, self.base_directory):
+                instance = mc(server_name, None, self.base_directory)
+                instance.chgrp(group)
+            else:
+                raise OSError('Group assignment to %s failed' % group)
+        except (RuntimeError, KeyError, OSError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except CalledProcessError as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        else:
+            response['result'] = 'success'
+            retval = "Server '%s' group ownership granted to '%s'" % (server_name, group)
+
+        response['payload'] = to_jsonable_type(retval)
+        return dumps(response)  
+        

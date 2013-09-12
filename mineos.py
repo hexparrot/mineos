@@ -430,7 +430,7 @@ class mc(object):
 
     def prune_archives(self, filename):
         """Removes old archives by filename as a space-separated string."""
-        self._command_direct(self.command_delete_archives(filename), self.env['awd'])
+        self._command_direct(self.command_delete_files(filename), self.env['awd'])
 
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
@@ -1012,14 +1012,25 @@ class mc(object):
         return '%(rsync)s -rlptD --chmod=ug+rw %(exclude)s %(pwd)s/%(profile)s/ %(cwd)s' % required_arguments
 
     @sanitize
-    def command_delete_archives(self, archives):
-        """Deletes archive_list of files from awd"""       
+    def command_delete_files(self, files):
+        """Deletes files from present working directory"""       
         required_arguments = {
-            'archives': archives,
+            'files': files,
             }
 
         self._previous_arguments = required_arguments
-        return 'rm -- %(archives)s' % required_arguments
+        return 'rm -- %(files)s' % required_arguments
+
+    @sanitize
+    def command_chgrp(self, group, path):
+        """Executes chgrp on a directory"""
+        required_arguments = {
+            'group': group,
+            'path': path
+            }
+
+        self._previous_arguments = required_arguments
+        return 'chgrp -R %(group)s %(path)s' % required_arguments
 
 #generator expressions
 
@@ -1274,6 +1285,7 @@ class mc(object):
 
     @classmethod
     def has_server_rights(cls, username, server_name, base_directory):
+        """Checks whether a given username is owner/group of a server"""
         has_rights = False
         for d in ('servers', 'backup'):
             try:
@@ -1283,6 +1295,11 @@ class mc(object):
             except OSError:
                 pass
         return has_rights
+
+    def chgrp(self, group):
+        """Change the group ownership of servers/backup/archive"""
+        for d in ('cwd', 'bwd', 'awd'):
+            self._command_direct(self.command_chgrp(group, self.env[d]), self.env[d])
 
     @staticmethod
     def _list_subdirs(directory):

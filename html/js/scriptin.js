@@ -157,6 +157,7 @@ function webui() {
 
 	self.dashboard = {
 		whoami: ko.observable(''),
+		groups: ko.observableArray([]),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
 		servers_up: ko.observable(0),
@@ -377,6 +378,15 @@ function webui() {
 		}
 		$.getJSON('/host', params).then(self.ajax.received, self.ajax.lost)
 								  .then(function() {self.ajax.refresh(null)});
+	}
+
+	self.change_group = function(vm, eventobj) {
+		var params = {
+			group: $(eventobj.currentTarget).val(),
+			server_name: self.server().server_name
+		}
+
+		$.getJSON('/change_group', params).then(self.ajax.received, self.ajax.lost)
 	}
 
 	self.command = function(vm, eventobj) {
@@ -649,6 +659,7 @@ function webui() {
 			self.dashboard.disk_usage(data.df);
 			self.dashboard.disk_usage_pct((str_to_bytes(self.dashboard.disk_usage().used) / 
 										   str_to_bytes(self.dashboard.disk_usage().total) * 100).toFixed(1));
+			self.dashboard.groups(data.groups);
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();
@@ -685,8 +696,10 @@ function webui() {
 			self.summary.owner(data.owner);
 			self.summary.group(data.group);
 			self.summary.du_cwd(bytes_to_mb(data.du_cwd));
-			self.summary.du_bwd(bytes_to_mb(data.du_bwd));
-			self.summary.du_awd(bytes_to_mb(data.du_awd));
+			setTimeout(function() {
+				$('#available_groups option').filter(function () { 
+					return $(this).val() == self.summary.group()
+				}).prop('selected', true)}, 50)
 		},
 		profiles: function(data) {
 			self.vmdata.profiles.removeAll();

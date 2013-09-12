@@ -462,7 +462,7 @@
                             <section class="body">
                                 <div class="body-inner">
                                     <p>Server Owner: <strong data-bind="text: summary.owner"></strong></p>
-                                    <p>Group Owner: <strong data-bind="text: summary.group"></strong></p>
+                                    <p>Group Owner: <select id="available_groups" data-bind="options: $root.dashboard.groups, event: { change: $root.change_group } "></select></p>
                                     <p>Space used by live server files: <strong data-bind="text: summary.du_cwd"></strong></p>
                                 </div>
                             </section>
