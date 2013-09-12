@@ -457,12 +457,14 @@ class Root(object):
             'payload': None
             }
 
+        
+
         try:
-            if mc.has_server_rights(self.login, server_name, self.base_directory):
+            if self.login == mc.has_server_rights(self.login, server_name, self.base_directory):
                 instance = mc(server_name, None, self.base_directory)
                 instance.chgrp(group)
             else:
-                raise OSError('Group assignment to %s failed' % group)
+                raise OSError('Group assignment to %s failed. Only the owner make change groups.' % group)
         except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
