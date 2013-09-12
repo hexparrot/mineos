@@ -106,7 +106,7 @@ class mc(object):
         except RuntimeError:
             pass
         else:
-            if self.server_config[:]:
+            if self.server_config.has_option('java', 'java_bin'):
                 self.upgrade_old_config()
 
     def _set_environment(self):
@@ -190,10 +190,9 @@ class mc(object):
                         pass
             return dict(new_config)
     
-        if self.server_config.has_option('java', 'java_bin'):
-            self._command_direct('rm -- %s' % self.env['sc'], self.env['cwd'])
-            self._create_sc(extract())
-            self._load_config()
+        self._command_direct('rm -- %s' % self.env['sc'], self.env['cwd'])
+        self._create_sc(extract())
+        self._load_config()
 
     @server_exists(True)
     def _create_sp(self, startup_values={}):
