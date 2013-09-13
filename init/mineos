@@ -14,7 +14,7 @@ NAME=mineos
 PIDFILE=/var/run/mineos.pid
 SCRIPTPATH=/usr/games/minecraft
 SERVER=server.py
-DATAPATH=/var/games/minecraft
+CONFIGFILE=/etc/mineos.conf
 
 set -e
 . /lib/lsb/init-functions
@@ -29,13 +29,13 @@ case "$1" in
             else
                 rm -- $PIDFILE
                 log_begin_msg "Starting $NAME..."
-                python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+                python $SCRIPTPATH/$SERVER -c $CONFIGFILE >/dev/null 2>&1 </dev/null
                 RETVAL=$?
                 log_action_end_msg $RETVAL
             fi
         else
             log_begin_msg "Starting $NAME..."
-            python $SCRIPTPATH/$SERVER --daemon -d $DATAPATH >/dev/null 2>&1 </dev/null
+            python $SCRIPTPATH/$SERVER -c $CONFIGFILE >/dev/null 2>&1 </dev/null
             RETVAL=$?
             log_action_end_msg $RETVAL
         fi
