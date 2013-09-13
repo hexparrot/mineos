@@ -72,7 +72,7 @@ if __name__ == "__main__":
         cherrypy.config.update(args.config_file)
         base_dir = cherrypy.config['misc.base_directory']
 
-        if not cherrypy.config['misc.use_https']:
+        if not cherrypy.config['misc.require_https']:
             cherrypy.config.update({
                 'server.ssl_module': None,
                 'server.ssl_certificate': None,
