@@ -61,6 +61,10 @@ if __name__ == "__main__":
                         dest='cert_chain',
                         help='CA certificate chain: /etc/ssl/certs/cert-chain.crt',
                         default=None)
+    parser.add_argument('-e',
+                        dest='external_config',
+                        help='use external default configuration file',
+                        default=None)
     args = parser.parse_args()
 
     html_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
@@ -133,15 +137,27 @@ if __name__ == "__main__":
         '/': {}
         }
 
-    if args.daemon:
+    daemonize = args.daemon
+    pid_file = '' if args.nopid else '/var/run/mineos.pid'
+
+    cherrypy.config.update(global_conf)
+    if args.external_config:
+        cherrypy.config.update(args.external_config)
+        daemonize = cherrypy.config['misc.server_as_daemon']
+        pid_file = cherrypy.config['misc.pid_file'] if cherrypy.config['misc.pid_file'] else ''
+        base_dir = cherrypy.config['misc.base_directory']
+        assert base_dir
+        print cherrypy.config
+        
+    if daemonize:
         from cherrypy.process.plugins import Daemonizer
         Daemonizer(cherrypy.engine).subscribe()
 
-    if args.nopid is False:
+    if pid_file:
         from cherrypy.process.plugins import PIDFile
-        PIDFile(cherrypy.engine, '/var/run/mineos.pid').subscribe()
+        PIDFile(cherrypy.engine, pid_file).subscribe()
 
-    if os.path.isfile('/var/run/mineos.pid'):
+    if os.path.isfile(pid_file):
         import sys
         print 'MineOS instance already running (PID found)'
         sys.exit(1)
@@ -151,7 +167,6 @@ if __name__ == "__main__":
 
     import mounts, auth
 
-    cherrypy.config.update(global_conf)
     cherrypy.tree.mount(mounts.Root(html_dir, base_dir), "/", config=root_conf)
     cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
     cherrypy.tree.mount(auth.AuthController(html_dir), '/auth', config=empty_conf)
