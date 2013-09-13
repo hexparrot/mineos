@@ -41,78 +41,108 @@ if __name__ == "__main__":
                         dest='base_directory',
                         help='the base of the mc file structure',
                         default=None)
-    parser.add_argument('--http',
-                        action='store_true',
-                        help='use HTTP not HTTPS.',
-                        default=None)
     parser.add_argument('--daemon',
                         action='store_true',
                         default=False,
                         help='run server as a daemon')
     parser.add_argument('--nopid',
+                        action='store_false',
+                        default='/var/run/mineos.log',
+                        help='do not use PID file')
+    parser.add_argument('--http',
                         action='store_true',
                         default=False,
-                        help='do not use a PID file')
-    parser.add_argument('-s',
-                        dest='cert_files',
-                        help='certificate files: /etc/ssl/certs/cert.crt,/etc/ssl/certs/cert.key',
-                        default=None)
+                        help='use HTTP over HTTPS')
     parser.add_argument('-c',
-                        dest='cert_chain',
-                        help='CA certificate chain: /etc/ssl/certs/cert-chain.crt',
-                        default=None)
-    parser.add_argument('-e',
-                        dest='external_config',
+                        dest='config_file',
                         help='use external default configuration file',
                         default=None)
     args = parser.parse_args()
 
+    ################
+
     html_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
-    base_dir = args.base_directory or os.path.expanduser("~")
-    mc._make_skeleton(base_dir)
 
-    log_error = '/var/log/mineos.log'
-    
-    try:
-        with open(log_error, 'a'): pass
-    except IOError:
-        log_error = os.path.join(base_dir, 'mineos.log')
-
-    global_conf = {
-        'server.socket_host': args.ip_address,
-        'server.socket_port': int(args.port),
+    cherrypy.config.update({
         'tools.sessions.on': True,
-        'tools.auth.on': True,
-        'log.screen': not args.daemon,
-        'log.error_file': log_error
-        }
+        'tools.auth.on': True
+        })
 
-    if not args.http:
-        if args.cert_files:
-            ssl = {
-                'server.ssl_module': 'builtin',
-                'server.ssl_certificate': args.cert_files.split(',')[0].strip(),
-                'server.ssl_private_key': args.cert_files.split(',')[1].strip(),
-                }
+    if args.config_file:
+        cherrypy.config.update(args.config_file)
+        base_dir = cherrypy.config['misc.base_directory']
+
+        if not cherrypy.config['misc.use_https']:
+            cherrypy.config.update({
+                'server.ssl_module': None,
+                'server.ssl_certificate': None,
+                'server.ssl_private_key': None,
+                'server.ssl_certificate_chain': None,
+                'server.ssl_ca_certificate': None
+                })
+
+        if cherrypy.config['misc.server_as_daemon']:
+            from cherrypy.process.plugins import Daemonizer
+            Daemonizer(cherrypy.engine).subscribe()
+            cherrypy.config.update({'log.screen': False})
         else:
+            cherrypy.config.update({'log.screen': True})
+            print cherrypy.config
+
+        if cherrypy.config['misc.pid_file']:
+            from cherrypy.process.plugins import PIDFile
+            PIDFile(cherrypy.engine, cherrypy.config['misc.pid_file']).subscribe()
+    else:
+        base_dir = args.base_directory or os.path.expanduser("~")
+
+        logfile = "/var/log/mineos.log"
+        try:
+            with open(logfile, 'a'): pass
+        except IOError:
+            logfile = os.path.join(base_dir, 'mineos.log')
+        
+        global_conf = {
+            'server.socket_host': args.ip_address,
+            'server.socket_port': int(args.port),
+            'log.screen': not args.daemon,
+            'log.error_file': logfile
+            }
+
+        if not args.http: #use https instead
             if os.path.isfile('/etc/ssl/certs/mineos.crt') and \
                os.path.isfile('/etc/ssl/certs/mineos.key'):
                 ssl = {
                     'server.ssl_module': 'builtin',
                     'server.ssl_certificate': '/etc/ssl/certs/mineos.crt',
-                    'server.ssl_private_key': '/etc/ssl/certs/mineos.key',
+                    'server.ssl_private_key': '/etc/ssl/certs/mineos.key'
                     }
             else:
                 ssl = {
                     'server.ssl_module': 'builtin',
                     'server.ssl_certificate': 'mineos.crt',
-                    'server.ssl_private_key': 'mineos.key',
+                    'server.ssl_private_key': 'mineos.key'
                     }  
-        if args.cert_chain:
-            ssl.update({'server.ssl_certificate_chain': args.cert_chain.strip()})
-        else:
-            ssl.update({'server.ssl_ca_certificate': None})
-        global_conf.update(ssl)
+            global_conf.update(ssl)
+
+        if args.daemon:
+            from cherrypy.process.plugins import Daemonizer
+            Daemonizer(cherrypy.engine).subscribe()
+
+        if args.nopid:
+            from cherrypy.process.plugins import PIDFile
+            PIDFile(cherrypy.engine, args.nopid).subscribe()
+
+            if os.path.isfile(args.nopid):
+                import sys
+                print 'MineOS instance already running (PID found)'
+                sys.exit(1)
+
+        cherrypy.config.update(global_conf)
+
+    if base_dir == '/':
+        raise RuntimeError('Cannot start server at filesystem root.')
+    else:
+        mc._make_skeleton(base_dir)
 
     root_conf = {
         '/assets': {
@@ -136,31 +166,6 @@ if __name__ == "__main__":
     empty_conf = {
         '/': {}
         }
-
-    daemonize = args.daemon
-    pid_file = '' if args.nopid else '/var/run/mineos.pid'
-
-    cherrypy.config.update(global_conf)
-    if args.external_config:
-        cherrypy.config.update(args.external_config)
-        daemonize = cherrypy.config['misc.server_as_daemon']
-        pid_file = cherrypy.config['misc.pid_file'] if cherrypy.config['misc.pid_file'] else ''
-        base_dir = cherrypy.config['misc.base_directory']
-        assert base_dir
-        print cherrypy.config
-        
-    if daemonize:
-        from cherrypy.process.plugins import Daemonizer
-        Daemonizer(cherrypy.engine).subscribe()
-
-    if pid_file:
-        from cherrypy.process.plugins import PIDFile
-        PIDFile(cherrypy.engine, pid_file).subscribe()
-
-    if os.path.isfile(pid_file):
-        import sys
-        print 'MineOS instance already running (PID found)'
-        sys.exit(1)
 
     minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine, cron(base_dir).check_interval, 60)
     minute_crontab.subscribe()

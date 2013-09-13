@@ -17,7 +17,7 @@ name=mineos
 rcvar=mineos_enable
 
 command="/usr/local/bin/python"
-command_args="/usr/local/games/minecraft/server.py -d /var/games/minecraft --daemon"
+command_args="/usr/local/games/minecraft/server.py -c /usr/local/etc/mineos.conf"
 pidfile="/var/run/mineos.pid"
 
 # read configuration and set defaults
