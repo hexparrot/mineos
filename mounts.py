@@ -424,9 +424,15 @@ class Root(object):
             'payload': None
             }
 
+        from pwd import getpwnam
+        from grp import getgrgid
+
         try:
             instance = mc(server_name, self.login, self.base_directory)
             instance.import_server(**args)
+            instance = mc(server_name, None, self.base_directory)
+            instance.chown(self.login)
+            instance.chgrp(getgrgid(getpwnam(self.login).pw_gid).gr_name)
         except (RuntimeError, KeyError, OSError) as ex:
             response['result'] = 'error'
             retval = ex.message
@@ -456,8 +462,6 @@ class Root(object):
             'cmd': 'chgrp',
             'payload': None
             }
-
-        
 
         try:
             if self.login == mc.has_server_rights(self.login, server_name, self.base_directory):

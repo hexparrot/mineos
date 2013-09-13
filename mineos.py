@@ -1022,6 +1022,17 @@ class mc(object):
         return 'rm -- %(files)s' % required_arguments
 
     @sanitize
+    def command_chown(self, user, path):
+        """Executes chown on a directory"""
+        required_arguments = {
+            'user': user,
+            'path': path
+            }
+
+        self._previous_arguments = required_arguments
+        return 'chown -R %(user)s %(path)s' % required_arguments
+
+    @sanitize
     def command_chgrp(self, group, path):
         """Executes chgrp on a directory"""
         required_arguments = {
@@ -1296,9 +1307,16 @@ class mc(object):
                 pass
         return has_rights
 
+    def chown(self, user):
+        """Change the ownership of servers/backup/archive"""
+        for d in ('cwd', 'bwd', 'awd'):
+            self._make_directory(self.env[d])
+            self._command_direct(self.command_chown(user, self.env[d]), self.env[d])
+
     def chgrp(self, group):
         """Change the group ownership of servers/backup/archive"""
         for d in ('cwd', 'bwd', 'awd'):
+            self._make_directory(self.env[d])
             self._command_direct(self.command_chgrp(group, self.env[d]), self.env[d])
 
     @staticmethod
