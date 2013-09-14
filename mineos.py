@@ -329,7 +329,7 @@ class mc(object):
 
         self._load_config(generate_missing=True)
         if not self.profile_current:
-            raise RuntimeError('Assigned jar does not match copy in profile directory')
+            self.profile = self.profile
 
         self._command_direct(self.command_start, self.env['cwd'])
 
