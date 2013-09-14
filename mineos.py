@@ -1291,6 +1291,8 @@ class mc(object):
             return owner_user.pw_name
         elif username in owner_group.gr_mem:
             return owner_user.pw_name
+        elif username == 'root':
+            return owner_user.pw_name
         else:
             raise OSError("user '%s' does not have permissions on %s" % (username, path))
 

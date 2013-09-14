@@ -137,15 +137,23 @@ class ViewModel(object):
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
+
+        try:
+            mc.has_ownership(self.login, os.path.join(self.base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config'))
+        except OSError:
+            profile_editable = False
+        else:
+            profile_editable = True
     
         return dumps({
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
-            'whoami': cherrypy.session['_cp_username'],
+            'whoami': self.login,
             'df': dict(disk_free('/')._asdict()),
             'groups': [i.gr_name for i in getgrall()
-                       if cherrypy.session['_cp_username']==i.gr_name or \
-                          cherrypy.session['_cp_username'] in i.gr_mem],
+                       if self.login in i.gr_mem or \
+                          self.login in [i.gr_name, 'root']],
+            'pc_permissions': profile_editable
             })
 
     @cherrypy.expose
@@ -464,7 +472,8 @@ class Root(object):
             }
 
         try:
-            if self.login == mc.has_server_rights(self.login, server_name, self.base_directory):
+            if self.login == mc.has_server_rights(self.login, server_name, self.base_directory) or \
+               self.login == 'root':
                 instance = mc(server_name, None, self.base_directory)
                 instance.chgrp(group)
             else:

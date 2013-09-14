@@ -228,6 +228,16 @@
                         </ul>
                         <!--/ Breadcrumb -->
                     </div>
+                    <div class="navbar-outer">
+                        <div class="alert alert-success" data-bind="visible: dashboard.whoami() == 'root'">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            <strong>You are currently logged in as root.</strong> You may manage all servers as <strong>root</strong>, but creating new ones must be done as an unprivileged user.
+                        </div>
+                        <div class="alert" data-bind="visible: !dashboard.pc_permissions() && (page() == 'profiles' || page() == 'define_profile')">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            You do not have rights on <strong>profile.config</strong>, so you may prototype a profile but not update it.
+                        </div>
+                    </div>
                 </div>
                 <!--/ END Bootstrap Navbar -->
 
@@ -625,8 +635,54 @@
 
                 <!-- START Content -->
                 <div id="importable" class="container-fluid" data-bind="">
+
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() == 'root'">
+                        <!-- START General Elements -->
+                        <div class="" data-bind="">
+                            <header>
+                                <h4 class="title">Importing a server</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Creating and running a server should be done strictly as an unprivileged user to contain potential damage from server exploits, faulty plugins or java secuirty issues.</p>
+                                    <p>You can create a user from the command line using <strong>adduser</strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+
+                        <div class="widget">
+                            <section class="body">
+                                <div class="body-inner">
+                                    <pre class="bash">
+root@core ~# adduser will
+Adding user `will' ...
+Adding new group `will' (1001) ...
+Adding new user `will' (1000) with group `will' ...
+Creating home directory `/home/will' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+Changing the user information for will
+Enter the new value, or press ENTER for the default
+Full Name []:
+Room Number []:
+Work Phone []:
+Home Phone []:
+Other []:
+Is the information correct? [Y/n]
+
+                                    </pre>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Syntax Highlighter -->
+                    </div>
+
+
                     <!-- START Row -->
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
                         <table id="table_importable" class="table table-hover" data-bind="">
                           <thead>
                             <tr>
@@ -775,8 +831,53 @@
 
                 <!-- START Content -->
                 <div id="create_server" class="container-fluid">
+
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() == 'root'">
+                        <!-- START General Elements -->
+                        <div class="" data-bind="">
+                            <header>
+                                <h4 class="title">Create a Server</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Creating and running a server should be done strictly as an unprivileged user to contain potential damage from server exploits, faulty plugins or java secuirty issues.</p>
+                                    <p>You can create a user from the command line using <strong>adduser</strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+
+                        <div class="widget">
+                            <section class="body">
+                                <div class="body-inner">
+                                    <pre class="bash">
+root@core ~# adduser will
+Adding user `will' ...
+Adding new group `will' (1001) ...
+Adding new user `will' (1000) with group `will' ...
+Creating home directory `/home/will' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+Changing the user information for will
+Enter the new value, or press ENTER for the default
+Full Name []:
+Room Number []:
+Work Phone []:
+Home Phone []:
+Other []:
+Is the information correct? [Y/n]
+
+                                    </pre>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Syntax Highlighter -->
+                    </div>
+
                     <!-- START Row -->
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
                         <!-- START Form Wizard With Validation -->
                         <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="createnewserver">
                             <header><h4 class="title">Create a New Server</h4></header>
