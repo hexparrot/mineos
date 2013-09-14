@@ -237,7 +237,7 @@
                         </div>
                         <div class="alert" data-bind="visible: !dashboard.pc_permissions() && (page() == 'profiles' || page() == 'define_profile')">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            You do not have rights on <strong>profile.config</strong>, so you may prototype a profile but not update it.
+                            You do not have rights on <strong>/profiles/profile.config</strong>, so you may prototype a profile but not update it.
                         </div>
                     </div>
                 </div>
@@ -306,6 +306,9 @@
 
                                     <!-- START Auto Update Chart -->
                                     <div class="span11 pull-left widget">
+                                        <header>
+                                            <h4 class="title">Load averages over last minute</h4>
+                                        </header>
                                         <div class="flot" id="load_averages"></div>
                                     </div>
                                     <!--/ END Auto Update Chart -->
@@ -682,9 +685,16 @@ Is the information correct? [Y/n]
                         <!--/ END Syntax Highlighter -->
                     </div>
 
-
                     <!-- START Row -->
                     <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
+                        <header>
+                            <h4 class="title">Create Server from an Archive</h4>
+                        </header>
+                        <section class="body">
+                            <div class="body-inner">
+                                <p>The files listed below are those located in the <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Acceptable archives are .tar, .tar.gz, .tgz, and .zip">/import</strong> directory of your Minecraft data files.</p>
+                            </div>
+                        </section>
                         <table id="table_importable" class="table table-hover" data-bind="">
                           <thead>
                             <tr>
@@ -721,6 +731,17 @@ Is the information correct? [Y/n]
                         <!--/ END Page/Section header -->
                     </div>
                     <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <section class="body">
+                            <div class="body-inner">
+                                <p>Server profiles may be prototyped by any user, but may only be updated by a user with write permissions on <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Users with group write access may UPDATE &amp; REMOVE profiles">profile.config</strong>. You may share this privilege with additional users by assigning <strong>profile.config</strong> to a new group and then adding authorized users to this group.</p>
+                            </div>
+                        </section>
+                    </div>
+                    <!--/ END Row -->
+
                     <!-- START Row -->
                     <div class="row-fluid">
                         <table id="table_profiles_view" class="table table-hover">
