@@ -194,7 +194,8 @@ function webui() {
 		servers_up: ko.observable(0),
 		disk_usage: ko.observable(),
 		disk_usage_pct: ko.observable(),
-		pc_permissions: ko.observable()
+		pc_permissions: ko.observable(),
+		git_hash: ko.observable()
 	}
 
 	self.logs = {
@@ -693,6 +694,7 @@ function webui() {
 										   str_to_bytes(self.dashboard.disk_usage().total) * 100).toFixed(1));
 			self.dashboard.groups(data.groups);
 			self.dashboard.pc_permissions(data.pc_permissions);
+			self.dashboard.git_hash(data.git_hash);
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();

@@ -143,7 +143,7 @@ class ViewModel(object):
                     
     @cherrypy.expose
     def dashboard(self):
-        from procfs_reader import entries, proc_uptime, disk_free
+        from procfs_reader import entries, proc_uptime, disk_free, git_hash
         from grp import getgrall
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
@@ -164,7 +164,8 @@ class ViewModel(object):
             'groups': [i.gr_name for i in getgrall()
                        if self.login in i.gr_mem or \
                           self.login in [i.gr_name, 'root']],
-            'pc_permissions': profile_editable
+            'pc_permissions': profile_editable,
+            'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__)))
             })
 
     @cherrypy.expose

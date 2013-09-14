@@ -148,3 +148,13 @@ def tail(f, window=50):
         block -= 1
     return ''.join(data).splitlines()[-window:]
 
+def git_hash(path):
+    """Returns the tag or short commit hash of a git path"""
+    from distutils.spawn import find_executable
+    from subprocess import check_output
+    from shlex import split
+
+    try:
+        return check_output(split('%s describe --always' % find_executable('git')), cwd=path).strip()
+    except:
+        return ''
