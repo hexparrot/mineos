@@ -44,11 +44,6 @@ class ViewModel(object):
         for i in self.server_list():
             instance = mc(i, self.login, self.base_directory)
 
-            try:
-                ping = instance.ping
-            except KeyError:
-                continue
-            
             srv = {
                 'server_name': i,
                 'profile': instance.profile,
@@ -58,8 +53,24 @@ class ViewModel(object):
                 'memory': instance.memory,
                 'java_xmx': instance.server_config['java':'java_xmx']
                 }
-            
-            srv.update(dict(instance.ping._asdict()))
+
+            try:
+                ping = instance.ping
+            except KeyError:
+                continue
+            except IndexError:
+                #assert d[0] == '\xff'
+                #IndexError: string index out of range
+                srv.update({
+                    'protocol_version': '',
+                    'server_version': '',
+                    'motd': '',
+                    'players_online': -1,
+                    'max_players': self.server_properties['max-players'::0]
+                    })
+            else:
+                srv.update(dict(instance.ping._asdict()))
+                
             servers.append(srv)
 
         return dumps(servers)
