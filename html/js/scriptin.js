@@ -37,40 +37,56 @@ function model_property(server_name, option, value, section, new_prop) {
 	self.section = ko.observable(section);
 	self.success = ko.observable(null);
 	self.newly_created = ko.observable(new_prop || false);
+	self.type = 'textbox';
 
-	if (section) {
-		var true_false = [
-			['onreboot', 'restore'],
-			['onreboot', 'start']
-		];
+	self.check_type = function(option, section) {
+		if (section) {
+			var fixed = [
+				{section: 'onreboot', option: 'restore', type: 'truefalse'},
+				{section: 'onreboot', option: 'start', type: 'truefalse'},
+				{section: 'crontabs', option: 'archive_interval', type: 'interval'},
+				{section: 'crontabs', option: 'backup_interval', type: 'interval'}
+			]
 
-		var match = true_false.filter(function(v) {
-		  return self.section() == v[0] && self.option() == v[1]
-		})
-
-		if (match.length) {
-			self.type = 'truefalse';
-			if (self.val().toLowerCase() == 'true')
-				self.val(true);
-			else
-				self.val(false);
+			$.each(fixed, function(i,v) {
+				if (v.section == section && v.option == option){
+					self.type = v.type;
+					self.id = v.id;
+					return false;
+				}
+			})
 		} else {
-			self.type = 'textbox';
-		}
-	} else {
-		var true_false = ['pvp', 'allow-nether', 'spawn-animals', 'enable-query', 
-						  'generate-structures', 'hardcore', 'allow-flight', 'online-mode',
-						  'spawn-monsters', 'force-gamemode', 'spawn-npcs', 'snooper-enabled',
-						  'white-list','enable-rcon'];
+			var fixed = [
+				{option: 'pvp', type: 'truefalse'},
+				{option: 'allow-nether', type: 'truefalse'},
+				{option: 'spawn-animals', type: 'truefalse'},
+				{option: 'enable-query', type: 'truefalse'},
+				{option: 'generate-structures', type: 'truefalse'},
+				{option: 'hardcore', type: 'truefalse'},
+				{option: 'allow-flight', type: 'truefalse'},
+				{option: 'online-mode', type: 'truefalse'},
+				{option: 'spawn-monsters', type: 'truefalse'},
+				{option: 'force-gamemode', type: 'truefalse'},
+				{option: 'spawn-npcs', type: 'truefalse'},
+				{option: 'snooper-enabled', type: 'truefalse'},
+				{option: 'white-list', type: 'truefalse'},
+				{option: 'enable-rcon', type: 'truefalse'}
+			]
 
-		if (true_false.indexOf(option) >= 0) {
-			self.type = 'truefalse';
+			$.each(fixed, function(i,v) {
+				if (v.option == option){
+					self.type = v.type;
+					return false;
+				}
+			})
+		}
+
+		if (self.type == 'truefalse') {
 			if (self.val().toLowerCase() == 'true')
 				self.val(true);
 			else
 				self.val(false);
-		} else
-			self.type = 'textbox';
+		}
 	}
 
 	self.toggle = function(model, eventobj) {
@@ -89,6 +105,18 @@ function model_property(server_name, option, value, section, new_prop) {
 			$(target).iCheck('check');
 			self.val(true);
 		}
+	}
+
+	self.change_select = function(model, eventobj) {
+		var new_value = $(eventobj.currentTarget).val();
+		var params = {
+			server_name: server_name,
+			cmd: 'modify_config',
+			option: self.option(),
+			value: new_value,
+			section: self.section()
+		}
+		$.getJSON('/server', params)
 	}
 
 	self.val.subscribe(function(value) {
@@ -115,6 +143,9 @@ function model_property(server_name, option, value, section, new_prop) {
 		}
 		$.getJSON('/server', params).then(flash_success, flash_failure)
 	}, self)
+
+	self.check_type(option, section);
+	self.id = '{0}_{1}'.format((section ? section : ''), option);
 }
 
 function model_logline(str) {
@@ -742,6 +773,16 @@ function webui() {
 	            radioClass: 'iradio_minimal-grey',
 	            increaseArea: '40%' // optional
 	        });
+
+			setTimeout(function() {
+		        $.each(self.vmdata.sc(), function(i,v) {
+	        		if (v.type == 'interval'){
+						$('#{0}_{1} option'.format(v.section(), v.option())).filter(function () { 
+							return $(this).val() == v.val()
+						}).prop('selected', true)
+	        		}
+	        	})
+			}, 50)
 		},
 		importable: function(data) {
 			self.vmdata.importable(data.ascending_by('filename'));

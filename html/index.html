@@ -1151,6 +1151,19 @@ Is the information correct? [Y/n]
                                         <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
                                             <input type="checkbox" data-bind="checked: val" class="truefalse">
                                         </span>
+                                        <span data-bind="if: $data.type == 'interval'">
+                                            <select class="input-medium" data-bind="attr: {id: $data.id}, event: { change: $data.change_select }">
+                                                <option value="">Skip</option>
+                                                <option value="30">Every 30 minutes</option>
+                                                <option value="60">1 Hour</option>
+                                                <option value="120">2 Hours</option>
+                                                <option value="180">3 Hours</option>
+                                                <option value="240">4 Hours</option>
+                                                <option value="360">6 Hours</option>
+                                                <option value="720">12 Hours</option>
+                                                <option value="0">24 Hours</option>
+                                            </select>
+                                        </span>
                                     </div>
                                 </div>
                               </td>
