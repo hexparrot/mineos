@@ -97,14 +97,6 @@
             <aside id="sidebar">
                 <!-- START Sidebar Content -->
                 <div class="sidebar-content">
-                    <!-- START Sidebar Tab -->
-                    <ul class="nav nav-tabs">
-                        <li data-bind="css: {'active': page() == 'dashboard'}"><a data-bind="click: show_page" data-page="dashboard"><span class="icon icone-bar-chart"></span></a></li>
-                        <li data-bind="css: {'active': page() == 'create_server'}"><a data-bind="click: show_page" data-page="create_server"><span class="icon icone-plus-sign"></span></a></li>
-                        <li data-bind="css: {'active': page() == 'define_profile'}"><a data-bind="click: show_page" data-page="define_profile"><span class="icon icone-tag"></span></a></li>
-                    </ul>
-                    <!--/ END Sidebar Tab -->
-
                     <!-- START Tab Content -->
                     <div class="tab-content">
                         <!-- START Tab Pane(menu) -->
@@ -127,10 +119,20 @@
                                     <!--/ END Menu -->
 
                                     <!-- START Menu -->
-                                    <li class="accordion-group" data-bind="css: {'active': page() == 'profiles'}">
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'profiles' || page() == 'define_profile'}">
                                         <a data-bind="click: show_page" data-page="profiles">
                                             <span class="icon icone-tags"></span>
-                                            <span class="text">Profiles</span>
+                                            <span class="text">Manage Profiles</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'create_server'}">
+                                        <a data-bind="click: show_page" data-page="create_server">
+                                            <span class="icon icone-share"></span>
+                                            <span class="text">Create New Server</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -140,7 +142,7 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
                                         <a data-bind="click: show_page" data-page="importable">
                                             <span class="icon icone-share"></span>
-                                            <span class="text">Archive Import</span>
+                                            <span class="text">Create Server from Archive</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -640,7 +642,7 @@
                         <!-- START General Elements -->
                         <div class="" data-bind="">
                             <header>
-                                <h4 class="title">Importing a server</h4>
+                                <h4 class="title">Create Server from an Archive</h4>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
@@ -748,6 +750,7 @@ Is the information correct? [Y/n]
                           <tfoot>
                             <tr>
                               <td colspan="6">
+                                <button class="btn" data-toggle="dropdown" data-bind="click: show_page" data-page="define_profile">Create Custom Profile</button>
                               	<div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Create Stock Profile <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
