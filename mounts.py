@@ -66,7 +66,7 @@ class ViewModel(object):
                     'server_version': '',
                     'motd': '',
                     'players_online': -1,
-                    'max_players': self.server_properties['max-players'::0]
+                    'max_players': instance.server_properties['max-players'::0]
                     })
             else:
                 srv.update(dict(instance.ping._asdict()))
