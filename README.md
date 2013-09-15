@@ -2,12 +2,10 @@ This is the github repository for MineOS Minecraft hosting and management script
 
 Goals for this version:
 
-*Full user-management system co-ordinated with actually /etc/shadow passwords
-
-*Self-contained, script-installable package with no external packages needing reconfiguration (e.g., webserver)
-
+*Full user-management system using /etc/shadow passwords
+*Self-contained, script-installable package with python-based webserver Cherrypy
 *Web user interface with modern Knockout templating
-
 *Command-line usage
 
-*Downloading and updating of Python scripts and Minecraft server software packages.
+Installation tutorial: http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
+Youtube Instructions: http://mineos.codeemo.com/mineoswiki/index.php?title=Installing_MineOS
