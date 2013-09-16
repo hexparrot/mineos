@@ -242,6 +242,10 @@
                             <button type="button" class="close" data-dismiss="alert">×</button>
                             You do not have rights on <strong>/profiles/profile.config</strong>, so you may prototype a profile but not update it.
                         </div>
+                        <div class="alert alert-error" data-bind="visible: !parseInt(vm.server().java_xmx) > 0 && !$.isEmptyObject(vm.server())">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            The <strong>server.config</strong> for this server is does not contain a valid, positive integer for the maximum java heapsize (java_xmx).
+                        </div>
                     </div>
                 </div>
                 <!--/ END Bootstrap Navbar -->

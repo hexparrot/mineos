@@ -44,6 +44,11 @@ class ViewModel(object):
         for i in self.server_list():
             instance = mc(i, self.login, self.base_directory)
 
+            try:
+                java_xmx = int(instance.server_config['java':'java_xmx'])
+            except (KeyError, ValueError):
+                java_xmx = 0
+
             srv = {
                 'server_name': i,
                 'profile': instance.profile,
@@ -51,7 +56,7 @@ class ViewModel(object):
                 'ip_address': instance.ip_address,
                 'port': instance.port,
                 'memory': instance.memory,
-                'java_xmx': instance.server_config['java':'java_xmx']
+                'java_xmx': java_xmx
                 }
 
             try:
