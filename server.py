@@ -24,6 +24,18 @@ class cron(cherrypy.process.plugins.SimplePlugin):
                 path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], i)
                 getattr(mc(i, path_owner(path_), self.base_directory), action)()
 
+def tally():
+    import platform, urllib2, urllib
+    from collections import namedtuple
+
+    uname = namedtuple('uname', 'system node release version machine processor')
+    server = uname(*platform.uname())
+
+    target = 'http://minecraft.codeemo.com/tally/tally.py'
+    parameters = urllib.urlencode(dict(server._asdict()))
+
+    urllib2.urlopen(target, parameters)
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
 
@@ -171,6 +183,11 @@ if __name__ == "__main__":
     minute_crontab.subscribe()
 
     import mounts, auth
+
+    try:
+        tally()
+    except:
+        pass
 
     cherrypy.tree.mount(mounts.Root(html_dir, base_dir), "/", config=root_conf)
     cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
