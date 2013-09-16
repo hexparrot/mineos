@@ -144,7 +144,7 @@ class ViewModel(object):
     @cherrypy.expose
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
-        from grp import getgrall
+        from grp import getgrall, getgrnam
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
@@ -160,6 +160,7 @@ class ViewModel(object):
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': self.login,
+            'group': getgrnam(self.login).gr_name,
             'df': dict(disk_free('/')._asdict()),
             'groups': [i.gr_name for i in getgrall()
                        if self.login in i.gr_mem or \

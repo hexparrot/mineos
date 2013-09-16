@@ -56,7 +56,7 @@
                 <!-- START Logo -->
                 <div class="logo hidden-phone hidden-tablet">
                     <a href="#"><img src="img/logo-white.png" alt=""></a>
-                    <small class="version" data-bind="text: dashboard.git_hash"></small>
+                    <small class="version" data-bind=""></small>
                 </div>
                 <!--/ END Logo -->
 
@@ -66,11 +66,14 @@
 
                 <!-- START Toolbar -->
                 <ul class="toolbar" id="toolbar">
+                    <li>
+                        <a data-bind="attr: {href: 'https://github.com/hexparrot/mineos/commit/'+dashboard.git_hash()}, text: 'webui version: '+dashboard.git_hash()"></a>
+                    </li>
                     <!-- START Profile -->
                     <li class="profile">
                         <a href="#" data-toggle="dropdown">
                             <span class="avatar"><img src="img/avatar/avatar.png" alt=""></span>
-                            <span class="text"><span class="role" data-bind="text: dashboard.whoami"> </span></span>
+                            <span class="text"><span data-bind="text: dashboard.whoami">&nbsp;</span><span class="role" data-bind="text: dashboard.group">&nbsp;</span></span>
                             <span class="arrow icone-caret-down"></span>
                         </a>
                         <!-- START Dropdown Menu -->

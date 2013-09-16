@@ -188,6 +188,7 @@ function webui() {
 
 	self.dashboard = {
 		whoami: ko.observable(''),
+		group: ko.observable(),
 		groups: ko.observableArray([]),
 		memfree: ko.observable(),
 		uptime: ko.observable(),
@@ -689,6 +690,7 @@ function webui() {
 			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
 			self.dashboard.memfree(data.memfree);
 			self.dashboard.whoami(data.whoami);
+			self.dashboard.group(data.group);
 			self.dashboard.disk_usage(data.df);
 			self.dashboard.disk_usage_pct((str_to_bytes(self.dashboard.disk_usage().used) / 
 										   str_to_bytes(self.dashboard.disk_usage().total) * 100).toFixed(1));

@@ -50,3 +50,7 @@ li.accordion-group a, ul.nav  {
 	background-color: #f89406;
 	color: white;
 }
+#header > .logo > a {
+	font-size: 90%;
+	font-weight: normal;
+}
