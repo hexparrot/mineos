@@ -495,11 +495,11 @@ class mc(object):
 
         if profile_dict['type'] == 'unmanaged':
             raise RuntimeWarning('No action taken; unmanaged profile')
-        elif profile_dict['type'] == 'standard_jar':
+        elif profile_dict['type'] in ['archived_jar', 'standard_jar']:
             with self.profile_config as pc:
                 pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
                 pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
-            
+
             old_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'])
 
             try:
@@ -525,19 +525,43 @@ class mc(object):
             if expected_md5 and expected_md5 != new_file_md5:
                 raise RuntimeError('Discarding download; expected md5 != actual md5')
             elif old_file_md5 == new_file_md5:
-                os.unlink(new_file_path) #os.unlink or _command_direct?
+                os.unlink(new_file_path)
                 raise RuntimeWarning('Discarding download; new md5 == existing md5')
+            '''elif self.profile_config[profile:'save_as_md5'] == new_file_md5:
+                potentially removable.
+                os.unlink(new_file_path)
+                raise RuntimeWarning('Discarding download; new md5 == existing md5')'''
 
-            from shutil import move
-            move(new_file_path, old_file_path)
+            if profile_dict['type'] == 'archived_jar':
+                if os.path.splitext(profile_dict['save_as'])[1].lower() in ['.zip']:
+                    import zipfile
+                    if zipfile.is_zipfile(new_file_path):
+                        with zipfile.ZipFile(new_file_path, mode='r') as zipchive:
+                            zipchive.extractall(os.path.join(self.env['pwd'], profile))
+                elif os.path.splitext(profile_dict['save_as'])[1].lower() in ['.tgz', '.gz', '.bz2', '.tar']:
+                    import tarfile
+                    if tarfile.is_tarfile(new_file_path):
+                        with tarfile.open(new_file_path, mode='r') as tarchive:
+                            tarchive.extractall(os.path.join(self.env['pwd'], profile))
 
-            active_md5 = self._md5sum(old_file_path)
+                new_run_as = os.path.join(os.path.join(self.env['pwd'], profile, profile_dict['run_as']))
+                with self.profile_config as pc:
+                    pc[profile:'save_as_md5'] = new_file_md5
+                    pc[profile:'run_as_md5'] = self._md5sum(new_run_as)
 
-            with self.profile_config as pc:
-                pc[profile:'save_as_md5'] = active_md5
-                pc[profile:'run_as_md5'] = active_md5
+                os.unlink(new_file_path)
+                return new_file_md5
+            elif profile_dict['type'] == 'standard_jar':
+                from shutil import move
 
-            return active_md5
+                active_md5 = self._md5sum(old_file_path)
+
+                with self.profile_config as pc:
+                    pc[profile:'save_as_md5'] = active_md5
+                    pc[profile:'run_as_md5'] = active_md5
+
+                move(new_file_path, old_file_path)
+                return self._md5sum(old_file_path)
         else:
             raise NotImplementedError("This type of profile is not implemented yet.")
 
