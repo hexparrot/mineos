@@ -635,7 +635,7 @@ function webui() {
 			return $(this).val();
 		});
 
-		properties['ignore'] = (props.length > 0) ? props.join(' ') : '';
+		properties['ignore'] = (props.length > 0) ? props.get().join(' ') : '';
 		delete properties.tags;
 
 		params = {

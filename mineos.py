@@ -554,13 +554,13 @@ class mc(object):
             elif profile_dict['type'] == 'standard_jar':
                 from shutil import move
 
+                move(new_file_path, old_file_path)
                 active_md5 = self._md5sum(old_file_path)
 
                 with self.profile_config as pc:
                     pc[profile:'save_as_md5'] = active_md5
                     pc[profile:'run_as_md5'] = active_md5
-
-                move(new_file_path, old_file_path)
+                
                 return self._md5sum(old_file_path)
         else:
             raise NotImplementedError("This type of profile is not implemented yet.")
