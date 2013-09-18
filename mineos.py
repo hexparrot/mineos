@@ -563,18 +563,24 @@ class mc(object):
             raise NotImplementedError("This type of profile is not implemented yet.")
 
     @staticmethod
-    def server_version(filepath):
-        """Extract server version from jarfile"""
+    def server_version(filepath, guess):
+        """Extract server version from jarfile and fallback
+        to guessing by URL"""
         import zipfile
         from xml.dom.minidom import parseString
-
         
         try:
             jarfile = zipfile.ZipFile(filepath, 'r')
             xml = parseString(zipfile.ZipFile(filepath, 'r').read(r'META-INF/maven/org.bukkit/craftbukkit/pom.xml'))
             return xml.getElementsByTagName('version')[0].firstChild.nodeValue
         except:
-            return ''
+            if guess:
+                import re
+                match = re.match('https://s3.amazonaws.com/Minecraft.Download/versions/([^/]+)', guess)
+                if match:
+                    return match.group(1)
+            else:
+                return ''
 
 #actual command execution methods
 

@@ -85,20 +85,23 @@ class ViewModel(object):
         def pdict():
             for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
                 path_ = os.path.join(self.base_directory, 'profiles', profile)
+                run_as = os.path.join(path_,opt_dict['run_as'])
+                save_as = os.path.join(path_,opt_dict['save_as'])
+                
                 profile_info = opt_dict
                 profile_info['profile'] = profile
-                profile_info['version'] = mc.server_version(os.path.join(path_,opt_dict['run_as']))
+                profile_info['version'] = mc.server_version(run_as, profile_info['url'])
                 
                 try:
-                    profile_info['save_as_md5'] = mc._md5sum(os.path.join(path_,opt_dict['save_as']))
-                    profile_info['save_as_mtime'] = mc._mtime(os.path.join(path_,opt_dict['save_as']))
+                    profile_info['save_as_md5'] = mc._md5sum(save_as)
+                    profile_info['save_as_mtime'] = mc._mtime(save_as)
                 except IOError:
                     profile_info['save_as_md5'] = ''
                     profile_info['save_as_mtime'] = ''
                     
                 try:
-                    profile_info['run_as_mtime'] = mc._mtime(os.path.join(path_,opt_dict['run_as']))
-                    profile_info['run_as_md5'] = mc._md5sum(os.path.join(path_,opt_dict['run_as']))
+                    profile_info['run_as_mtime'] = mc._mtime(run_as)
+                    profile_info['run_as_md5'] = mc._md5sum(run_as)
                 except IOError:
                     profile_info['run_as_mtime'] = ''
                     profile_info['run_as_md5'] = ''
