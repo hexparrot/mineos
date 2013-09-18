@@ -829,6 +829,17 @@ Is the information correct? [Y/n]
                                         </figure>
                                         <!--/ END Summary -->
 
+                                        <!-- START Summary -->
+                                        <!-- ko if: version -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle teal"><span class="icone-trophy"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: version"></span><small>Detected Version</small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!-- /ko -->
+                                        <!--/ END Summary -->
+
                                     </div>
                                 </div>
                             </section>

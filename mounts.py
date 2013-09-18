@@ -87,6 +87,7 @@ class ViewModel(object):
                 path_ = os.path.join(self.base_directory, 'profiles', profile)
                 profile_info = opt_dict
                 profile_info['profile'] = profile
+                profile_info['version'] = mc.server_version(os.path.join(path_,opt_dict['run_as']))
                 
                 try:
                     profile_info['save_as_md5'] = mc._md5sum(os.path.join(path_,opt_dict['save_as']))

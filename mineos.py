@@ -562,6 +562,20 @@ class mc(object):
         else:
             raise NotImplementedError("This type of profile is not implemented yet.")
 
+    @staticmethod
+    def server_version(filepath):
+        """Extract server version from jarfile"""
+        import zipfile
+        from xml.dom.minidom import parseString
+
+        
+        try:
+            jarfile = zipfile.ZipFile(filepath, 'r')
+            xml = parseString(zipfile.ZipFile(filepath, 'r').read(r'META-INF/maven/org.bukkit/craftbukkit/pom.xml'))
+            return xml.getElementsByTagName('version')[0].firstChild.nodeValue
+        except:
+            return ''
+
 #actual command execution methods
 
     @staticmethod
