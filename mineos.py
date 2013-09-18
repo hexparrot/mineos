@@ -400,7 +400,7 @@ class mc(object):
             prefix_ = os.path.commonprefix(members_)
         elif zipfile.is_zipfile(filepath):
             archive_ = zipfile.ZipFile(filepath, 'r')
-            members_ = archive_.getnames()
+            members_ = archive_.namelist()
             prefix_ = os.path.commonprefix(members_)
         else:
             raise NotImplementedError('Ignoring command {import_server};'
@@ -533,16 +533,13 @@ class mc(object):
                 raise RuntimeWarning('Discarding download; new md5 == existing md5')'''
 
             if profile_dict['type'] == 'archived_jar':
-                if os.path.splitext(profile_dict['save_as'])[1].lower() in ['.zip']:
-                    import zipfile
-                    if zipfile.is_zipfile(new_file_path):
-                        with zipfile.ZipFile(new_file_path, mode='r') as zipchive:
-                            zipchive.extractall(os.path.join(self.env['pwd'], profile))
-                elif os.path.splitext(profile_dict['save_as'])[1].lower() in ['.tgz', '.gz', '.bz2', '.tar']:
-                    import tarfile
-                    if tarfile.is_tarfile(new_file_path):
-                        with tarfile.open(new_file_path, mode='r') as tarchive:
-                            tarchive.extractall(os.path.join(self.env['pwd'], profile))
+                import zipfile, tarfile
+                if zipfile.is_zipfile(new_file_path):
+                    with zipfile.ZipFile(new_file_path, mode='r') as zipchive:
+                        zipchive.extractall(os.path.join(self.env['pwd'], profile))
+                elif tarfile.is_tarfile(new_file_path):
+                    with tarfile.open(new_file_path, mode='r') as tarchive:
+                        tarchive.extractall(os.path.join(self.env['pwd'], profile))
 
                 new_run_as = os.path.join(os.path.join(self.env['pwd'], profile, profile_dict['run_as']))
                 with self.profile_config as pc:
