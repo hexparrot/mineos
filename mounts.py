@@ -160,7 +160,7 @@ class ViewModel(object):
 
         try:
             mc.has_ownership(self.login, os.path.join(self.base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config'))
-        except OSError:
+        except (OSError, KeyError):
             profile_editable = False
         else:
             profile_editable = True

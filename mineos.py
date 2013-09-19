@@ -1318,7 +1318,7 @@ class mc(object):
 
     @staticmethod
     def has_ownership(username, path):
-        from pwd import getpwuid
+        from pwd import getpwuid, getpwnam
         from grp import getgrgid
 
         st = os.stat(path)
@@ -1327,15 +1327,16 @@ class mc(object):
 
         owner_user = getpwuid(uid)
         owner_group = getgrgid(gid)
+        user_info = getpwnam(username)
 
-        if username in [owner_user.pw_name, owner_group.gr_name]:
-            return owner_user.pw_name
-        elif username in owner_group.gr_mem:
+        if user_info.pw_uid == uid or \
+           user_info.pw_gid == gid or \
+           username in owner_group.gr_mem:
             return owner_user.pw_name
         elif username == 'root':
             return owner_user.pw_name
         else:
-            raise OSError("user '%s' does not have permissions on %s" % (username, path))
+            raise OSError("User '%s' does not have permissions on %s" % (username, path))
 
     @classmethod
     def has_server_rights(cls, username, server_name, base_directory):
