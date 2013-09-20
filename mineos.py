@@ -340,13 +340,11 @@ class mc(object):
         self._command_direct(self.command_kill, self.env['cwd'])
 
     @server_exists(True)
-    @server_up(False)
     def archive(self):
         """Creates a timestamped, gzipped tarball of the server contents."""
         self._make_directory(self.env['awd'])
         if self.up:
             self._command_stuff('save-off')
-            self._command_stuff('save-all')
             self._command_direct(self.command_archive, self.env['cwd'])
             self._command_stuff('save-on')
         else:

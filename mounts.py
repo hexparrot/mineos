@@ -286,7 +286,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -336,7 +336,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -373,9 +373,12 @@ class Root(object):
                     log.seek(cherrypy.session['log_offset'], 0)
                     retval = log.readlines()
                     cherrypy.session['log_offset'] = os.stat(instance.env['log']).st_size
-        except (RuntimeError, KeyError, CalledProcessError) as ex:
+        except (RuntimeError, KeyError) as ex:
             response['result'] = 'error'
             retval = ex.message
+        except CalledProcessError as ex:
+            response['result'] = 'error'
+            retval = ex.output
         except (RuntimeWarning, OSError) as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -436,7 +439,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -473,7 +476,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -510,7 +513,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
@@ -545,7 +548,7 @@ class Root(object):
             retval = ex.message
         except CalledProcessError as ex:
             response['result'] = 'error'
-            retval = ex.message
+            retval = ex.output
         except RuntimeWarning as ex:
             response['result'] = 'warning'
             retval = ex.message
