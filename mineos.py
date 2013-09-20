@@ -1363,6 +1363,10 @@ class mc(object):
             self._make_directory(self.env[d])
             self._command_direct(self.command_chgrp(group, self.env[d]), self.env[d])
 
+    def chgrp_pc(self, group):
+        """Change the group ownership of profile.config"""
+        self._command_direct('chgrp %s %s' % (group, self.env['pc']), self.env['pwd'])
+
     @staticmethod
     def _list_subdirs(directory):
         """Returns a list of all subdirectories of a path."""

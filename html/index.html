@@ -743,16 +743,6 @@ Is the information correct? [Y/n]
 
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <section class="body">
-                            <div class="body-inner">
-                                <p>Server profiles may be prototyped by any user, but may only be updated by a user with write permissions on <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Users with group write access may UPDATE &amp; REMOVE profiles">profile.config</strong>. You may share this privilege with additional users by assigning <strong>profile.config</strong> to a new group and then adding authorized users to this group.</p>
-                            </div>
-                        </section>
-                    </div>
-                    <!--/ END Row -->
-
-                    <!-- START Row -->
-                    <div class="row-fluid">
                         <table id="table_profiles_view" class="table table-hover">
                           <thead>
                             <tr>
@@ -794,6 +784,21 @@ Is the information correct? [Y/n]
                             </tr>
                           </tfoot>
                         </table>
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <section class="body">
+                            <div class="body-inner">
+                                <p>Server profiles may be prototyped by any user, but may only be updated by a user with write permissions on <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="chmod g+w profile.config">profile.config</strong>.
+                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">The <strong>root</strong> user may extend these privileges to additional users by assigning <strong>profile.config</strong> to a new group and then adding authorized users to this group.</span>
+                                <span data-bind="visible: $root.dashboard.whoami() == 'root'">You may share this privilege with additional users by assigning <strong>profile.config</strong> to a new group and then adding authorized users to this group.</span></p>
+                                Members of this group may update and remove profiles: 
+                                <select id="pc_group" name="pc_group" data-bind="visible: $root.dashboard.whoami() == 'root', options: $root.dashboard.groups, event: { change: $root.change_pc_group }"></select>
+                                <strong data-bind="visible: $root.dashboard.whoami() != 'root', text: $root.dashboard.pc_group"></strong>
+                            </div>
+                        </section>
                     </div>
                     <!--/ END Row -->
                 </div>
@@ -1082,7 +1087,6 @@ Is the information correct? [Y/n]
                                             </div>
                                         </div>
                                     </fieldset>
-                                    
                                     
                                     <div class="form-actions">
                                         <input class="btn" id="back-1" value="Back" type="reset">

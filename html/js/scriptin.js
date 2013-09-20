@@ -196,6 +196,7 @@ function webui() {
 		disk_usage: ko.observable(),
 		disk_usage_pct: ko.observable(),
 		pc_permissions: ko.observable(),
+		pc_group: ko.observable(),
 		git_hash: ko.observable()
 	}
 
@@ -421,6 +422,13 @@ function webui() {
 		}
 
 		$.getJSON('/change_group', params).then(self.ajax.received, self.ajax.lost)
+	}
+
+	self.change_pc_group = function(vm, eventobj) {
+		var params = {
+			group: $(eventobj.currentTarget).val()
+		}
+		$.getJSON('/change_pc_group', params).then(self.ajax.received, self.ajax.lost)
 	}
 
 	self.command = function(vm, eventobj) {
@@ -696,7 +704,12 @@ function webui() {
 										   str_to_bytes(self.dashboard.disk_usage().total) * 100).toFixed(1));
 			self.dashboard.groups(data.groups);
 			self.dashboard.pc_permissions(data.pc_permissions);
+			self.dashboard.pc_group(data.pc_group);
 			self.dashboard.git_hash(data.git_hash);
+
+			$('#pc_group option').filter(function () { 
+				return $(this).val() == data.pc_group
+			}).prop('selected', true);
 		},
 		pings: function(data) {
 			self.vmdata.pings.removeAll();

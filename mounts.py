@@ -153,17 +153,21 @@ class ViewModel(object):
     @cherrypy.expose
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
-        from grp import getgrall, getgrnam
+        from grp import getgrall, getgrnam, getgrgid
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
 
         try:
-            mc.has_ownership(self.login, os.path.join(self.base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config'))
+            pc_path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config')
+            mc.has_ownership(self.login, pc_path)
         except (OSError, KeyError):
             profile_editable = False
         else:
             profile_editable = True
+        finally:
+            st = os.stat(pc_path)
+            pc_group = getgrgid(st.st_gid).gr_name
     
         return dumps({
             'uptime': str(proc_uptime()[0]),
@@ -175,6 +179,7 @@ class ViewModel(object):
                        if self.login in i.gr_mem or \
                           self.login in [i.gr_name, 'root']],
             'pc_permissions': profile_editable,
+            'pc_group': pc_group,
             'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__)))
             })
 
@@ -515,4 +520,39 @@ class Root(object):
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)  
-        
+
+    @cherrypy.expose
+    @require()
+    def change_pc_group(self, **raw_args):
+        args = {k:str(v) for k,v in raw_args.iteritems()}
+        group = args.pop('group')
+        retval = None
+
+        response = {
+            'result': None,
+            'cmd': 'chgrp_pc',
+            'payload': None
+            }
+
+        try:
+            if self.login == 'root':
+                instance = mc('throwaway', None, self.base_directory)
+                instance.chgrp_pc(group)
+            else:
+                raise OSError('Group assignment to %s failed. Only the superuser may make change groups.' % group)
+        except (RuntimeError, KeyError, OSError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except CalledProcessError as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        else:
+            response['result'] = 'success'
+            retval = "profile.config group ownership granted to '%s'" % group
+
+        response['payload'] = to_jsonable_type(retval)
+        return dumps(response)  
+      
