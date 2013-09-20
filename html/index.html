@@ -548,6 +548,7 @@
                               <th scope="col">Timestamp</th>
                               <th scope="col">Increment Size</th>
                               <th scope="col">Cumulative Size</th>
+                              <th scope="col"></th>
                             </tr>
                           </thead>
                           <tfoot>
@@ -558,6 +559,7 @@
                               <td data-bind="text: $data.timestamp"></td>
                               <td data-bind="text: $data.increment_size"></td>
                               <td data-bind="text: $data.cumulative_size"></td>
+                              <td><button data-required="server_name,step,force" data-cmd="restore" data-bind="click: $root.command" class="btn btn-success btn-mini">Restore</button></td>
                             </tr>
                           </tbody>
                         </table>

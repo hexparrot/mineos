@@ -366,7 +366,7 @@ class mc(object):
 
     @server_exists(True)
     @server_up(False)
-    def restore(self, steps='now', force=False):
+    def restore(self, step='now', force=False):
         """Overwrites the /servers/ version of a server with the /backup/."""
         from subprocess import CalledProcessError
         
@@ -377,7 +377,7 @@ class mc(object):
 
             self._make_directory(self.env['cwd'])
             try:
-                self._command_direct(self.command_restore(steps,force), self.env['cwd'])
+                self._command_direct(self.command_restore(step,force), self.env['cwd'])
             except CalledProcessError as e:
                 raise RuntimeError(e.output)
 
@@ -424,9 +424,9 @@ class mc(object):
         self._load_config(generate_missing=True)
 
     @server_exists(True)
-    def prune(self, steps):
+    def prune(self, step):
         """Removes old rdiff-backup data/metadata."""
-        self._command_direct(self.command_prune(steps), self.env['bwd'])
+        self._command_direct(self.command_prune(step), self.env['bwd'])
 
     def prune_archives(self, filename):
         """Removes old archives by filename as a space-separated string."""
@@ -957,34 +957,34 @@ class mc(object):
         return '%(kill)s %(pid)s' % required_arguments
 
     @sanitize
-    def command_restore(self, steps, force):
+    def command_restore(self, step, force):
         """Returns the actual command used to rdiff restore a minecraft server."""
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'force': force,
-            'steps': steps,
+            'force': '--force' if force else '',
+            'step': step,
             'bwd': self.env['bwd'],
             'cwd': self.env['cwd']
             }
 
         self._previous_arguments = required_arguments
-        return '%(rdiff)s %(force)s --restore-as-of %(steps)s ' \
+        return '%(rdiff)s %(force)s --restore-as-of %(step)s ' \
                '%(bwd)s %(cwd)s' % required_arguments
 
     @sanitize
-    def command_prune(self, steps):
+    def command_prune(self, step):
         """Returns the actual command used to rdiff prune minecraft backups."""
         required_arguments = {
             'rdiff': self.BINARY_PATHS['rdiff-backup'],
-            'steps': steps,
+            'step': step,
             'bwd': self.env['bwd']
             }
 
-        if type(required_arguments['steps']) is int:
-            required_arguments['steps'] = '%sB' % required_arguments['steps']
+        if type(required_arguments['step']) is int:
+            required_arguments['step'] = '%sB' % required_arguments['step']
 
         self._previous_arguments = required_arguments
-        return '%(rdiff)s --force --remove-older-than %(steps)s %(bwd)s' % required_arguments
+        return '%(rdiff)s --force --remove-older-than %(step)s %(bwd)s' % required_arguments
 
     @property
     @sanitize

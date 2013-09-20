@@ -284,7 +284,7 @@ function webui() {
 		increments: {
 			user_input: ko.observable(),
 			remove_count: ko.observable(0),
-			steps: '',
+			step: '',
 			space_reclaimed: ko.observable(0.0)
 		},
 		archives: {
@@ -395,7 +395,7 @@ function webui() {
 		var params = {
 			cmd: 'prune',
 			server_name: self.server().server_name,
-			steps: self.pruning.increments.steps
+			step: self.pruning.increments.step
 		}
 		$.getJSON('/server', params).then(self.ajax.received, self.ajax.lost)
 									.then(function() {self.ajax.refresh(null)});
@@ -532,7 +532,7 @@ function webui() {
 		$.each(clone, function(i,v) {
 			if (v.timestamp == new_value || v.step == new_value) {
 				match = i;
-				self.pruning.increments.steps = v.step;
+				self.pruning.increments.step = v.step;
 				return false;
 			}
 
@@ -545,7 +545,7 @@ function webui() {
 		if (!match){
 			self.pruning.increments.remove_count(0);
 			self.pruning.increments.space_reclaimed(0);
-			self.pruning.increments.steps = '';
+			self.pruning.increments.step = '';
 		} else {
 			self.pruning.increments.remove_count(clone.slice(0,match).length);
 			self.pruning.increments.space_reclaimed(reclaimed);
