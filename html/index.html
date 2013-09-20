@@ -944,7 +944,7 @@ Is the information correct? [Y/n]
                                         <div class="control-group">
                                             <label class="control-label">Group Ownership:</label>
                                             <div class="controls">
-                                                <input type="text" name="group" class="input-medium">
+                                                <select name="group" data-bind="options: $root.dashboard.groups"></select>
                                                 <span class="help-block">Other members of this group will have full control of the server</span>
                                             </div>
                                         </div>
