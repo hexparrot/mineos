@@ -446,6 +446,7 @@
                                 	<p>Oldest restore point: <strong data-bind="text: summary.backup.first"></strong></p>
                                     <p>Most recent restore point: <strong data-bind="text: summary.backup.most_recent"></strong></p>
                                     <p>Space used by backups: <strong data-bind="text: summary.backup.cumulative"></strong></p>
+                                    <p><a class="link pointer" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command">Create a new Restore Point</a></p>
                                 </div>
                             </section>
                         </div>
@@ -467,6 +468,7 @@
                                 	<p>Oldest archive: <strong data-bind="text: summary.archive.first"></strong></p>
                                     <p>Most recent archive: <strong data-bind="text: summary.archive.most_recent"></strong></p>
                                     <p>Space used by archives: <strong data-bind="text: summary.archive.cumulative"></strong></p>
+                                    <p><a class="link pointer" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command">Create a new Archive</a></p>
                                 </div>
                             </section>
                         </div>
@@ -583,7 +585,7 @@
                     <!--/ END Row -->
 
                     <!-- START Row -->
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="if: pruning.archives.remove_count() > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
                             <header><h4 class="title">Removal Summary</h4></header>

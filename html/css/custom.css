@@ -7,7 +7,7 @@
  */
 
 
-li.accordion-group a, ul.nav  {
+li.accordion-group a, ul.nav, .pointer  {
     cursor: pointer;
 }
 #table_status tr td:first-child, #table_profiles_view tr td:first-child{
