@@ -12,6 +12,11 @@ li.accordion-group a, ul.nav  {
 }
 #table_status tr td:first-child, #table_profiles_view tr td:first-child{
     cursor: pointer;
+    color: #2A5DB0;
+    font-size: 1.1em;
+}
+#table_status tr td:first-child:hover, #table_profiles_view tr td:first-child:hover{
+    text-decoration: underline;
 }
 #create_server .help-block {
     display: block !important;
@@ -53,4 +58,9 @@ li.accordion-group a, ul.nav  {
 #header > .logo > a {
 	font-size: 90%;
 	font-weight: normal;
+}
+
+.table-hover tbody tr:hover > td,
+.table-hover tbody tr:hover > td{
+	background-color: #ddd !important;
 }

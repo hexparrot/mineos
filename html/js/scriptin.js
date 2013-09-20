@@ -282,7 +282,7 @@ function webui() {
 
 	self.pruning = {
 		increments: {
-			user_input: ko.observable(),
+			user_input: ko.observable(''),
 			remove_count: ko.observable(0),
 			step: '',
 			space_reclaimed: ko.observable(0.0)
@@ -792,10 +792,14 @@ function webui() {
 			self.vmdata.importable(data.ascending_by('filename'));
 		},
 		logs: function(data) {
-			$.each(data.payload, function(i,v) {
-				if (!v.match(/\[INFO\] \/127.0.0.1:\d+ lost connection/) && !v.match(/\[SEVERE\] Reached end of stream for \/127.0.0.1/))
-					self.vmdata.logs.push(new model_logline(v));
-			})
+			if (!data.payload.length) {
+				self.reset_logs();
+			} else {
+				$.each(data.payload, function(i,v) {
+					if (!v.match(/\[INFO\] \/127.0.0.1:\d+ lost connection/) && !v.match(/\[SEVERE\] Reached end of stream for \/127.0.0.1/))
+						self.vmdata.logs.push(new model_logline(v));
+				})
+			}
 		}
 	}
 

@@ -503,7 +503,7 @@
                         <div class="control-group">
                             <label class="control-label">Remove restore points older than:</label>
                             <div class="controls">
-                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button data-bind="click: prune_increments" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
+                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button data-bind="click: prune_increments, visible: pruning.increments.remove_count() > 0" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
                             </div>
                         </div>
 
@@ -511,7 +511,7 @@
                     <!--/ END Row -->
 
                     <!-- START Row -->
-                    <div class="row-fluid">
+                    <div class="row-fluid" data-bind="if: pruning.increments.user_input().length > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
                             <header><h4 class="title">Removal Summary</h4></header>
@@ -1081,8 +1081,6 @@ Is the information correct? [Y/n]
                                                 </label>
                                             </div>
                                         </div>
-                                        
-                                        
                                     </fieldset>
                                     
                                     
@@ -1306,20 +1304,6 @@ Is the information correct? [Y/n]
                         <div class="span12 widget">
                             <header>
                                 <h4 class="title">Server Logs</h4>
-                                <!-- START Toolbar -->
-                                <ul class="toolbar pull-right">
-                                    <li>
-                                        <a href="#" class="link" data-toggle="dropdown">
-                                            <span data-bind="click: function() { logs.reversed(!logs.reversed()) }" class="icon icon-resize-horizontal"></span>
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="#" class="link" data-toggle="dropdown">
-                                            <span data-bind="click: reset_logs" class="icon icon-refresh"></span>
-                                        </a>
-                                    </li>
-                                </ul>
-                                <!--/ END Toolbar -->
                             </header>
                         </div>
                         <!--/ END Line Chart - Filled -->
@@ -1347,7 +1331,12 @@ Is the information correct? [Y/n]
                                     <table class="table table-bordered table-striped table-hover" id="logs">
                                         <thead>
                                             <tr>
-                                                <th>Entry</th>
+                                                <th>Entry
+                                                    <div class="btn-group pull-right">
+                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">Reverse Order</a>
+                                                        <!--<a href="#" class="btn btn-small" data-bind="click: reset_logs">Show most recent 100 lines</a>-->
+                                                    </div>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <!-- ko if: logs.reversed() -->
