@@ -250,6 +250,7 @@ function webui() {
 	}
 
 	self.import_information = ko.observable();
+	self.profile_type = ko.observable();
 
 	self.summary = {
 		backup: {

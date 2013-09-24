@@ -617,7 +617,9 @@ class mc(object):
         from subprocess import check_call
         from shlex import split
 
-        command = """screen -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.screen_pid, stuff_text)
+        command = """%s -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.BINARY_PATHS['screen'],
+                                                                  self.screen_pid,
+                                                                  stuff_text)
         check_call(split(command),
                    preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 

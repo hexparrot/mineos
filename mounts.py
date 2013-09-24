@@ -90,7 +90,12 @@ class ViewModel(object):
                 
                 profile_info = opt_dict
                 profile_info['profile'] = profile
-                profile_info['version'] = mc.server_version(run_as, profile_info['url'])
+
+                if 'url' in profile_info:
+                    profile_info['version'] = mc.server_version(run_as, profile_info['url'])
+                else:
+                    profile_info['url'] = ''
+                    profile_info['version'] = ''
                 
                 try:
                     profile_info['save_as_md5'] = mc._md5sum(save_as)
