@@ -775,11 +775,8 @@ Is the information correct? [Y/n]
                                 <button class="btn" data-toggle="dropdown" data-bind="click: show_page" data-page="define_profile">Create Custom Profile</button>
                               	<div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Create Stock Profile <span class="caret"></span></button>
-                                    <ul class="dropdown-menu">
-                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="vanilla162">vanilla162</a></li>
-                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-recommended">bukkit-recommended</a></li>
-                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-beta">bukkit-beta</a></li>
-                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command" data-profile="bukkit-dev">bukkit-dev</a></li>
+                                    <ul class="dropdown-menu" data-bind="foreach: $root.dashboard.stock_profiles">
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command, attr: {'data-profile': $data}, text: $data"></a></li>
                                     </ul>
                                 </div>
                               </td>

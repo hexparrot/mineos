@@ -197,7 +197,8 @@ function webui() {
 		disk_usage_pct: ko.observable(),
 		pc_permissions: ko.observable(),
 		pc_group: ko.observable(),
-		git_hash: ko.observable()
+		git_hash: ko.observable(),
+		stock_profiles: ko.observableArray([])
 	}
 
 	self.logs = {
@@ -707,6 +708,7 @@ function webui() {
 			self.dashboard.pc_permissions(data.pc_permissions);
 			self.dashboard.pc_group(data.pc_group);
 			self.dashboard.git_hash(data.git_hash);
+			self.dashboard.stock_profiles(data.stock_profiles);
 
 			$('#pc_group option').filter(function () { 
 				return $(this).val() == data.pc_group

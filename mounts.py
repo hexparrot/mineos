@@ -159,6 +159,7 @@ class ViewModel(object):
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
         from grp import getgrall, getgrnam, getgrgid
+        from stock_profiles import STOCK_PROFILES
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
         mb_free = str(round(float(kb_free.split()[0])/1000, 2))
@@ -185,7 +186,8 @@ class ViewModel(object):
                           self.login in [i.gr_name, 'root']],
             'pc_permissions': profile_editable,
             'pc_group': pc_group,
-            'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__)))
+            'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__))),
+            'stock_profiles': STOCK_PROFILES.keys()
             })
 
     @cherrypy.expose
