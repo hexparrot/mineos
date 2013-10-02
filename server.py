@@ -189,7 +189,12 @@ if __name__ == "__main__":
     except:
         pass
 
-    cherrypy.tree.mount(mounts.Root(html_dir, base_dir), "/", config=root_conf)
+    try:
+        localization = cherrypy.config['misc.localization']
+    except KeyError:
+        localization = 'en'
+
+    cherrypy.tree.mount(mounts.Root(html_dir, base_dir, localization), "/", config=root_conf)
     cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
     cherrypy.tree.mount(auth.AuthController(html_dir), '/auth', config=empty_conf)
     cherrypy.engine.start()
