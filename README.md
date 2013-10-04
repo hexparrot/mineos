@@ -1,14 +1,17 @@
 This is the github repository for MineOS Minecraft hosting and management scripts.
 
-Goals for this version:
+Features
+========
 
-*Full user-management system using /etc/shadow passwords
+- Utilizes underlying system's user passwords (/etc/shadow)
+- Multiple-user functionality based on *nix permisisons
+- Administrative control of all servers as root
+- Self-contained package powered by Python-based webserver Cherrypy
+- Web user interface with modern Knockout templating
+- Command-line usage
 
-*Self-contained, script-installable package with python-based webserver Cherrypy
-
-*Web user interface with modern Knockout templating
-
-*Command-line usage
+Tutorials
+=========
 
 Installation tutorial: http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
 
