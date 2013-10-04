@@ -158,7 +158,8 @@ class ViewModel(object):
     @cherrypy.expose
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
-        from grp import getgrall, getgrnam, getgrgid
+        from grp import getgrall, getgrgid
+        from pwd import getpwnam
         from stock_profiles import STOCK_PROFILES
         
         kb_free = dict(entries('', 'meminfo'))['MemFree']
@@ -174,16 +175,16 @@ class ViewModel(object):
         finally:
             st = os.stat(pc_path)
             pc_group = getgrgid(st.st_gid).gr_name
+
+        primary_group = getgrgid(getpwnam(self.login).pw_gid).gr_name
     
         return dumps({
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': self.login,
-            'group': getgrnam(self.login).gr_name,
+            'group': primary_group,
             'df': dict(disk_free('/')._asdict()),
-            'groups': [i.gr_name for i in getgrall()
-                       if self.login in i.gr_mem or \
-                          self.login in [i.gr_name, 'root']],
+            'groups': [i.gr_name for i in getgrall() if self.login in i.gr_mem or self.login == 'root'] + [primary_group],
             'pc_permissions': profile_editable,
             'pc_group': pc_group,
             'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__))),
