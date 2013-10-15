@@ -780,21 +780,28 @@ class mc(object):
     @property
     def memory(self):
         """Returns the amount of memory the java instance is using (VmRSS)"""
-        def sizeof_fmt(num):
-            ''' Taken from Fred Cirera, as cited in Sridhar Ratnakumar @
-                http://stackoverflow.com/a/1094933/1191579
-            '''
-            for x in ['bytes','KB','MB','GB','TB']:
-                if num < 1024.0:
-                    return "%3.2f %s" % (num, x)
-                num /= 1024.0
-                
+        def bytesto(num, to, bsize=1024):
+            """convert bytes to megabytes, etc.
+               sample code:
+                   print('mb= ' + str(bytesto(314575262000000, 'm')))
+
+               sample output: 
+                   mb= 300002347.946
+               https://gist.github.com/shawnbutts/3906915
+            """
+            a = {'k' : 1, 'm': 2, 'g' : 3, 't' : 4, 'p' : 5, 'e' : 6 }
+            r = float(num)
+            for i in range(a[to]):
+                r = r / bsize
+
+            return r
+
         from procfs_reader import entries
-          
+
         try:
             mem_str = dict(entries(self.java_pid, 'status'))['VmRSS']
             mem = int(mem_str.split()[0]) * 1024
-            return sizeof_fmt(mem)
+            return '%s MB' % bytesto(mem, 'm')
         except IOError:
             return '0'
         
