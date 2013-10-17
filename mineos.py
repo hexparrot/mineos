@@ -129,8 +129,7 @@ class mc(object):
             'sc': os.path.join(self.env['cwd'], 'server.config'),
             'pc': os.path.join(self.base, self.DEFAULT_PATHS['profiles'], 'profile.config'),
             'sp_backup': os.path.join(self.env['bwd'], 'server.properties'),
-            'sc_backup': os.path.join(self.env['bwd'], 'server.config'),
-            'log': os.path.join(self.env['cwd'], 'server.log')
+            'sc_backup': os.path.join(self.env['bwd'], 'server.config')
             })
 
     def _load_config(self, load_backup=False, generate_missing=False):
@@ -429,6 +428,12 @@ class mc(object):
     def prune_archives(self, filename):
         """Removes old archives by filename as a space-separated string."""
         self._command_direct(self.command_delete_files(filename), self.env['awd'])
+
+    @server_exists(True)
+    @server_up(False)
+    def delete_server(self):
+        """Deletes server files from system"""
+        self._command_direct(self.command_delete_server, self.env['pwd'])
 
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
@@ -1069,6 +1074,19 @@ class mc(object):
         self._previous_arguments = required_arguments
         return 'rm -- %(files)s' % required_arguments
 
+    @property
+    @sanitize
+    def command_delete_server(self):
+        """Deletes a server and all its related files and folders"""
+        required_arguments = {
+            'live': self.env['cwd'],
+            'backup': self.env['bwd'],
+            'archive': self.env['awd']
+            }
+
+        self._previous_arguments = required_arguments
+        return 'rm -rf -- %(live)s %(backup)s %(archive)s' % required_arguments
+
     @sanitize
     def command_chown(self, user, path):
         """Executes chown on a directory"""
@@ -1225,9 +1243,16 @@ class mc(object):
     def list_last_loglines(self, lines=100):
         """Returns last n lines from logfile"""
         from procfs_reader import tail
-        
-        with open(self.env['log'], 'rb') as log:
-            return tail(log, int(lines))
+
+        logfiles =['server.log', os.path.join('logs', 'latest.log')]
+
+        for i in logfiles:
+            try:
+                with open(os.path.join(self.env['cwd'], logfiles), 'rb') as log:
+                    return tail(log, int(lines))
+            except IOError:
+                pass
+        return []
 
     @classmethod
     def list_servers_to_act(cls, action, base_directory):

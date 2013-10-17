@@ -198,7 +198,8 @@ function webui() {
 		pc_permissions: ko.observable(),
 		pc_group: ko.observable(),
 		git_hash: ko.observable(),
-		stock_profiles: ko.observableArray([])
+		stock_profiles: ko.observableArray([]),
+		base_directory: ko.observable()
 	}
 
 	self.logs = {
@@ -417,6 +418,30 @@ function webui() {
 								  .then(function() {self.ajax.refresh(null)});
 	}
 
+	self.delete_server = function(vm, eventobj) {
+		var params = {
+			server_name: self.server().server_name
+		}
+
+		var unchecked = $('#delete_confirmations input[type=checkbox]').filter(function(i,v) {
+			return !$(v).prop('checked');
+		})
+
+		if (unchecked.length == 0) {
+			$.getJSON('/delete_server', params)
+			.then(self.ajax.received, self.ajax.lost)
+			.done(function(){ self.show_page('dashboard') },
+				  function(){})
+		} else {
+			$.gritter.add({
+				text: 'No action taken; must confirm all content will be deleted to continue.',
+				sticky: false,
+				time: '3000',
+				class_name: 'gritter-warning'
+			});
+		}	
+	}
+
 	self.change_group = function(vm, eventobj) {
 		var params = {
 			group: $(eventobj.currentTarget).val(),
@@ -480,6 +505,13 @@ function webui() {
 				$.getJSON('/vm/increments', params).then(self.refresh.increments);
 				$.getJSON('/vm/archives', params).then(self.refresh.archives);
 				$.getJSON('/vm/server_summary', params).then(self.refresh.summary);
+				setTimeout(function() {
+					$('#delete_server input[type="checkbox"]').not('.nostyle').iCheck({
+			            checkboxClass: 'icheckbox_minimal-grey',
+			            radioClass: 'iradio_minimal-grey',
+			            increaseArea: '40%' // optional
+			        });
+				}, 500)
 				break;
 			case 'profiles':
 				$.getJSON('/vm/profiles').then(self.refresh.profiles);
@@ -709,6 +741,7 @@ function webui() {
 			self.dashboard.pc_group(data.pc_group);
 			self.dashboard.git_hash(data.git_hash);
 			self.dashboard.stock_profiles(data.stock_profiles);
+			self.dashboard.base_directory(data.base_directory);
 
 			$('#pc_group option').filter(function () { 
 				return $(this).val() == data.pc_group

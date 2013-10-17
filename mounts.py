@@ -188,7 +188,8 @@ class ViewModel(object):
             'pc_permissions': profile_editable,
             'pc_group': pc_group,
             'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__))),
-            'stock_profiles': STOCK_PROFILES.keys()
+            'stock_profiles': STOCK_PROFILES.keys(),
+            'base_directory': self.base_directory,
             })
 
     @cherrypy.expose
@@ -575,4 +576,38 @@ class Root(object):
 
         response['payload'] = to_jsonable_type(retval)
         return dumps(response)  
-      
+
+    @cherrypy.expose
+    @require()
+    def delete_server(self, **raw_args):
+        args = {k:str(v) for k,v in raw_args.iteritems()}
+        server_name = args.pop('server_name')
+        retval = None
+
+        response = {
+            'result': None,
+            'cmd': 'delete_server',
+            'payload': None
+            }
+
+        try:
+            if mc.has_server_rights(self.login, server_name, self.base_directory):
+                instance = mc(server_name, None, self.base_directory)
+                instance.delete_server()
+            else:
+                raise OSError('Server deletion failed. Only the server owner or root may delete servers.')
+        except (RuntimeError, KeyError, OSError) as ex:
+            response['result'] = 'error'
+            retval = ex.message
+        except CalledProcessError as ex:
+            response['result'] = 'error'
+            retval = ex.output
+        except RuntimeWarning as ex:
+            response['result'] = 'warning'
+            retval = ex.message
+        else:
+            response['result'] = 'success'
+            retval = "Server '%s' deleted" % server_name
+
+        response['payload'] = to_jsonable_type(retval)
+        return dumps(response)        

@@ -491,6 +491,29 @@
                             </section>
                         </div>
                         <!--/ END Default Widget -->
+                        <!-- START Default Widget -->
+                        <div id="delete_server" class="span6 widget" data-bind="">
+                            <header>
+                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Delete Server</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <div class="controls" id="delete_confirmations">
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Delete <span data-bind="text: $root.dashboard.base_directory"></span>/servers/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Delete <span data-bind="text: $root.dashboard.base_directory"></span>/backup/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Delete <span data-bind="text: $root.dashboard.base_directory"></span>/archive/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <button class="btn btn-warning btn-mini" data-bind="click: $root.delete_server">Delete </button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
                     </div>
                     <!--/ END Row -->
 
@@ -700,7 +723,7 @@ Is the information correct? [Y/n]
                         </header>
                         <section class="body">
                             <div class="body-inner">
-                                <p>De onderstaande bestanden zijn in de Minecraft data directory <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Acceptable archives are .tar, .tar.gz, .tgz, and .zip">/import</strong> gevonden.</p>
+                                <p>De onderstaande bestanden zijn in de Minecraft data directory <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Acceptable archives are .tar, .tar.gz, .tgz, and .zip"><span data-bind="text: $root.dashboard.base_directory"></span>/import</strong> gevonden.</p>
                             </div>
                         </section>
                         <table id="table_importable" class="table table-hover" data-bind="">
@@ -744,7 +767,7 @@ Is the information correct? [Y/n]
                     <div class="row-fluid">
                         <section class="body">
                             <div class="body-inner">
-                                <p>Server profielen mag door elke gebruiker worden aangemaakt, maar alleen een gebruiker met schrijfrechten kan <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Gebruikers met schrijfrechten mogen profielen UPDATEN &amp; VERWIJDEREN">profile.config</strong> updaten. Je kunt dit recht met andere gebruikers delen door <strong>profile.config</strong> toe te kennen aan een nieuwe groep en vervolgens geautoriseerde gebruikers aan de groep toe te voegen.</p>
+                                <p>Server profielen mag door elke gebruiker worden aangemaakt, maar alleen een gebruiker met schrijfrechten kan <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Gebruikers met schrijfrechten mogen profielen UPDATEN &amp; VERWIJDEREN">profile.config</strong> updaten. Je kunt dit recht met andere gebruikers delen door <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> toe te kennen aan een nieuwe groep en vervolgens geautoriseerde gebruikers aan de groep toe te voegen.</p>
                             </div>
                         </section>
                     </div>
