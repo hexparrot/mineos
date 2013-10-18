@@ -1258,8 +1258,7 @@ class mc(object):
     def list_servers_to_act(cls, action, base_directory):
         """Generator listing all servers doing action at this minute in time"""
         from procfs_reader import path_owner
-        from ConfigParser import NoOptionError, NoSectionError
-        
+
         hits = []
         msm = cls.minutes_since_midnight()
 
@@ -1271,11 +1270,11 @@ class mc(object):
             raise NotImplementedError("Requested action is not yet implemented.")
 
         for i in cls.list_servers(base_directory):
-            path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
-            owner_ = path_owner(path_)
-            instance = cls(i, owner_, base_directory)
-
             try:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
+                owner_ = path_owner(path_)
+                instance = cls(i, owner_, base_directory)
+            
                 interval = instance.server_config.getint(section_option[0],section_option[1])
                 '''at midnight, always archive. this works because
                 if archive_interval is not type(int), e.g., 'skip' or '',
@@ -1284,16 +1283,16 @@ class mc(object):
                     hits.append(i)
                 elif msm % interval == 0:
                     hits.append(i)
-            except (ZeroDivisionError, KeyError, ValueError, NoOptionError, NoSectionError):
-                pass
+            except Exception:
+                '''(ZeroDivisionError, KeyError, ValueError, NoOptionError, NoSectionError, OSError)'''
+                continue
 
         return hits
 
     @classmethod
     def list_servers_start_at_boot(cls, base_directory):
         from procfs_reader import path_owner
-        from ConfigParser import NoOptionError, NoSectionError
-        
+
         hits = []
         msm = cls.minutes_since_midnight()
 
@@ -1305,7 +1304,8 @@ class mc(object):
             try:
                 if instance.server_config.getboolean('onreboot', 'start'):
                     hits.append(i)
-            except (ValueError, KeyError, NoSectionError, NoOptionError):
+            except Exception:
+                '''(ValueError, KeyError, NoSectionError, NoOptionError)'''
                 pass
 
         return hits
