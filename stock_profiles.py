@@ -26,6 +26,15 @@ STOCK_PROFILES = {
         'ignore': '',
         'desc': 'official minecraft_server.jar'
         }, 
+    'vanilla172': {
+        'name': 'vanilla172',
+        'type': 'standard_jar',
+        'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.7.2/minecraft_server.1.7.2.jar',
+        'save_as': 'minecraft_server.jar',
+        'run_as': 'minecraft_server.jar',
+        'ignore': '',
+        'desc': 'official minecraft_server.jar'
+        }, 
     'bukkit-recommended': {
         'name': 'bukkit-recommended',
         'type': 'standard_jar',
