@@ -45,7 +45,6 @@ case "$1" in
         if [ -s $PIDFILE ]; then
             log_begin_msg "Stopping $NAME..."
             kill -s INT `cat $PIDFILE` >/dev/null 2>&1
-            rm -- $PIDFILE
             RETVAL=$?
             log_action_end_msg $RETVAL
         else
