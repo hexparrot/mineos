@@ -132,6 +132,12 @@ class mc(object):
             'sc_backup': os.path.join(self.env['bwd'], 'server.config')
             })
 
+        server_logs = [os.path.join('logs', 'latest.log'), 'server.log']
+        for i in server_logs:
+            path = os.path.join(self.env['cwd'], i)
+            if os.path.isfile(path):
+                self.env['log'] = path
+
     def _load_config(self, load_backup=False, generate_missing=False):
         """Loads server.properties and server.config for a given server.
         With load_backup, /backup/ is referred to rather than /servers/.
@@ -809,12 +815,28 @@ class mc(object):
             return '%s MB' % bytesto(mem, 'm')
         except IOError:
             return '0'
-        
+   
     @property
     def ping(self):
         """Returns a named tuple using the current Minecraft protocol
         to retreive versions, player counts, etc"""
         import socket
+
+        def server_list_packet():
+            """Guesses what version minecraft a live server directory is."""
+            if self.env['log'].endswith('server.log'):
+                return '\xfe' \
+                       '\x01' \
+                       '\xfa' \
+                       '\x00\x06' \
+                       '\x00\x6d\x00\x69\x00\x6e\x00\x65\x00\x6f\x00\x73' \
+                       '\x00\x19' \
+                       '\x49' \
+                       '\x00\x09' \
+                       '\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68' \
+                       '\x00\x6f\x00\x73\x00\x74' \
+                       '\x00\x00\x63\xdd'
+            return '\xfe\x01'
 
         server_ping = namedtuple('ping', ['protocol_version',
                                           'server_version',
@@ -826,17 +848,7 @@ class mc(object):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((self.ip_address, self.port))
-                s.send('\xfe'      #1
-                       '\x01'      #2
-                       '\xfa'      #3
-                       '\x00\x06'  #4
-                       '\x00\x6d\x00\x69\x00\x6e\x00\x65\x00\x6f\x00\x73'
-                       '\x00\x19'  #6
-                       '\x49'      #7
-                       '\x00\x09'  #8
-                       '\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68'
-                       '\x00\x6f\x00\x73\x00\x74'
-                       '\x00\x00\x63\xdd') #10
+                s.send(server_list_packet())
 
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
@@ -1244,11 +1256,11 @@ class mc(object):
         """Returns last n lines from logfile"""
         from procfs_reader import tail
 
-        logfiles =['server.log', os.path.join('logs', 'latest.log')]
+        logfiles = ['server.log', os.path.join('logs', 'latest.log')]
 
         for i in logfiles:
             try:
-                with open(os.path.join(self.env['cwd'], logfiles), 'rb') as log:
+                with open(os.path.join(self.env['cwd'], i), 'rb') as log:
                     return tail(log, int(lines))
             except IOError:
                 pass
