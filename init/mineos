@@ -51,6 +51,9 @@ case "$1" in
             echo "$NAME is not running."
         fi
         ;;
+    'restart')
+        $0 stop && sleep 2 && $0 start
+        ;;
 
     'status')
         if [ -s $PIDFILE ]; then
