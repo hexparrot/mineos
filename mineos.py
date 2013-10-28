@@ -132,6 +132,12 @@ class mc(object):
             'sc_backup': os.path.join(self.env['bwd'], 'server.config')
             })
 
+        server_logs = [os.path.join('logs', 'latest.log'), 'server.log']
+        for i in server_logs:
+            path = os.path.join(self.env['cwd'], i)
+            if os.path.isfile(path):
+                self.env['log'] = path
+
     def _load_config(self, load_backup=False, generate_missing=False):
         """Loads server.properties and server.config for a given server.
         With load_backup, /backup/ is referred to rather than /servers/.
@@ -818,7 +824,7 @@ class mc(object):
 
         def server_list_packet():
             """Guesses what version minecraft a live server directory is."""
-            if not os.path.isfile(os.path.join(self.env['cwd'], 'logs', 'latest.log')):
+            if self.env['log'].endswith('server.log'):
                 return '\xfe' \
                        '\x01' \
                        '\xfa' \
@@ -1250,11 +1256,11 @@ class mc(object):
         """Returns last n lines from logfile"""
         from procfs_reader import tail
 
-        logfiles =['server.log', os.path.join('logs', 'latest.log')]
+        logfiles = ['server.log', os.path.join('logs', 'latest.log')]
 
         for i in logfiles:
             try:
-                with open(os.path.join(self.env['cwd'], logfiles), 'rb') as log:
+                with open(os.path.join(self.env['cwd'], i), 'rb') as log:
                     return tail(log, int(lines))
             except IOError:
                 pass
