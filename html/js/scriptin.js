@@ -263,7 +263,7 @@ function webui() {
 				try { return self.vmdata.increments()[self.vmdata.increments().length-1].timestamp } catch (e) { return 'None' }
 			}),
 			cumulative: ko.computed(function() {
-				try { return self.vmdata.increments()[0].cumulative_size } catch (e) { return '0 MB' }
+				try { return self.vmdata.increments()[self.vmdata.increments().length-1].cumulative_size } catch (e) { return '0 MB' }
 			})
 		},
 		archive: {
