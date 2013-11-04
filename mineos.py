@@ -1306,15 +1306,31 @@ class mc(object):
         from procfs_reader import path_owner
 
         hits = []
-        msm = cls.minutes_since_midnight()
-
         for i in cls.list_servers(base_directory):
-            path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
-            owner_ = path_owner(path_)
-            instance = cls(i, owner_, base_directory)
-
             try:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['servers'], i)
+                owner_ = path_owner(path_)
+                instance = cls(i, owner_, base_directory)
                 if instance.server_config.getboolean('onreboot', 'start'):
+                    hits.append(i)
+            except Exception:
+                '''(ValueError, KeyError, NoSectionError, NoOptionError)'''
+                pass
+
+        return hits
+
+    @classmethod
+    def list_servers_restore_at_boot(cls, base_directory):
+        from procfs_reader import path_owner
+
+        hits = []
+        for i in cls.list_servers(base_directory):
+            try:
+                path_ = os.path.join(base_directory, cls.DEFAULT_PATHS['backup'], i)
+                owner_ = path_owner(path_)
+                instance = cls(i, owner_, base_directory)
+                instance._load_config(load_backup=True)
+                if instance.server_config.getboolean('onreboot', 'restore'):
                     hits.append(i)
             except Exception:
                 '''(ValueError, KeyError, NoSectionError, NoOptionError)'''

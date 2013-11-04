@@ -22,6 +22,7 @@ stop_cmd="${name}_stop"
 minecraft_start()
 {
 	export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:
+	cd /usr/local/games/minecraft && /usr/local/bin/python mineos_console.py -d /var/games/minecraft restore
 	cd /usr/local/games/minecraft && /usr/local/bin/python mineos_console.py -d /var/games/minecraft start
 }
 

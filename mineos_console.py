@@ -134,6 +134,16 @@ if __name__=="__main__":
                     print ' done'
                 except Exception as ex:
                     print ex.message
+        elif args.cmd == 'restore':
+            from procfs_reader import path_owner
+            for i in mc.list_servers_restore_at_boot(args.base_directory):
+                try:
+                    owner = path_owner(os.path.join(args.base_directory, mc.DEFAULT_PATHS['backup'], i))
+                    print 'starting %s for %s...' % (args.cmd, i),
+                    mc(i, owner, args.base_directory).restore()
+                    print ' done'
+                except Exception as ex:
+                    print ex.message
         elif args.cmd in available_properties:
             for i in sorted(mc.list_servers(args.base_directory)):
                 prop_ = getattr(mc(i, None, args.base_directory), args.cmd)
