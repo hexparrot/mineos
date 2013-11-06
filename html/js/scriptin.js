@@ -321,7 +321,10 @@ function webui() {
 
 	self.select_server = function(model) {
 		self.server(model);
-		self.show_page('server_status');
+		if (self.page() == 'dashboard')
+			self.show_page('server_status');
+		else
+			self.ajax.refresh(null);
 	}
 
 	self.select_profile = function(model) {

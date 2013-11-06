@@ -229,8 +229,7 @@
                     <div class="navbar-inner">
                         <!-- Breadcrumb -->
                         <ul class="breadcrumb">
-                            <li data-bind="if: server().server_name"><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a> <span class="divider"></span></li>
-                            <li class="active">Dashboard</li>
+                            <li data-bind="if: server().server_name">Currently Selected Server: <strong><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a></strong>
                         </ul>
                         <!--/ Breadcrumb -->
                     </div>
