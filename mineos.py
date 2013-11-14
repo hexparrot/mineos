@@ -89,6 +89,11 @@ class mc(object):
         'kill': find_executable('kill'),
         'wget': find_executable('wget'),
         }
+    LOG_PATHS = {
+        'legacy': 'server.log',
+        'current': os.path.join('logs', 'latest.log'),
+        'bungee': 'proxy.log.0'
+        } 
     
     def __init__(self,
                  server_name,
@@ -132,11 +137,16 @@ class mc(object):
             'sc_backup': os.path.join(self.env['bwd'], 'server.config')
             })
 
-        server_logs = [os.path.join('logs', 'latest.log'), 'server.log']
-        for i in server_logs:
-            path = os.path.join(self.env['cwd'], i)
+        for server_type, lp in sorted(self.LOG_PATHS.iteritems()):
+            #implementation detail; sorted() depends on 'current' always preceeding 'legacy',
+            #to ensure that current is always tested first in the event both logfiles exist.
+            path = os.path.join(self.env['cwd'], lp)
             if os.path.isfile(path):
                 self.env['log'] = path
+                self.server_type = server_type
+                break
+        else:
+            self.server_type = 'unknown'
 
     def _load_config(self, load_backup=False, generate_missing=False):
         """Loads server.properties and server.config for a given server.
@@ -815,7 +825,7 @@ class mc(object):
             return '%s MB' % bytesto(mem, 'm')
         except IOError:
             return '0'
-   
+
     @property
     def ping(self):
         """Returns a named tuple using the current Minecraft protocol
@@ -824,7 +834,7 @@ class mc(object):
 
         def server_list_packet():
             """Guesses what version minecraft a live server directory is."""
-            if self.env['log'].endswith('server.log'):
+            if self.server_type == 'legacy':
                 return '\xfe' \
                        '\x01' \
                        '\xfa' \
@@ -836,7 +846,8 @@ class mc(object):
                        '\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x68' \
                        '\x00\x6f\x00\x73\x00\x74' \
                        '\x00\x00\x63\xdd'
-            return '\xfe\x01'
+            else:
+                return '\xfe\x01'
 
         server_ping = namedtuple('ping', ['protocol_version',
                                           'server_version',
@@ -853,7 +864,10 @@ class mc(object):
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
             except socket.error:
-                return server_ping(None,None,self.server_properties['motd'::''],
+                if self.server_type == 'bungee':
+                    return server_ping(None,None,'','0',1)
+                else:
+                    return server_ping(None,None,self.server_properties['motd'::''],
                                    '-1',self.server_properties['max-players'])
             finally:
                 s.close()
@@ -1256,14 +1270,11 @@ class mc(object):
         """Returns last n lines from logfile"""
         from procfs_reader import tail
 
-        logfiles = ['server.log', os.path.join('logs', 'latest.log')]
-
-        for i in logfiles:
-            try:
-                with open(os.path.join(self.env['cwd'], i), 'rb') as log:
-                    return tail(log, int(lines))
-            except IOError:
-                pass
+        try:
+            with open(self.env['log'], 'rb') as log:
+                return tail(log, int(lines))
+        except IOError:
+            pass
         return []
 
     @classmethod
