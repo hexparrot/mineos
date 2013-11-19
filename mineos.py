@@ -272,7 +272,7 @@ class mc(object):
                 'start': False,
                 },
             'java': {
-                'java_tweaks': '-server',
+                'java_tweaks': '',
                 'java_xmx': 256,
                 'java_xms': 256,
                 }
@@ -941,7 +941,7 @@ class mc(object):
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
-               '%(java)s %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
+               '%(java)s -server %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
                '-jar %(jar_file)s %(jar_args)s' % required_arguments
 
     @property
