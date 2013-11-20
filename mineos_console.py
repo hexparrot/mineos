@@ -25,6 +25,10 @@ if __name__=="__main__":
                         dest='base_directory',
                         help='the base of the mc file structure',
                         default=None)
+    parser.add_argument('--this',
+                        action='store_true',
+                        default=False,
+                        help='use pwd to determine -d and -s values')
     parser.add_argument('argv',
                         nargs='*',
                         help='additional arguments to pass to the command() function',
@@ -41,8 +45,12 @@ if __name__=="__main__":
     import pprint, types
     pp = pprint.PrettyPrinter(indent=4)
 
-    args.base_directory = args.base_directory or os.path.expanduser("~")
-    mc._make_skeleton(args.base_directory)
+    if args.this:
+        args.server_name = os.path.basename(os.getcwd())
+        args.base_directory = os.path.dirname(os.path.dirname(os.getcwd()))
+    else:
+        args.base_directory = args.base_directory or os.path.expanduser("~")
+        mc._make_skeleton(args.base_directory)
 
     if args.server_name:
         owner = mc.has_server_rights(getuser(), args.server_name, args.base_directory)
