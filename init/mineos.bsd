@@ -12,7 +12,7 @@
 #
 
 . /etc/rc.subr
-export PATH=/usr/local/bin:$PATH
+export PATH=$PATH:/usr/local/bin
 
 name=mineos
 rcvar=mineos_enable
