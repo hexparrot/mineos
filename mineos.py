@@ -355,6 +355,12 @@ class mc(object):
         self._command_direct(self.command_kill, self.env['cwd'])
 
     @server_exists(True)
+    @server_up(True)
+    def commit(self):
+        """Commit a server's memory to disk"""
+        self._command_stuff('save-all')
+
+    @server_exists(True)
     def archive(self):
         """Creates a timestamped, gzipped tarball of the server contents."""
         self._make_directory(self.env['awd'])

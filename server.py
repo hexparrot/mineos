@@ -18,11 +18,27 @@ class cron(cherrypy.process.plugins.SimplePlugin):
         
     def check_interval(self):
         from procfs_reader import path_owner
+        from time import sleep
+
+        crons = []
         
         for action in ('backup','archive'):
-            for i in mc.list_servers_to_act(action, self.base_directory):
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], i)
-                getattr(mc(i, path_owner(path_), self.base_directory), action)()
+            for server in mc.list_servers_to_act(action, self.base_directory):
+                crons.append( (action, server) )
+
+        for action, server in crons:
+            try:
+                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+                getattr(mc(server, path_owner(path_), self.base_directory), 'commit')()
+            except Exception:
+                pass
+        else:
+            sleep(len(crons) * 10)
+
+        for action, server in crons:
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            getattr(mc(server, path_owner(path_), self.base_directory), action)()
+            sleep(10)
 
 def tally():
     import platform, urllib2, urllib
