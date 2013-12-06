@@ -36,9 +36,12 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             sleep(len(crons) * mc.COMMIT_DELAY)
 
         for action, server in crons:
-            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
-            getattr(mc(server, path_owner(path_), self.base_directory), action)()
-            sleep(mc.COMMIT_DELAY)
+            try:
+                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+                getattr(mc(server, path_owner(path_), self.base_directory), action)()
+                sleep(mc.COMMIT_DELAY)
+            except Exception:
+                pass
 
 def tally():
     import platform, urllib2, urllib
