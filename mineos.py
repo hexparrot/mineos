@@ -948,7 +948,7 @@ class mc(object):
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
-               '%(java)s -server %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
+               '%(java)s -server -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
                '-jar %(jar_file)s %(jar_args)s' % required_arguments
 
     @property
