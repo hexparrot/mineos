@@ -93,7 +93,8 @@ class mc(object):
     LOG_PATHS = {
         'legacy': 'server.log',
         'current': os.path.join('logs', 'latest.log'),
-        'bungee': 'proxy.log.0'
+        'bungee': 'proxy.log.0',
+        'forgemod': 'ForgeModLoader-server-0.log'
         } 
     
     def __init__(self,
@@ -144,10 +145,10 @@ class mc(object):
             path = os.path.join(self.env['cwd'], lp)
             if os.path.isfile(path):
                 self.env['log'] = path
-                self.server_type = server_type
+                self._server_type = server_type
                 break
         else:
-            self.server_type = 'unknown'
+            self._server_type = 'unknown'
 
     def _load_config(self, load_backup=False, generate_missing=False):
         """Loads server.properties and server.config for a given server.
@@ -594,12 +595,16 @@ class mc(object):
         to guessing by URL"""
         import zipfile
         from xml.dom.minidom import parseString
-        
-        try:
-            jarfile = zipfile.ZipFile(filepath, 'r')
-            xml = parseString(zipfile.ZipFile(filepath, 'r').read(r'META-INF/maven/org.bukkit/craftbukkit/pom.xml'))
-            return xml.getElementsByTagName('version')[0].firstChild.nodeValue
-        except:
+
+        for internal_path in [r'META-INF/maven/org.bukkit/craftbukkit/pom.xml',
+                              r'META-INF/maven/mcpc/mcpc-plus-legacy/pom.xml',
+                              r'META-INF/maven/org.spigotmc/spigot/pom.xml']:
+            try:
+                xml = parseString(zipfile.ZipFile(filepath, 'r').read(internal_path))
+                return xml.getElementsByTagName('version')[0].firstChild.nodeValue
+            except (IndexError, KeyError, AttributeError):
+                continue
+        else:
             if guess:
                 import re
                 match = re.match('https://s3.amazonaws.com/Minecraft.Download/versions/([^/]+)', guess)
@@ -900,7 +905,19 @@ class mc(object):
     @property
     def sc(self):
         """Returns the entire server.config in a dictionary"""
-        return self.server_config[:]        
+        return self.server_config[:]
+
+    @property
+    def server_type(self):
+        """Returns best guess of server type"""
+        return self._server_type
+
+    @property
+    def server_milestone(self):
+        """Returns best guessed server major and minor versions"""
+        jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
+        jar_path = os.path.join(self.env['cwd'], jar_file)
+        return self.server_version(jar_path, self.profile_config[self.profile:'url'])
 
 # shell command constructor properties
 
@@ -1353,6 +1370,7 @@ class mc(object):
 
     @classmethod
     def list_servers_start_at_boot(cls, base_directory):
+        """Generator listing of all servers to start at boot"""
         from procfs_reader import path_owner
 
         hits = []
@@ -1371,6 +1389,7 @@ class mc(object):
 
     @classmethod
     def list_servers_restore_at_boot(cls, base_directory):
+        """Generator listing of all servers to restore at boot"""
         from procfs_reader import path_owner
 
         hits = []
@@ -1428,6 +1447,7 @@ class mc(object):
 
     @staticmethod
     def has_ownership(username, path):
+        """Returns username of owner, given provided username has access via fs"""
         from pwd import getpwuid, getpwnam
         from grp import getgrgid
 
@@ -1515,6 +1535,7 @@ class mc(object):
 
     @staticmethod
     def minutes_since_midnight():
+        """Returns number of seconds since midnight"""
         from datetime import datetime
         now = datetime.now()
         return int(((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()) / 60)
