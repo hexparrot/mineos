@@ -602,7 +602,7 @@ class mc(object):
             try:
                 xml = parseString(zipfile.ZipFile(filepath, 'r').read(internal_path))
                 return xml.getElementsByTagName('version')[0].firstChild.nodeValue
-            except (IndexError, KeyError, AttributeError):
+            except (IndexError, KeyError, AttributeError, IOError):
                 continue
         else:
             if guess:
