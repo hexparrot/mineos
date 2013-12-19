@@ -598,6 +598,7 @@ class mc(object):
 
         for internal_path in [r'META-INF/maven/org.bukkit/craftbukkit/pom.xml',
                               r'META-INF/maven/mcpc/mcpc-plus-legacy/pom.xml',
+                              r'META-INF/maven/mcpc/mcpc-plus/pom.xml',
                               r'META-INF/maven/org.spigotmc/spigot/pom.xml']:
             try:
                 xml = parseString(zipfile.ZipFile(filepath, 'r').read(internal_path))
