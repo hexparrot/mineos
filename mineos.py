@@ -923,7 +923,8 @@ class mc(object):
         """Returns best guessed server major and minor versions"""
         jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
         jar_path = os.path.join(self.env['cwd'], jar_file)
-        return self.server_version(jar_path, self.profile_config[self.profile:'url'])
+        return self.server_version(jar_path,
+                                   self.profile_config[self.profile:'url']) or 'unknown'
 
     @property
     def server_milestone_short(self):
