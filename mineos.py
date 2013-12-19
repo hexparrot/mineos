@@ -852,7 +852,8 @@ class mc(object):
 
         def server_list_packet():
             """Guesses what version minecraft a live server directory is."""
-            if self.server_milestone_short in ['1.5', '1.6']:
+            if self.server_milestone_short in ['1.5', '1.6'] or \
+               (self.server_type == 'forgemod' and self.server_milestone == 'unknown'):
                 return '\xfe' \
                        '\x01' \
                        '\xfa' \
