@@ -847,7 +847,7 @@ class mc(object):
 
         def server_list_packet():
             """Guesses what version minecraft a live server directory is."""
-            if self.server_type == 'legacy':
+            if self.server_milestone_short in ['1.5', '1.6']:
                 return '\xfe' \
                        '\x01' \
                        '\xfa' \
@@ -919,6 +919,26 @@ class mc(object):
         jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
         jar_path = os.path.join(self.env['cwd'], jar_file)
         return self.server_version(jar_path, self.profile_config[self.profile:'url'])
+
+    @property
+    def server_milestone_short(self):
+        """Returns short version of server_milestone major/minor"""
+        import re
+
+        try:
+            version = re.match(r'(\d)\.(\d)\.\d', self.server_milestone)
+            return '%s.%s' % (version.group(1), version.group(2))
+        except (AttributeError, TypeError):
+            return '0.0'
+
+    @property
+    def ping_debug(self):
+        """Returns helpful debug information for web-ui ping() issues"""
+        return ' '.join([
+            self.server_type,
+            '(%s) -' % self.server_milestone_short,
+            self.server_milestone,
+            ])
 
 # shell command constructor properties
 
