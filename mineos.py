@@ -590,28 +590,33 @@ class mc(object):
             raise NotImplementedError("This type of profile is not implemented yet.")
 
     @staticmethod
-    def server_version(filepath, guess):
+    def server_version(filepath, guess=''):
         """Extract server version from jarfile and fallback
         to guessing by URL"""
         import zipfile
         from xml.dom.minidom import parseString
 
-        for internal_path in [r'META-INF/maven/org.bukkit/craftbukkit/pom.xml',
-                              r'META-INF/maven/mcpc/mcpc-plus-legacy/pom.xml',
-                              r'META-INF/maven/mcpc/mcpc-plus/pom.xml',
-                              r'META-INF/maven/org.spigotmc/spigot/pom.xml']:
-            try:
-                xml = parseString(zipfile.ZipFile(filepath, 'r').read(internal_path))
-                return xml.getElementsByTagName('version')[0].firstChild.nodeValue
-            except (IndexError, KeyError, AttributeError, IOError):
-                continue
+        try:
+            with zipfile.ZipFile(filepath, 'r') as zf:
+                files = zf.namelist()
+                for internal_path in [r'META-INF/maven/org.bukkit/craftbukkit/pom.xml',
+                                      r'META-INF/maven/mcpc/mcpc-plus-legacy/pom.xml',
+                                      r'META-INF/maven/mcpc/mcpc-plus/pom.xml',
+                                      r'META-INF/maven/org.spigotmc/spigot/pom.xml']:
+                    if internal_path in files:
+                        try:
+                            xml = parseString(zf.read(internal_path))
+                            return xml.getElementsByTagName('version')[0].firstChild.nodeValue
+                        except (IndexError, KeyError, AttributeError):
+                            continue 
+        except IOError:
+            return ''
         else:
-            if guess:
-                import re
-                match = re.match('https://s3.amazonaws.com/Minecraft.Download/versions/([^/]+)', guess)
-                if match:
-                    return match.group(1)
-            else:
+            import re
+            match = re.match('https://s3.amazonaws.com/Minecraft.Download/versions/([^/]+)', guess)
+            try:
+                return match.group(1)
+            except AttributeError:
                 return ''
 
 #actual command execution methods
