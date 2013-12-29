@@ -1375,14 +1375,14 @@ Is the information correct? [Y/n]
                                         <!-- ko if: logs.reversed() -->
                                         <tbody data-bind=", foreach: vmdata.logs.slice(0).reverse()">
                                             <tr>
-                                              <td data-bind="text: entry"></td>
+                                              <td data-bind="html: entry"></td>
                                             </tr>
                                         </tbody>
                                         <!-- /ko -->
                                         <!-- ko if: !logs.reversed() -->
                                         <tbody data-bind=", foreach: vmdata.logs">
                                             <tr>
-                                              <td data-bind="text: entry"></td>
+                                              <td data-bind="html: entry"></td>
                                             </tr>
                                         </tbody>
                                         <!-- /ko -->
@@ -1494,6 +1494,7 @@ Is the information correct? [Y/n]
     <script src="js/application.js"></script>
 
     <script src="js/knockout-min.js"></script>
+    <script src="js/ansi_up.js"></script>
     <script src="js/scriptin.js"></script>
     <!--/ Javascript (Application) -->
     
