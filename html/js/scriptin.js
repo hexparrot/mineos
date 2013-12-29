@@ -152,7 +152,7 @@ function model_logline(str) {
 	var self = this;
 
 	self.timestamp = '';
-	self.entry = str;
+	self.entry = ansi_up.ansi_to_html(ansi_up.linkify(ansi_up.escape_for_html(str)));
 }
 
 function model_profile(data) {
