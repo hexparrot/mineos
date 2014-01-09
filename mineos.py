@@ -981,15 +981,14 @@ class mc(object):
             required_arguments['jar_args'] = self.profile_config[self.profile:'jar_args':'']
         except (TypeError,ValueError):
             required_arguments['jar_file'] = None
-            required_arguments['jar_args'] = None        
+            required_arguments['jar_args'] = None
 
         try:
-            java_xms = self.server_config['java':'java_xms']
-        except KeyError:
+            java_xms = self.server_config['java':'java_xms'].strip()
+            assert 0 < int(java_xms) <= int(required_arguments['java_xmx'])
+            required_arguments['java_xms'] = java_xms   
+        except (KeyError,AttributeError,ValueError,AssertionError):
             pass
-        else:
-            if java_xms.strip():
-                self.server_config['java':'java_xms'] = java_xms.strip()                
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
