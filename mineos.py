@@ -874,7 +874,9 @@ class mc(object):
                                           'players_online',
                                           'max_players'])
 
-        if self.up:
+        if self.server_type == 'bungee':
+            return server_ping(None,None,'','0',1)
+        elif self.up:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((self.ip_address, self.port))
@@ -883,10 +885,7 @@ class mc(object):
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
             except socket.error:
-                if self.server_type == 'bungee':
-                    return server_ping(None,None,'','0',1)
-                else:
-                    return server_ping(None,None,self.server_properties['motd'::''],
+                return server_ping(None,None,self.server_properties['motd'::''],
                                    '-1',self.server_properties['max-players'])
             finally:
                 s.close()
