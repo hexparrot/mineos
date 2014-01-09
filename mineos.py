@@ -999,33 +999,11 @@ class mc(object):
     @sanitize
     def command_debug(self):
         """Returns the command used to test starting up a minecraft server."""
-        required_arguments = {
-            'java': self.BINARY_PATHS['java'],
-            'java_xmx': self.server_config['java':'java_xmx'],
-            'java_xms': self.server_config['java':'java_xmx'],
-            'java_tweaks': self.server_config['java':'java_tweaks':''],
-            'jar_args': '-nogui'
-            }
-
-        try:
-            jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
-            required_arguments['jar_file'] = os.path.join(self.env['cwd'], jar_file)
-            required_arguments['jar_args'] = self.profile_config[self.profile:'jar_args':'']
-        except (TypeError,ValueError):
-            required_arguments['jar_file'] = None
-            required_arguments['jar_args'] = None        
-
-        try:
-            java_xms = self.server_config['java':'java_xms']
-        except KeyError:
-            pass
-        else:
-            if java_xms.strip():
-                self.server_config['java':'java_xms'] = java_xms.strip()                
-
-        self._previous_arguments = required_arguments
-        return '%(java)s -server %(java_tweaks)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM ' \
-               '-jar %(jar_file)s %(jar_args)s' % required_arguments
+        import re
+        
+        command = self.command_start
+        match = re.match(r'^.+ mc-.+? (.+)', command)
+        return match.group(1)
 
     @property
     @sanitize
