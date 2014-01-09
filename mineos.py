@@ -602,7 +602,8 @@ class mc(object):
                 for internal_path in [r'META-INF/maven/org.bukkit/craftbukkit/pom.xml',
                                       r'META-INF/maven/mcpc/mcpc-plus-legacy/pom.xml',
                                       r'META-INF/maven/mcpc/mcpc-plus/pom.xml',
-                                      r'META-INF/maven/org.spigotmc/spigot/pom.xml']:
+                                      r'META-INF/maven/org.spigotmc/spigot/pom.xml',
+                                      r'META-INF/maven/net.md-5/bungeecord-api/pom.xml']:
                     if internal_path in files:
                         try:
                             xml = parseString(zf.read(internal_path))
@@ -932,7 +933,7 @@ class mc(object):
         import re
 
         try:
-            version = re.match(r'(\d)\.(\d)\.\d', self.server_milestone)
+            version = re.match(r'(\d)\.(\d)', self.server_milestone)
             return '%s.%s' % (version.group(1), version.group(2))
         except (AttributeError, TypeError):
             return '0.0'
