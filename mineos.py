@@ -972,7 +972,7 @@ class mc(object):
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks':''],
-            'jar_args': '-nogui'
+            'jar_args': 'nogui'
             }
 
         try:
