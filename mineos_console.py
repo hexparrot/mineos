@@ -24,7 +24,7 @@ if __name__=="__main__":
     parser.add_argument('-d',
                         dest='base_directory',
                         help='the base of the mc file structure',
-                        default=None)
+                        default='/var/games/minecraft')
     parser.add_argument('--this',
                         action='store_true',
                         default=False,
