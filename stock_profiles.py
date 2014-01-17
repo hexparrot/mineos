@@ -50,12 +50,20 @@ STOCK_PROFILES = {
         'run_as': 'craftbukkit.jar',
         'ignore': '',
         }
-      'spigot': {
+    'spigot': {
         'name': 'spigot',
         'type': 'standard_jar',
         'url': 'http://ci.md-5.net/job/Spigot/lastSuccessfulBuild/artifact/Spigot-Server/target/spigot.jar',
         'save_as': 'spigot.jar',
         'run_as': 'spigot.jar',
+        'ignore': '',
+        }
+    'bungeecord': {
+        'name': 'bungeecord',
+        'type': 'standard_jar',
+        'url': 'http://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar',
+        'save_as': 'bungeecord.jar',
+        'run_as': 'bungeecord.jar',
         'ignore': '',
         }
     }
