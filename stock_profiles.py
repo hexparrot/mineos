@@ -50,4 +50,12 @@ STOCK_PROFILES = {
         'run_as': 'craftbukkit.jar',
         'ignore': '',
         }
+      'spigot': {
+        'name': 'spigot',
+        'type': 'standard_jar',
+        'url': 'http://ci.md-5.net/job/Spigot/lastSuccessfulBuild/artifact/Spigot-Server/target/spigot.jar',
+        'save_as': 'spigot.jar',
+        'run_as': 'spigot.jar',
+        'ignore': '',
+        }
     }
