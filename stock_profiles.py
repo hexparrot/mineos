@@ -58,12 +58,4 @@ STOCK_PROFILES = {
         'run_as': 'spigot.jar',
         'ignore': '',
         }
-    'bungeecord': {
-        'name': 'bungeecord',
-        'type': 'standard_jar',
-        'url': 'http://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar',
-        'save_as': 'bungeecord.jar',
-        'run_as': 'bungeecord.jar',
-        'ignore': '',
-        }
     }
