@@ -49,7 +49,7 @@ STOCK_PROFILES = {
         'save_as': 'craftbukkit.jar',
         'run_as': 'craftbukkit.jar',
         'ignore': '',
-        }
+        },
     'spigot': {
         'name': 'spigot',
         'type': 'standard_jar',
