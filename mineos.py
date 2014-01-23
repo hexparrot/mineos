@@ -779,9 +779,9 @@ class mc(object):
         
         try:
             current = self.profile
-            if current == 'unmanaged':
-                path_ = os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])
-                if not os.path.isfile(path):
+            if self.profile_config[current:'type'] == 'unmanaged':
+                path_ = os.path.join(self.env['cwd'], self.profile_config[current:'run_as'])
+                if not os.path.isfile(path_):
                     raise RuntimeError('%s does not exist' % path_)
                 else:
                     return True
