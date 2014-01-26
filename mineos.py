@@ -72,7 +72,6 @@ def server_up(up):
 class mc(object):
 
     NICE_VALUE = 10
-    COMMIT_DELAY = 10
     DEFAULT_PATHS = {
         'servers': 'servers',
         'backup': 'backup',

@@ -13,8 +13,9 @@ import os
 from mineos import mc
 
 class cron(cherrypy.process.plugins.SimplePlugin):
-    def __init__(self, base_directory):
+    def __init__(self, base_directory, commit_delay=10):
         self.base_directory = base_directory
+        self.commit_delay = commit_delay
         
     def check_interval(self):
         from procfs_reader import path_owner
@@ -33,13 +34,13 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             except Exception:
                 pass
         else:
-            sleep(len(crons) * mc.COMMIT_DELAY)
+            sleep(len(crons) * self.commit_delay)
 
         for action, server in crons:
             try:
                 path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
                 getattr(mc(server, path_owner(path_), self.base_directory), action)()
-                sleep(mc.COMMIT_DELAY)
+                sleep(self.commit_delay)
             except Exception:
                 pass
 
@@ -198,7 +199,14 @@ if __name__ == "__main__":
         '/': {}
         }
 
-    minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine, cron(base_dir).check_interval, 60)
+    try:
+        commit_delay = int(cherrypy.config['server.commit_delay'])
+    except (ValueError, KeyError):
+        commit_delay = 10
+        
+    minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine,
+                                                      cron(base_dir, commit_delay).check_interval,
+                                                      60)
     minute_crontab.subscribe()
 
     import mounts, auth
