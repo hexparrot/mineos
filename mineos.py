@@ -1345,12 +1345,7 @@ class mc(object):
         hits = []
         msm = cls.minutes_since_midnight()
 
-        if action == 'archive':
-            section_option = ('crontabs', 'archive_interval')
-        elif action == 'backup':
-            section_option = ('crontabs', 'backup_interval')
-        else:
-            raise NotImplementedError("Requested action is not yet implemented.")
+        section_option = ('crontabs', '%s_interval' % action)
 
         for i in cls.list_servers(base_directory):
             try:
@@ -1359,8 +1354,8 @@ class mc(object):
                 instance = cls(i, owner_, base_directory)
             
                 interval = instance.server_config.getint(section_option[0],section_option[1])
-                '''at midnight, always archive. this works because
-                if archive_interval is not type(int), e.g., 'skip' or '',
+                '''msm == 0; at midnight, always trigger. this works because
+                if *_interval is not type(int), e.g., 'skip' or '',
                 it'll except ValueError, skipping the test altogether'''
                 if msm == 0:
                     hits.append(i)

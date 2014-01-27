@@ -20,29 +20,39 @@ class cron(cherrypy.process.plugins.SimplePlugin):
     def check_interval(self):
         from procfs_reader import path_owner
         from time import sleep
-
+        
         crons = []
         
-        for action in ('backup','archive'):
+        for action in ('restart','backup','archive'):
             for server in mc.list_servers_to_act(action, self.base_directory):
                 crons.append( (action, server) )
 
-        for action, server in crons:
-            try:
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
-                getattr(mc(server, path_owner(path_), self.base_directory), 'commit')()
-            except Exception:
-                pass
-        else:
-            sleep(len(crons) * self.commit_delay)
+        for server in set(s for a,s in crons):
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+            
+            if instance.up:
+                instance.commit()
+                sleep(self.commit_delay)
 
         for action, server in crons:
-            try:
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
-                getattr(mc(server, path_owner(path_), self.base_directory), action)()
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+
+            if action == 'restart':
+                instance._command_stuff('stop')
                 sleep(self.commit_delay)
-            except Exception:
-                pass
+            elif action in ('backup', 'archive'):
+                getattr(instance, action)()
+                sleep(self.commit_delay)
+                
+        for action, server in crons:
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+            
+            if action == 'restart':
+                instance.start()
+                sleep(self.commit_delay)  
 
 def tally():
     import platform, urllib2, urllib
@@ -203,9 +213,10 @@ if __name__ == "__main__":
         commit_delay = int(cherrypy.config['server.commit_delay'])
     except (ValueError, KeyError):
         commit_delay = 10
-        
+
+    cron_instance = cron(base_dir, commit_delay)
     minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine,
-                                                      cron(base_dir, commit_delay).check_interval,
+                                                      cron_instance.check_interval,
                                                       60)
     minute_crontab.subscribe()
 
