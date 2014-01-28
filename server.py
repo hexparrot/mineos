@@ -31,8 +31,11 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
             instance = mc(server, path_owner(path_), self.base_directory)
             
-            if instance.up:
+            try:
                 instance.commit()
+            except RuntimeError:
+                pass
+            else:
                 sleep(self.commit_delay)
 
         for action, server in crons:
@@ -40,8 +43,12 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             instance = mc(server, path_owner(path_), self.base_directory)
 
             if action == 'restart':
-                instance._command_stuff('stop')
-                sleep(self.commit_delay)
+                try:
+                    instance._command_stuff('stop')
+                except RuntimeError:
+                    pass
+                else:
+                    sleep(self.commit_delay)
             elif action in ('backup', 'archive'):
                 getattr(instance, action)()
                 sleep(self.commit_delay)
@@ -51,8 +58,15 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             instance = mc(server, path_owner(path_), self.base_directory)
             
             if action == 'restart':
-                instance.start()
-                sleep(self.commit_delay)  
+                if instance.up:
+                    sleep(self.commit_delay)
+                    
+                try:
+                    instance.start()
+                except RuntimeError:
+                    pass
+                else:
+                    sleep(self.commit_delay)
 
 def tally():
     import platform, urllib2, urllib
