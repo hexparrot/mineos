@@ -267,7 +267,7 @@ class mc(object):
             'crontabs': {
                 'archive_interval': 0,
                 'backup_interval': 0,
-                'restart_interval': 0,
+                'restart_interval': '',
                 },
             'onreboot': {
                 'restore': False,
