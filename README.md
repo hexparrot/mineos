@@ -1,18 +1,20 @@
 This is the github repository for MineOS Minecraft hosting and management scripts.
 
+While MineOS can always be found with a distributable ISO (currently Turnkey), these scripts are distro-agnostic and can be installed atop any Linux or BSD system. See the wiki for details.
+
 Features
 ========
 
-- Utilizes underlying system's user passwords (/etc/shadow)
-- Multiple-user functionality based on *nix permisisons
-- Administrative control of all servers as root
-- Self-contained package powered by Python-based webserver Cherrypy
 - Web user interface with modern Knockout templating
-- Command-line usage
+- Scheduled backups, archives, and restarts
+- Command-line scriptable
+- Leverages host system's existing user passwords (/etc/shadow) and HTTPS
+- Shared administration functionality using group permissions
+- Works on Linux and BSD
 
 Tutorials
 =========
 
-Installation tutorial: http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
+Installation tutorial: http://minecraft.codeemo.com/mineoswiki/index.php?title=Installing_MineOS
 
-Youtube Instructions: http://mineos.codeemo.com/mineoswiki/index.php?title=Installing_MineOS
+Youtube Instructions: http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
