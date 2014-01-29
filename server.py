@@ -13,35 +13,60 @@ import os
 from mineos import mc
 
 class cron(cherrypy.process.plugins.SimplePlugin):
-    def __init__(self, base_directory):
+    def __init__(self, base_directory, commit_delay=10):
         self.base_directory = base_directory
+        self.commit_delay = commit_delay
         
     def check_interval(self):
         from procfs_reader import path_owner
         from time import sleep
-
+        
         crons = []
         
-        for action in ('backup','archive'):
+        for action in ('restart','backup','archive'):
             for server in mc.list_servers_to_act(action, self.base_directory):
                 crons.append( (action, server) )
 
-        for action, server in crons:
+        for server in set(s for a,s in crons):
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+            
             try:
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
-                getattr(mc(server, path_owner(path_), self.base_directory), 'commit')()
-            except Exception:
+                instance.commit()
+            except RuntimeError:
                 pass
-        else:
-            sleep(len(crons) * mc.COMMIT_DELAY)
+            else:
+                sleep(self.commit_delay)
 
         for action, server in crons:
-            try:
-                path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
-                getattr(mc(server, path_owner(path_), self.base_directory), action)()
-                sleep(mc.COMMIT_DELAY)
-            except Exception:
-                pass
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+
+            if action == 'restart':
+                try:
+                    instance._command_stuff('stop')
+                except RuntimeError:
+                    pass
+                else:
+                    sleep(self.commit_delay)
+            elif action in ('backup', 'archive'):
+                getattr(instance, action)()
+                sleep(self.commit_delay)
+                
+        for action, server in crons:
+            path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
+            instance = mc(server, path_owner(path_), self.base_directory)
+            
+            if action == 'restart':
+                if instance.up:
+                    sleep(self.commit_delay)
+                    
+                try:
+                    instance.start()
+                except RuntimeError:
+                    pass
+                else:
+                    sleep(self.commit_delay)
 
 def tally():
     import platform, urllib2, urllib
@@ -71,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument('-d',
                         dest='base_directory',
                         help='the base of the mc file structure',
-                        default=None)
+                        default='/var/games/minecraft')
     parser.add_argument('--daemon',
                         action='store_true',
                         default=False,
@@ -198,7 +223,15 @@ if __name__ == "__main__":
         '/': {}
         }
 
-    minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine, cron(base_dir).check_interval, 60)
+    try:
+        commit_delay = int(cherrypy.config['server.commit_delay'])
+    except (ValueError, KeyError):
+        commit_delay = 10
+
+    cron_instance = cron(base_dir, commit_delay)
+    minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine,
+                                                      cron_instance.check_interval,
+                                                      60)
     minute_crontab.subscribe()
 
     import mounts, auth

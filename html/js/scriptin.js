@@ -45,7 +45,8 @@ function model_property(server_name, option, value, section, new_prop) {
 				{section: 'onreboot', option: 'restore', type: 'truefalse'},
 				{section: 'onreboot', option: 'start', type: 'truefalse'},
 				{section: 'crontabs', option: 'archive_interval', type: 'interval'},
-				{section: 'crontabs', option: 'backup_interval', type: 'interval'}
+				{section: 'crontabs', option: 'backup_interval', type: 'interval'},
+				{section: 'crontabs', option: 'restart_interval', type: 'interval'}
 			]
 
 			$.each(fixed, function(i,v) {
