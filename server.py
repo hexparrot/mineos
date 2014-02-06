@@ -13,13 +13,17 @@ import os
 from mineos import mc
 
 class cron(cherrypy.process.plugins.SimplePlugin):
-    def __init__(self, base_directory, commit_delay=10):
+    def __init__(self, base_directory, commit_delay):
         self.base_directory = base_directory
-        self.commit_delay = commit_delay
+        try:
+            self.commit_delay = int(commit_delay)
+        except (ValueError, TypeError):
+            self.commit_delay = 10
         
     def check_interval(self):
         from procfs_reader import path_owner
         from time import sleep
+        from subprocess import CalledProcessError
         
         crons = []
         
@@ -30,8 +34,10 @@ class cron(cherrypy.process.plugins.SimplePlugin):
         for server in set(s for a,s in crons):
             path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
             instance = mc(server, path_owner(path_), self.base_directory)
-            
+
+            cherrypy.log('[%s] commit' % server)
             try:
+                instance._command_stuff('save-off')
                 instance.commit()
             except RuntimeError:
                 pass
@@ -43,6 +49,7 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             instance = mc(server, path_owner(path_), self.base_directory)
 
             if action == 'restart':
+                cherrypy.log('[%s] stop' % server)
                 try:
                     instance._command_stuff('stop')
                 except RuntimeError:
@@ -50,8 +57,14 @@ class cron(cherrypy.process.plugins.SimplePlugin):
                 else:
                     sleep(self.commit_delay)
             elif action in ('backup', 'archive'):
-                getattr(instance, action)()
-                sleep(self.commit_delay)
+                cherrypy.log('[%s] %s' % (server, action))
+                try:
+                    getattr(instance, action)()
+                except CalledProcessError as e:
+                    cherrypy.log('[%s] %s exception: returncode %s' % (server, action, e.returncode))
+                    cherrypy.log(e.output)
+                else:
+                    sleep(self.commit_delay)
                 
         for action, server in crons:
             path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
@@ -59,8 +72,10 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             
             if action == 'restart':
                 if instance.up:
+                    cherrypy.log('[%s] extra delay' % server)
                     sleep(self.commit_delay)
-                    
+
+                cherrypy.log('[%s] start' % server)
                 try:
                     instance.start()
                 except RuntimeError:
@@ -224,15 +239,14 @@ if __name__ == "__main__":
         }
 
     try:
-        commit_delay = int(cherrypy.config['server.commit_delay'])
-    except (ValueError, KeyError):
-        commit_delay = 10
-
-    cron_instance = cron(base_dir, commit_delay)
-    minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine,
-                                                      cron_instance.check_interval,
-                                                      60)
-    minute_crontab.subscribe()
+        cron_instance = cron(base_dir, cherrypy.config['server.commit_delay'])
+    except KeyError:
+        cron_instance = cron(base_dir, 10)
+    finally:
+        minute_crontab = cherrypy.process.plugins.Monitor(cherrypy.engine,
+                                                          cron_instance.check_interval,
+                                                          60)
+        minute_crontab.subscribe()
 
     import mounts, auth
 
