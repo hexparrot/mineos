@@ -54,7 +54,7 @@ if __name__=="__main__":
 
     if args.server_name:
         owner = mc.has_server_rights(getuser(), args.server_name, args.base_directory)
-        if not owner:
+        if not owner and os.path.isdir(os.path.join(args.base_directory, mc.DEFAULT_PATHS['servers'], args.server_name)):
             raise OSError("User '%s' does not have rights to %s" % (getuser(),
                                                                     os.path.join(args.base_directory,
                                                                                  args.server_name)))
