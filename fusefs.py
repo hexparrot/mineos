@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 
 import fuse, errno, stat, os, sys, time
-
-MINEOS_SCRIPTS = '/usr/games/minecraft'
-MINEOS_SKELETON = '/var/games/minecraft'
-
-sys.path.append(MINEOS_SCRIPTS)
 from mineos import mc
+
+MINEOS_SKELETON = '/var/games/minecraft'
 
 fuse.fuse_python_api = (0, 2)
 
@@ -141,7 +138,14 @@ class minefs(fuse.Fuse):
                                 return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name + '.txt'))
 
         elif root_dir == 'profiles':
-            return st.directory()
+            try:
+                profile_name = components.pop(0)
+            except IndexError:
+                return st.directory()
+            else:
+                if profile_name in mc.list_profiles(MINEOS_SKELETON):
+                    return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir, profile_name))
+                
 
         return -errno.ENOENT
 

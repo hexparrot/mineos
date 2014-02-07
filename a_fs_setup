@@ -1,0 +1,18 @@
+#!/bin/sh
+
+TMPFS="/tmp/fs"
+MINEOS_SKELETON="/var/games/minecraft"
+SERVER_NAME="a"
+
+/usr/games/minecraft/mineos_console.py -s $SERVER_NAME create
+touch "$MINEOS_SKELETON/servers/$SERVER_NAME/white-list.txt"
+touch "$MINEOS_SKELETON/servers/$SERVER_NAME/banned-ips.txt"
+touch "$MINEOS_SKELETON/servers/$SERVER_NAME/banned-players.txt"
+touch "$MINEOS_SKELETON/servers/$SERVER_NAME/ops.txt"
+
+mkdir $TMPFS
+./fusefs.py $TMPFS
+./test_fusefs.py
+fusermount -u $TMPFS
+rm -rf $TMPFS
+rm -rf $MINEOS_SKELETON
