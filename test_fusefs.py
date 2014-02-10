@@ -12,6 +12,8 @@ MOUNT_POINT = '/tmp/fs'
 UNPRIVILEGED_USER = 'mc'
 REAL_SERVER = 'a'
 
+os.chdir(MOUNT_POINT)
+
 class TestFuseFS(unittest.TestCase):   
     def setUp(self):
         pass
@@ -28,10 +30,8 @@ class TestFuseFS(unittest.TestCase):
         with open('/dev/null', 'w') as nulldev:
             subprocess.check_call(split(command),
                                   stderr=nulldev,
-                                  stdout=nulldev)
-
-    def join(self, *paths):
-        return os.path.join(MOUNT_POINT, *paths)
+                                  stdout=nulldev,
+                                  cwd=MOUNT_POINT)
 
     def test_external_setup(self):
         self.assertTrue(os.path.exists(MOUNT_POINT))
@@ -41,22 +41,22 @@ class TestFuseFS(unittest.TestCase):
             self.assertTrue(os.path.isdir(os.path.join(MOUNT_POINT,d)))
 
     def test_server_dir(self):
-        for s in next(os.walk(self.join('servers')))[1]:
+        for s in next(os.walk('servers'))[1]:
             for d in ['server.properties', 'server.config',
                       'banned-ips', 'banned-players',
                       'white-list']:
-                self.assertTrue(os.path.isdir(self.join('servers', s, d)))
+                self.assertTrue(os.path.isdir(os.path.join('servers', s, d)))
 
     def test_regular_files(self):
-        for s in next(os.walk(self.join('servers')))[1]:
+        for s in next(os.walk('servers'))[1]:
             for d in ['server.properties',
                       'banned-ips', 'banned-players',
                       'white-list']:
-                prefix_path = self.join('servers',s,d)
+                prefix_path = os.path.join('servers',s,d)
                 for f in os.listdir(prefix_path):
                     self.assertTrue(os.path.isfile(os.path.join(prefix_path, f)))
 
-            prefix_path = self.join('servers', s, 'server.config')
+            prefix_path = os.path.join('servers', s, 'server.config')
             for d in os.listdir(prefix_path):
                 full_path = os.path.join(prefix_path, d)
                 self.assertTrue(os.path.isdir(full_path))
@@ -65,60 +65,60 @@ class TestFuseFS(unittest.TestCase):
                          
     def test_ls_fake_dir(self):
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('fakedir'))
+            self.call('ls fakedir')
             self.assertEqual(e.returncode, errno.ENOENT)
                  
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('servers/fakeserver'))
+            self.call('ls %s' % os.path.join('servers/fakeserver'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('servers/fakeserver/server.config'))
+            self.call('ls %s' % os.path.join('servers/fakeserver/server.config'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('servers/fakeserver/server.config/java'))
+            self.call('ls %s' % os.path.join('servers/fakeserver/server.config/java'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('servers/fakeserver/server.config/javac'))
+            self.call('ls %s' % os.path.join('servers/fakeserver/server.config/javac'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('profiles/fakeprofile'))
+            self.call('ls %s' % os.path.join('profiles/fakeprofile'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('ls %s' % self.join('servers/%s/server.config/javac' % REAL_SERVER))
+            self.call('ls %s' % os.path.join('servers/%s/server.config/javac' % REAL_SERVER))
             self.assertEqual(e.returncode, errno.ENOENT)
 
     def test_cd_fake_dir(self):
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('fakeo'))
+            self.call('cd %s' % os.path.join('fakeo'))
             self.assertEqual(e.returncode, errno.ENOENT)
             
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('servers/fake'))
+            self.call('cd %s' % os.path.join('servers/fake'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('servers/fake/server.config'))
+            self.call('cd %s' % os.path.join('servers/fake/server.config'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('servers/fake/server.config/java'))
+            self.call('cd %s' % os.path.join('servers/fake/server.config/java'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('servers/fake/server.properties/javac'))
+            self.call('cd %s' % os.path.join('servers/fake/server.properties/javac'))
             self.assertEqual(e.returncode, errno.ENOENT)
 
         with self.assertRaises(OSError) as e:
-            self.call('cd %s' % self.join('servers/%s/server.config/fake' % REAL_SERVER))
+            self.call('cd %s' % os.path.join('servers/%s/server.config/fake' % REAL_SERVER))
             self.assertEqual(e.returncode, errno.ENOENT)
 
     def test_create_server_property(self):
-        fn = self.join('servers/%s/server.properties/newprop' % REAL_SERVER)
+        fn = os.path.join('servers/%s/server.properties/newprop' % REAL_SERVER)
         self.system('touch %s' % fn)
         self.system('echo 5 >> %s' % fn)
         self.assertTrue(os.path.isfile(fn))
@@ -128,7 +128,7 @@ class TestFuseFS(unittest.TestCase):
             self.assertEqual(n[0], '5\n')
 
     def test_create_server_config(self):
-        fn = self.join('servers/%s/server.config/java/java_fake' % REAL_SERVER)
+        fn = os.path.join('servers/%s/server.config/java/java_fake' % REAL_SERVER)
         self.system('touch %s' % fn)
         self.system('echo 256 >> %s' % fn)
         self.assertTrue(os.path.isfile(fn))
@@ -138,20 +138,20 @@ class TestFuseFS(unittest.TestCase):
             self.assertEqual(n[0], '256\n')
 
     def test_create_server_config_section(self):
-        fn = self.join('servers/%s/server.config/newsect' % REAL_SERVER)
+        fn = os.path.join('servers/%s/server.config/newsect' % REAL_SERVER)
         self.call('mkdir -p %s' % fn)
         
         self.assertTrue(os.path.isdir(fn))
 
     def test_delete_server_property(self):
-        fn = self.join('servers/%s/server.properties/newprop2' % REAL_SERVER)
+        fn = os.path.join('servers/%s/server.properties/newprop2' % REAL_SERVER)
         self.system('touch %s' % fn)
         self.assertTrue(os.path.isfile(fn))
         self.system('rm %s' % fn)
         self.assertFalse(os.path.isfile(fn))
 
     def test_delete_server_config(self):
-        fn = self.join('servers/%s/server.config/java/java_fake2' % REAL_SERVER)
+        fn = os.path.join('servers/%s/server.config/java/java_fake2' % REAL_SERVER)
         self.system('touch %s' % fn)
         self.assertTrue(os.path.isfile(fn))
         self.system('rm %s' % fn)
