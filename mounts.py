@@ -215,7 +215,13 @@ class Root(object):
         return str(cherrypy.session['_cp_username'])
 
     @cherrypy.expose
-    @require()
+    def test(self, **raw_args):
+        import pdb
+        pdb.set_trace()
+        return str(raw_args['jar'].__class__.__name__)
+
+    @cherrypy.expose
+    #@require()
     def index(self):
         from cherrypy.lib.static import serve_file
         from cherrypy import NotFound
