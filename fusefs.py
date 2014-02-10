@@ -37,6 +37,18 @@ class mos_stat(fuse.Stat):
         
         return self
 
+    def console_device(self, server_name):
+        self.st_mode = stat.S_IFREG | 0666
+        self.st_nlink = 1
+        
+        instance = mc(server_name, None, MINEOS_SKELETON)
+        if instance.up:
+            self.st_size = os.path.getsize(instance.env['log'])
+        else:
+            self.st_size = 0
+
+        return self
+
     def copy_stat(self, path):
         return os.stat(path)
 
@@ -60,7 +72,7 @@ class mos_stat(fuse.Stat):
         else:
             size = len(config_file(path)[option])
             self.st_size = size + 1 if size else 0
-            
+
         return self
 
 class minefs(fuse.Fuse):
@@ -121,6 +133,8 @@ class minefs(fuse.Fuse):
                             elif file_name in ['server.config', 'server.properties']:
                                 print 'returning stat for special config FAD'
                                 return st.file_as_directory(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name))
+                            elif file_name == 'console':
+                                return st.console_device(server_name)
                     else:
                         print 'got prop'
                         try:
@@ -225,6 +239,7 @@ class minefs(fuse.Fuse):
                         yield fuse.Direntry('banned-ips')
                         yield fuse.Direntry('white-list')
                         yield fuse.Direntry('ops')
+                        yield fuse.Direntry(name='console', type=stat.S_IFCHR)
                 else:
                     print 'got file name!'
                     try:
@@ -281,6 +296,11 @@ class minefs(fuse.Fuse):
         elif components.file_name == 'server.properties':
             instance = mc(components.server_name, None, MINEOS_SKELETON)
             return bytes(instance.server_properties[components.prop] + '\n')
+        elif components.file_name == 'console':
+            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            with open(instance.env['log'], 'r') as log:
+                return bytes(''.join(log.readlines()))
+            
 
     def create(self, path, mode=None, umask=None):
         components = self.named_components(path)
@@ -342,12 +362,18 @@ class minefs(fuse.Fuse):
             instance.server_properties[components.prop] = str(buf).partition('\n')[0]
             instance.server_properties.commit()
             return len(buf)
+        elif components.file_name == 'console':
+            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            try:
+                instance._command_stuff(buf)
+            except RuntimeError:
+                return -errno.EHOSTDOWN
+            return len(buf)
         
         return -errno.EIO
 
     def truncate(self, path, length):
         print "*** TRUNCATE"
-        #self.create(path)
 
     def unlink(self, path):
         print "*** UNLINK"
