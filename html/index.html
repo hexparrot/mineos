@@ -1255,7 +1255,7 @@ Is the information correct? [Y/n]
                     <!-- START Row -->
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
-                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="definenewprofile">
+                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="definenewprofile" action="/test">
                             <header><h4 class="title">Create a New Server Profile</h4></header>
                             <section class="body">
                                 <div class="body-inner">
@@ -1289,6 +1289,12 @@ Is the information correct? [Y/n]
                                             <div class="controls">
                                                 <input type="text" name="save_as" class="input-xlarge" placeholder="craftbukkit.jar">
                                                 <span class="help-block">Be sure <em>only</em> the filename is here</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group" data-bind="visible: profile_type() == 'unmanaged'">
+                                            <label class="control-label">Upload Jar</label>
+                                            <div class="controls">
+                                                <input type="file" name="upload" class="input-xlarge">
                                             </div>
                                         </div>
                                         <div class="control-group">

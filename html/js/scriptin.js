@@ -668,9 +668,18 @@ function webui() {
     }
 
 	self.define_profile = function(form) {
-		var step1 = $(form).find('fieldset :input').filter(function() {
+		var step1 = $(form).find('fieldset :input:not([type="file"])').filter(function() {
 			return ($(this).val() ? true : false);
 		})
+    
+    var file = $(form).find('input[name="upload"]')[0].files[0];
+    
+    var formData = new FormData();
+    formData.append('jar', file);
+    
+    var request = new XMLHttpRequest();
+    request.open("POST", "/test");
+    request.send(formData);
 
 		var properties = {};
 		$(step1).each(function() {
