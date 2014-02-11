@@ -214,76 +214,87 @@ class minefs(fuse.Fuse):
 
     def readdir(self, path, offset):
         ''' lists pwd files given a path '''
+
+        def root():
+            yield fuse.Direntry('servers')
+            yield fuse.Direntry('profiles')
+
+        def root_dir(components):
+            if components.root_dir == 'servers':
+                for s in mc.list_servers(BASE_DIR):
+                    yield fuse.Direntry(s)
+            elif components.root_dir == 'profiles':
+                for p in mc.list_profiles(BASE_DIR):
+                    yield fuse.Direntry(p)
+
+        def server_name(components):
+            if components.server_name in mc.list_servers(BASE_DIR):
+                yield fuse.Direntry('server.config')
+                yield fuse.Direntry('server.properties')
+                yield fuse.Direntry('banned-players')
+                yield fuse.Direntry('banned-ips')
+                yield fuse.Direntry('white-list')
+                yield fuse.Direntry('ops')
+                yield fuse.Direntry(name='console', type=stat.S_IFCHR)
+
+        def file_name(components):
+            if components.file_name == 'server.properties':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                for i in config_file(p_)[:]:
+                    yield fuse.Direntry(name=i, type=stat.S_IFREG)
+            elif components.file_name == 'server.config':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                for i in config_file(p_)[:]:
+                    yield fuse.Direntry(name=i, type=stat.S_IFDIR)
+            elif components.file_name == 'banned-players':
+                for i in self.flat_config(os.path.join(BASE_DIR,
+                                                       components.root_dir,
+                                                       components.server_name,
+                                                       components.file_name + '.txt'),
+                                          None,
+                                          None,
+                                          partition_by='|'):
+                    yield fuse.Direntry(name=i, type=stat.S_IFREG)
+            elif components.file_name in ['banned-ips', 'white-list', 'ops']:
+                for i in self.flat_config(os.path.join(BASE_DIR,
+                                                       components.root_dir,
+                                                       components.server_name,
+                                                       components.file_name + '.txt'),
+                                          None,
+                                          None):
+                    yield fuse.Direntry(name=i, type=stat.S_IFREG)
+
+        def prop(components):
+            if components.file_name == 'server.config':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                for i in config_file(p_)[components.prop:]:
+                    yield fuse.Direntry(name=i, type=stat.S_IFREG)
+
+        components = self.named_components(path)
+
         for r in ['.', '..']:
             yield fuse.Direntry(r)
 
-        components = self.components(path)
-
-        try:
-            root_dir = components.pop(0)
-        except IndexError:
-            yield fuse.Direntry('servers')
-            yield fuse.Direntry('profiles')
-            raise StopIteration
-
-        #/root_dir/server_name/file_name/prop/next_val
-        if root_dir == 'servers':
-            try:
-                server_name = components.pop(0)
-            except IndexError:
-                for s in mc.list_servers(BASE_DIR):
-                    yield fuse.Direntry(s)
-                raise StopIteration
-            else:
-                try:
-                    file_name = components.pop(0)
-                except IndexError:
-                    if server_name in mc.list_servers(BASE_DIR):
-                        yield fuse.Direntry('server.config')
-                        yield fuse.Direntry('server.properties')
-                        yield fuse.Direntry('banned-players')
-                        yield fuse.Direntry('banned-ips')
-                        yield fuse.Direntry('white-list')
-                        yield fuse.Direntry('ops')
-                        yield fuse.Direntry(name='console', type=stat.S_IFCHR)
-                else:
-                    try:
-                        prop = components.pop(0)
-                    except IndexError:
-                        if file_name == 'server.properties':
-                            instance = mc(server_name, None, BASE_DIR)
-                            for i in getattr(instance, 'server_properties')[:]:
-                                yield fuse.Direntry(name=i, type=stat.S_IFREG)
-                        elif file_name == 'server.config':
-                            instance = mc(server_name, None, BASE_DIR)
-                            for i in getattr(instance, 'server_config')[:]:
-                                yield fuse.Direntry(name=i, type=stat.S_IFREG)
-                        elif file_name == 'banned-players':
-                            for i in self.flat_config(os.path.join(BASE_DIR, root_dir, server_name, file_name) + '.txt',
-                                                      None,
-                                                      None,
-                                                      partition_by='|'):
-                                yield fuse.Direntry(name=i, type=stat.S_IFREG)
-                        elif file_name in ['banned-ips', 'white-list', 'ops']:
-                            for i in self.flat_config(os.path.join(BASE_DIR, root_dir, server_name, file_name) + '.txt',
-                                                      None,
-                                                      None):
-                                yield fuse.Direntry(name=i, type=stat.S_IFREG)
-                    else:
-                        if file_name == 'server.config':
-                            instance = mc(server_name, None, BASE_DIR)
-                            for i in getattr(instance, 'server_config')[prop:]:
-                                yield fuse.Direntry(name=i, type=stat.S_IFREG)
-        elif root_dir == 'profiles':
-            try:
-                profile_name = components.pop(0)
-            except IndexError:
-                for p in mc.list_profiles(BASE_DIR):
-                    yield fuse.Direntry(p)
-                raise StopIteration
-            else:
-                if profile_name in mc.list_profiles(BASE_DIR):
-                    pass
+        if components.prop:
+            for d in prop(components): yield d
+        elif components.file_name:
+            for d in file_name(components): yield d
+        elif components.server_name:
+            for d in server_name(components): yield d
+        elif components.root_dir:
+            for d in root_dir(components): yield d
+        else:
+            for d in root(): yield d
+                        
 
     def read(self, path, size, offset):
         components = self.named_components(path)
