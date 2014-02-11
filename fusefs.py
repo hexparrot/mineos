@@ -3,8 +3,9 @@
 import fuse, errno, stat, os, sys, time
 from mineos import mc
 from conf_reader import config_file
+from functools import partial
 
-MINEOS_SKELETON = '/var/games/minecraft'
+BASE_DIR = '/var/games/minecraft'
 
 fuse.fuse_python_api = (0, 2)
 
@@ -38,13 +39,13 @@ class mos_stat(fuse.Stat):
         return self
 
     def console_device(self, server_name):
-        self.st_mode = stat.S_IFREG | 0666
+        self.st_mode = stat.S_IFREG | 0664
         self.st_nlink = 1
-        
-        instance = mc(server_name, None, MINEOS_SKELETON)
-        if instance.up:
+
+        try:
+            instance = mc(server_name, None, BASE_DIR)
             self.st_size = os.path.getsize(instance.env['log'])
-        else:
+        except (KeyError, OSError, RuntimeError):
             self.st_size = 0
 
         return self
@@ -78,6 +79,7 @@ class mos_stat(fuse.Stat):
 class minefs(fuse.Fuse):
     def __init__(self, *args, **kwargs):
         fuse.Fuse.__init__(self, *args, **kwargs)
+        self.mineos = partial(mc, owner=None, base_directory=BASE_DIR)
 
     @classmethod
     def components(self, path):
@@ -94,93 +96,100 @@ class minefs(fuse.Fuse):
         return dirs(*d)
 
     def getattr(self, path):
-        ''' returns meta data for a path '''
+        """Returns meta data for a given path"""
+
+        def root():
+            return st.copy_stat(BASE_DIR)
+
+        def root_dir(components):
+            if components.root_dir in ['servers','profiles']:
+                return st.copy_stat(os.path.join(BASE_DIR, components.root_dir))
+            return -errno.ENOENT
+
+        def server_name(components):
+            if components.server_name in mc.list_servers(BASE_DIR):
+                return st.copy_stat(os.path.join(BASE_DIR, 'servers', components.server_name))
+            return -errno.ENOENT
+
+        def file_name(components):
+            if components.file_name in ['banned-ips', 'banned-players', 'ops', 'white-list']:
+                return st.file_as_directory(os.path.join(BASE_DIR,
+                                                         components.root_dir,
+                                                         components.server_name,
+                                                         components.file_name) + '.txt')
+            elif components.file_name in ['server.config', 'server.properties']:
+                return st.file_as_directory(os.path.join(BASE_DIR,
+                                                         components.root_dir,
+                                                         components.server_name,
+                                                         components.file_name))
+            elif components.file_name == 'console':
+                return st.console_device(components.server_name)
+            return -errno.ENOENT
+
+        def prop(components):
+            if components.file_name == 'server.properties':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                try:
+                    return st.config_as_file(p_,
+                                             None,
+                                             components.prop)
+                except KeyError:
+                    return -errno.ENOENT
+            elif components.file_name == 'server.config':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                if components.prop in config_file(p_)[:]:
+                    return st.file_as_directory(p_)
+            elif components.file_name in ['banned-ips', 'banned-players']:
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name + '.txt')
+                if prop in self.flat_config(p_, None, None, '|'):
+                    return st.copy_stat(p_)
+            elif components.file_name in ['ops', 'white-list']:
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name + '.txt')
+                if prop in self.flat_config(p_, None, None):
+                    return st.copy_stat(p_)
+            return -errno.ENOENT
+
+        def next_val(components):
+            if components.file_name == 'server.config':
+                p_ = os.path.join(BASE_DIR,
+                                  components.root_dir,
+                                  components.server_name,
+                                  components.file_name)
+                try:
+                    return st.config_as_file(p_, components.prop, components.next_val)
+                except KeyError:
+                    return -errno.ENOENT
+            return -errno.ENOENT
+        
         context = self.GetContext()
         st = mos_stat(context['uid'], context['gid'])
 
-        components = self.components(path)
+        components = self.named_components(path)
 
-        try:
-            root_dir = components.pop(0)
-        except IndexError:
-            return st.directory()
-
-        #/root_dir/server_name/file_name/prop/next_val
-        if root_dir == 'servers':
-            try:
-                server_name = components.pop(0)
-            except IndexError:
-                print 'didnt get server_name'
-                return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir))
-            else:
-                print 'got server_name'
-                try:
-                    file_name = components.pop(0)
-                except IndexError:
-                    print 'didnt get file_name'
-                    if server_name in mc.list_servers(MINEOS_SKELETON):
-                        return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir, server_name))
-                else:
-                    print 'got file name'
-                    try:
-                        prop = components.pop(0)
-                    except IndexError:
-                        print 'didnt get prop'
-                        if server_name in mc.list_servers(MINEOS_SKELETON):
-                            if file_name in ['banned-ips', 'banned-players', 'ops', 'white-list']:
-                                print 'returning stat for flat configs FAD'
-                                return st.file_as_directory(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name) + '.txt')
-                            elif file_name in ['server.config', 'server.properties']:
-                                print 'returning stat for special config FAD'
-                                return st.file_as_directory(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name))
-                            elif file_name == 'console':
-                                return st.console_device(server_name)
-                    else:
-                        print 'got prop'
-                        try:
-                            next_val = components.pop(0)
-                        except IndexError:
-                            print 'didnt get next_val'
-                            if file_name == 'server.properties':
-                                try:
-                                    return st.config_as_file(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name), None, prop)
-                                except KeyError:
-                                    return -errno.ENOENT
-                            elif file_name == 'server.config': 
-                                p_ = os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name)
-                                with config_file(p_) as sc:
-                                    if prop in sc[:]:
-                                        return st.file_as_directory(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name))
-                                    else:
-                                        return -errno.ENOENT
-                            elif file_name == 'banned-players':
-                                p_ = os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name + '.txt')
-                                if prop in self.flat_config(p_, None, None, '|'):
-                                    return st.copy_stat(p_)
-                            elif file_name in ['banned-ips', 'ops', 'white-list']:
-                                p_ = os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name + '.txt')
-                                if prop in self.flat_config(p_, None, None):
-                                    return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name + '.txt'))
-                        else:
-                            print 'got next val'
-                            if file_name == 'server.config':
-                                try:
-                                    return st.config_as_file(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name), prop, next_val)
-                                except KeyError:
-                                    return -errno.ENOENT
-                            
-
-        elif root_dir == 'profiles':
-            try:
-                profile_name = components.pop(0)
-            except IndexError:
-                return st.directory()
-            else:
-                if profile_name in mc.list_profiles(MINEOS_SKELETON):
-                    return st.copy_stat(os.path.join(MINEOS_SKELETON, root_dir, profile_name))
-                
-
-        return -errno.ENOENT
+        if components.next_val:
+            return next_val(components)
+        elif components.prop:
+            return prop(components)
+        elif components.file_name:
+            return file_name(components)
+        elif components.server_name:
+            return server_name(components)
+        elif components.root_dir:
+            return root_dir(components)
+        else:
+            return root()
 
     def flat_config(self, path, add, remove, partition_by=None):
         with open(path, 'r') as conf:
@@ -222,17 +231,14 @@ class minefs(fuse.Fuse):
             try:
                 server_name = components.pop(0)
             except IndexError:
-                print 'didnt get server_name!, listing servers'
-                for s in mc.list_servers(MINEOS_SKELETON):
+                for s in mc.list_servers(BASE_DIR):
                     yield fuse.Direntry(s)
                 raise StopIteration
             else:
-                print 'got server name!'
                 try:
                     file_name = components.pop(0)
                 except IndexError:
-                    print 'didnt get file name! listing configs'
-                    if server_name in mc.list_servers(MINEOS_SKELETON):
+                    if server_name in mc.list_servers(BASE_DIR):
                         yield fuse.Direntry('server.config')
                         yield fuse.Direntry('server.properties')
                         yield fuse.Direntry('banned-players')
@@ -241,63 +247,55 @@ class minefs(fuse.Fuse):
                         yield fuse.Direntry('ops')
                         yield fuse.Direntry(name='console', type=stat.S_IFCHR)
                 else:
-                    print 'got file name!'
                     try:
                         prop = components.pop(0)
                     except IndexError:
-                        print 'didnt get prop!'
                         if file_name == 'server.properties':
-                            print 'sp! listing all properties:'
-                            instance = mc(server_name, None, MINEOS_SKELETON)
+                            instance = mc(server_name, None, BASE_DIR)
                             for i in getattr(instance, 'server_properties')[:]:
                                 yield fuse.Direntry(name=i, type=stat.S_IFREG)
                         elif file_name == 'server.config':
-                            print 'sc! listing all sections:'
-                            instance = mc(server_name, None, MINEOS_SKELETON)
+                            instance = mc(server_name, None, BASE_DIR)
                             for i in getattr(instance, 'server_config')[:]:
                                 yield fuse.Direntry(name=i, type=stat.S_IFREG)
                         elif file_name == 'banned-players':
-                            print 'bp! listing all:'
-                            for i in self.flat_config(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name) + '.txt',
+                            for i in self.flat_config(os.path.join(BASE_DIR, root_dir, server_name, file_name) + '.txt',
                                                       None,
                                                       None,
                                                       partition_by='|'):
                                 yield fuse.Direntry(name=i, type=stat.S_IFREG)
                         elif file_name in ['banned-ips', 'white-list', 'ops']:
-                            print 'other flat configs! listing'
-                            for i in self.flat_config(os.path.join(MINEOS_SKELETON, root_dir, server_name, file_name) + '.txt',
+                            for i in self.flat_config(os.path.join(BASE_DIR, root_dir, server_name, file_name) + '.txt',
                                                       None,
                                                       None):
                                 yield fuse.Direntry(name=i, type=stat.S_IFREG)
                     else:
-                        print 'got prop!'
                         if file_name == 'server.config':
-                            print 'sc with prop! listing all properties'
-                            instance = mc(server_name, None, MINEOS_SKELETON)
+                            instance = mc(server_name, None, BASE_DIR)
                             for i in getattr(instance, 'server_config')[prop:]:
                                 yield fuse.Direntry(name=i, type=stat.S_IFREG)
         elif root_dir == 'profiles':
             try:
                 profile_name = components.pop(0)
             except IndexError:
-                for p in mc.list_profiles(MINEOS_SKELETON):
+                for p in mc.list_profiles(BASE_DIR):
                     yield fuse.Direntry(p)
                 raise StopIteration
             else:
-                if profile_name in mc.list_profiles(MINEOS_SKELETON):
+                if profile_name in mc.list_profiles(BASE_DIR):
                     pass
 
     def read(self, path, size, offset):
         components = self.named_components(path)
 
         if components.file_name == 'server.config':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             return bytes(instance.server_config[components.prop:components.next_val] + '\n')
         elif components.file_name == 'server.properties':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             return bytes(instance.server_properties[components.prop] + '\n')
         elif components.file_name == 'console':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             with open(instance.env['log'], 'r') as log:
                 return bytes(''.join(log.readlines()))
             
@@ -306,7 +304,7 @@ class minefs(fuse.Fuse):
         components = self.named_components(path)
 
         if components.file_name == 'server.config':
-            p_ = os.path.join(MINEOS_SKELETON,
+            p_ = os.path.join(BASE_DIR,
                               components.root_dir,
                               components.server_name,
                               components.file_name)
@@ -319,12 +317,12 @@ class minefs(fuse.Fuse):
                 return 0
             return -errno.EPERM
         elif components.file_name == 'server.properties':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             instance.server_properties[components.prop] = ''
             instance.server_properties.commit()
             return 0
         elif components.file_name in ['banned-ips', 'banned-players', 'white-list', 'ops']:
-            self.flat_config(os.path.join(MINEOS_SKELETON,
+            self.flat_config(os.path.join(BASE_DIR,
                                           components.root_dir,
                                           components.server_name,
                                           components.file_name + '.txt'),
@@ -340,7 +338,7 @@ class minefs(fuse.Fuse):
             if components.next_val:
                 print 'trying to create a directory within a section'
                 return -errno.EPERM
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             with instance.server_config as sc:
                 sc.add_section(components.prop)
                 return 0
@@ -353,17 +351,17 @@ class minefs(fuse.Fuse):
         components = self.named_components(path)
 
         if components.file_name == 'server.config':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             instance.server_config[components.prop:components.next_val] = str(buf).partition('\n')[0]
             instance.server_config.commit()
             return len(buf)
         elif components.file_name == 'server.properties':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             instance.server_properties[components.prop] = str(buf).partition('\n')[0]
             instance.server_properties.commit()
             return len(buf)
         elif components.file_name == 'console':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             try:
                 instance._command_stuff(buf)
             except RuntimeError:
@@ -381,23 +379,23 @@ class minefs(fuse.Fuse):
         components = self.named_components(path)
         
         if components.file_name == 'server.config':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             del instance.server_config[components.prop:components.next_val]
             instance.server_config.commit()
             return 0
         elif components.file_name == 'server.properties':
-            instance = mc(components.server_name, None, MINEOS_SKELETON)
+            instance = mc(components.server_name, None, BASE_DIR)
             del instance.server_properties[components.prop]
             instance.server_properties.commit()
             return 0
         elif components.file_name in ['banned-ips', 'white-list', 'ops']:
-            self.flat_config(os.path.join(MINEOS_SKELETON,
+            self.flat_config(os.path.join(BASE_DIR,
                                           components.root_dir,
                                           components.server_name,
                                           components.file_name + '.txt'), '', components.prop)
             return 0
         elif components.file_name == 'banned-players':
-            self.flat_config(os.path.join(MINEOS_SKELETON,
+            self.flat_config(os.path.join(BASE_DIR,
                                           components.root_dir,
                                           components.server_name,
                                           components.file_name + '.txt'), '', components.prop, '|')
