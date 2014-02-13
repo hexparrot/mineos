@@ -160,11 +160,5 @@ class TestFuseFS(unittest.TestCase):
         self.system('rm {0}'.format(fn))
         self.assertFalse(os.path.isfile(fn))
 
-    def test_write_console_server_down(self):
-        fn = 'servers/{0}/console'.format(REAL_SERVER)
-        with self.assertRaises(subprocess.CalledProcessError) as e:
-            self.call('echo "test" > {0}'.format(fn))
-            self.assertEqual(e.returncode, errno.EHOSTDOWN)
-
 if __name__ == "__main__":
     unittest.main()  
