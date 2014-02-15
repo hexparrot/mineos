@@ -972,27 +972,41 @@ class mc(object):
             'java_xmx': self.server_config['java':'java_xmx'],
             'java_xms': self.server_config['java':'java_xmx'],
             'java_tweaks': self.server_config['java':'java_tweaks':''],
+            'java_debug': '',
             'jar_args': 'nogui'
             }
+
+        from ConfigParser import NoOptionError
 
         try:
             jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
             required_arguments['jar_file'] = os.path.join(self.env['cwd'], jar_file)
             required_arguments['jar_args'] = self.profile_config[self.profile:'jar_args':'']
-        except (TypeError,ValueError):
+        except (TypeError, ValueError):
             required_arguments['jar_file'] = None
             required_arguments['jar_args'] = None
 
         try:
-            java_xms = self.server_config['java':'java_xms'].strip()
-            assert 0 < int(java_xms) <= int(required_arguments['java_xmx'])
-            required_arguments['java_xms'] = java_xms   
-        except (KeyError,AttributeError,ValueError,AssertionError):
+            java_xms = self.server_config.getint('java','java_xms')
+            if 0 < java_xms <= int(required_arguments['java_xmx']):
+                required_arguments['java_xms'] = java_xms   
+        except (NoOptionError, ValueError):
+            pass
+
+        try:
+            if self.server_config.getboolean('java','java_debug'):
+                required_arguments['java_debug'] = ' '.join([
+                    '-verbose:gc',
+                    '-XX:+PrintGCTimeStamps',
+                    '-XX:+PrintGCDetails',
+                    '-Xloggc:{0}'.format(os.path.join(self.env['cwd'], 'java_gc.log'))
+                    ])
+        except (NoOptionError, ValueError):
             pass
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
-               '%(java)s -server -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
+               '%(java)s -server %(java_debug)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
                '-jar %(jar_file)s %(jar_args)s' % required_arguments
 
     @property
