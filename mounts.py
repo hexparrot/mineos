@@ -26,8 +26,8 @@ def to_jsonable_type(retval):
         return retval
 
 class ViewModel(object):
-    def __init__(self, base_directory):
-        self.base_directory = base_directory
+    def __init__(self):
+        self.base_directory = cherrypy.config['misc.base_directory']
 
     @property
     def login(self):
@@ -206,10 +206,9 @@ class Root(object):
     PROPERTIES = list(m for m in dir(mc) if not callable(getattr(mc,m)) \
                       and not m.startswith('_'))
 
-    def __init__(self, html_directory, base_directory, localization='en'):
-        self.html_directory = html_directory
-        self.base_directory = base_directory
-        self.localization = localization
+    def __init__(self):
+        self.html_directory = cherrypy.config['misc.html_directory']
+        self.base_directory = cherrypy.config['misc.base_directory']
 
     @property
     def login(self):
@@ -221,9 +220,11 @@ class Root(object):
         from cherrypy.lib.static import serve_file
 
         try:
-            return serve_file(os.path.join(self.html_directory, 'index_%s.html' % self.localization))
+            return serve_file(os.path.join(self.html_directory,
+                                           'index_%s.html' % cherrypy.config['misc.localization']))
         except cherrypy.NotFound:
-            return serve_file(os.path.join(self.html_directory, 'index_en.html'))
+            return serve_file(os.path.join(self.html_directory,
+                                           'index_en.html'))
 
     @cherrypy.expose
     @require()

@@ -133,6 +133,7 @@ if __name__ == "__main__":
     ################
 
     html_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
+    cherrypy.config['misc.html_directory'] = html_dir
 
     cherrypy.config.update({
         'tools.sessions.on': True,
@@ -256,12 +257,12 @@ if __name__ == "__main__":
         pass
 
     try:
-        localization = cherrypy.config['misc.localization']
-    except KeyError:
-        localization = 'en'
+        cherrypy.config['misc.localization'] = str(cherrypy.config['misc.localization']).lower()
+    except (KeyError, TypeError, AttributeError):
+        cherrypy.config['misc.localization'] = 'en'
 
-    cherrypy.tree.mount(mounts.Root(html_dir, base_dir, localization), "/", config=root_conf)
-    cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
-    cherrypy.tree.mount(auth.AuthController(html_dir, localization), '/auth', config=empty_conf)
+    cherrypy.tree.mount(mounts.Root(), "/", config=root_conf)
+    cherrypy.tree.mount(mounts.ViewModel(), "/vm", config=empty_conf)
+    cherrypy.tree.mount(auth.AuthController(), '/auth', config=empty_conf)
     cherrypy.engine.start()
     cherrypy.engine.block()

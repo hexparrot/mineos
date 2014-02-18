@@ -77,10 +77,9 @@ def require(*conditions):
 # Controller to provide login and logout actions
 
 class AuthController(object):
-    def __init__(self, html_directory, localization):
-        self.html_directory = html_directory
-        self.localization = localization
-    
+    def __init__(self):
+        self.html_directory = cherrypy.config['misc.html_directory']
+
     def on_login(self, username):
         """Called on successful login"""
     
@@ -92,9 +91,11 @@ class AuthController(object):
         from cherrypy.lib.static import serve_file
 
         try:
-            return serve_file(os.path.join(self.html_directory, 'login_%s.html' % self.localization))
+            return serve_file(os.path.join(self.html_directory,
+                                           'login_%s.html' % cherrypy.config['misc.localization']))
         except cherrypy.NotFound:
-            return serve_file(os.path.join(self.html_directory, 'login_en.html'))
+            return serve_file(os.path.join(self.html_directory,
+                                           'login_en.html'))
     
     @cherrypy.expose
     def login(self, username=None, password=None, hide=None, from_page='/'):
