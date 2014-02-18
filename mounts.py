@@ -219,15 +219,11 @@ class Root(object):
     @require()
     def index(self):
         from cherrypy.lib.static import serve_file
-        from cherrypy import NotFound
 
         try:
-            if self.localization != 'en':
-                return serve_file(os.path.join(self.html_directory, 'index_%s.html' % self.localization))
-            else:
-                return serve_file(os.path.join(self.html_directory, 'index.html'))
-        except NotFound:
-            return serve_file(os.path.join(self.html_directory, 'index.html'))
+            return serve_file(os.path.join(self.html_directory, 'index_%s.html' % self.localization))
+        except cherrypy.NotFound:
+            return serve_file(os.path.join(self.html_directory, 'index_en.html'))
 
     @cherrypy.expose
     @require()

@@ -262,6 +262,6 @@ if __name__ == "__main__":
 
     cherrypy.tree.mount(mounts.Root(html_dir, base_dir, localization), "/", config=root_conf)
     cherrypy.tree.mount(mounts.ViewModel(base_dir), "/vm", config=empty_conf)
-    cherrypy.tree.mount(auth.AuthController(html_dir), '/auth', config=empty_conf)
+    cherrypy.tree.mount(auth.AuthController(html_dir, localization), '/auth', config=empty_conf)
     cherrypy.engine.start()
     cherrypy.engine.block()
