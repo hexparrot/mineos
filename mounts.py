@@ -10,7 +10,6 @@ __email__ = "wdchromium@gmail.com"
 
 import cherrypy
 import os
-from json import dumps
 from mineos import mc
 from auth import require
 from subprocess import CalledProcessError
@@ -39,6 +38,7 @@ class ViewModel(object):
                 yield i
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def status(self):
         servers = []
         for i in self.server_list():
@@ -78,9 +78,10 @@ class ViewModel(object):
                 
             servers.append(srv)
 
-        return dumps(servers)
+        return servers
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def profiles(self):
         def pdict():
             for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
@@ -113,19 +114,22 @@ class ViewModel(object):
 
                 yield profile_info
                 
-        return dumps(list(pdict()))
+        return list(pdict())
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def increments(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
-        return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
+        return [dict(d._asdict()) for d in instance.list_increment_sizes()]
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def archives(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
-        return dumps([dict(d._asdict()) for d in instance.list_archives()])
+        return [dict(d._asdict()) for d in instance.list_archives()]
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def server_summary(self, server_name):
         from procfs_reader import disk_usage
         from pwd import getpwuid
@@ -148,14 +152,16 @@ class ViewModel(object):
         except:
             dir_info['du_cwd'] = 0
 
-        return dumps(dir_info)
+        return dir_info
     
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def loadavg(self):
         from procfs_reader import proc_loadavg
-        return dumps(proc_loadavg())     
+        return proc_loadavg()     
                     
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
         from grp import getgrall, getgrgid
@@ -178,7 +184,7 @@ class ViewModel(object):
 
         primary_group = getgrgid(getpwnam(self.login).pw_gid).gr_name
     
-        return dumps({
+        return {
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': self.login,
@@ -190,15 +196,16 @@ class ViewModel(object):
             'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__))),
             'stock_profiles': STOCK_PROFILES.keys(),
             'base_directory': self.base_directory,
-            })
+            }
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     def importable(self):
         path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['import'])
-        return dumps([{
+        return [{
             'path': path,
             'filename': f
-            } for f in mc._list_files(path)])
+            } for f in mc._list_files(path)]
 
 class Root(object):
     METHODS = list(m for m in dir(mc) if callable(getattr(mc,m)) \
@@ -227,6 +234,7 @@ class Root(object):
                                            'index_en.html'))
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def host(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -309,9 +317,10 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)
+        return response
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -359,9 +368,10 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)
+        return response
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def logs(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -401,9 +411,10 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)
+        return response
         
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def create(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -462,9 +473,10 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)
+        return response
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def import_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -500,9 +512,10 @@ class Root(object):
             retval = "Server '%s' successfully imported" % server_name
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)  
+        return response 
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def change_group(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -537,9 +550,10 @@ class Root(object):
             retval = "Server '%s' group ownership granted to '%s'" % (server_name, group)
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)  
+        return response 
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def change_pc_group(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -572,9 +586,10 @@ class Root(object):
             retval = "profile.config group ownership granted to '%s'" % group
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)  
+        return response 
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
     @require()
     def delete_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -607,4 +622,4 @@ class Root(object):
             retval = "Server '%s' deleted" % server_name
 
         response['payload'] = to_jsonable_type(retval)
-        return dumps(response)        
+        return response     
