@@ -15,6 +15,9 @@ from mineos import mc
 from auth import require
 from subprocess import CalledProcessError
 
+def set_json_header():
+    cherrypy.response.headers['Content-Type'] = "application/json"
+
 def to_jsonable_type(retval):
     import types
 
@@ -78,6 +81,7 @@ class ViewModel(object):
                 
             servers.append(srv)
 
+        set_json_header()
         return dumps(servers)
 
     @cherrypy.expose
@@ -112,17 +116,19 @@ class ViewModel(object):
                     profile_info['run_as_md5'] = ''
 
                 yield profile_info
-                
+        set_json_header()        
         return dumps(list(pdict()))
 
     @cherrypy.expose
     def increments(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
+        set_json_header()
         return dumps([dict(d._asdict()) for d in instance.list_increment_sizes()])
 
     @cherrypy.expose
     def archives(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
+        set_json_header()
         return dumps([dict(d._asdict()) for d in instance.list_archives()])
 
     @cherrypy.expose
@@ -147,12 +153,13 @@ class ViewModel(object):
             dir_info['du_cwd'] = disk_usage(cwd)
         except:
             dir_info['du_cwd'] = 0
-
+        set_json_header()
         return dumps(dir_info)
     
     @cherrypy.expose
     def loadavg(self):
         from procfs_reader import proc_loadavg
+        set_json_header()
         return dumps(proc_loadavg())     
                     
     @cherrypy.expose
@@ -177,7 +184,7 @@ class ViewModel(object):
             pc_group = getgrgid(st.st_gid).gr_name
 
         primary_group = getgrgid(getpwnam(self.login).pw_gid).gr_name
-    
+        set_json_header()
         return dumps({
             'uptime': str(proc_uptime()[0]),
             'memfree': mb_free,
@@ -195,6 +202,7 @@ class ViewModel(object):
     @cherrypy.expose
     def importable(self):
         path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['import'])
+        set_json_header()
         return dumps([{
             'path': path,
             'filename': f
@@ -309,6 +317,7 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)
 
     @cherrypy.expose
@@ -359,6 +368,7 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)
 
     @cherrypy.expose
@@ -401,6 +411,7 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)
         
     @cherrypy.expose
@@ -462,6 +473,7 @@ class Root(object):
             response['result'] = 'success'
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)
 
     @cherrypy.expose
@@ -500,6 +512,7 @@ class Root(object):
             retval = "Server '%s' successfully imported" % server_name
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)  
 
     @cherrypy.expose
@@ -537,6 +550,7 @@ class Root(object):
             retval = "Server '%s' group ownership granted to '%s'" % (server_name, group)
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)  
 
     @cherrypy.expose
@@ -572,6 +586,7 @@ class Root(object):
             retval = "profile.config group ownership granted to '%s'" % group
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)  
 
     @cherrypy.expose
@@ -607,4 +622,5 @@ class Root(object):
             retval = "Server '%s' deleted" % server_name
 
         response['payload'] = to_jsonable_type(retval)
+        set_json_header()
         return dumps(response)        
