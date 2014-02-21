@@ -42,6 +42,7 @@ function model_property(server_name, option, value, section, new_prop) {
 	self.check_type = function(option, section) {
 		if (section) {
 			var fixed = [
+				{section: 'java', option: 'java_debug', type: 'truefalse'},
 				{section: 'onreboot', option: 'restore', type: 'truefalse'},
 				{section: 'onreboot', option: 'start', type: 'truefalse'},
 				{section: 'crontabs', option: 'archive_interval', type: 'interval'},

@@ -277,6 +277,7 @@ class mc(object):
                 'java_tweaks': '',
                 'java_xmx': 256,
                 'java_xms': 256,
+                'java_debug': False
                 }
             }
 
