@@ -609,11 +609,12 @@ class mc(object):
                                       r'META-INF/maven/org.spigotmc/spigot/pom.xml',
                                       r'META-INF/maven/net.md-5/bungeecord-api/pom.xml']:
                     if internal_path in files:
-                        try:
-                            xml = parseString(zf.read(internal_path))
-                            return xml.getElementsByTagName('version')[0].firstChild.nodeValue
-                        except (IndexError, KeyError, AttributeError):
-                            continue 
+                        for tag in ['minecraft.version', 'version']:
+                            try:
+                                xml = parseString(zf.read(internal_path))
+                                return xml.getElementsByTagName(tag)[0].firstChild.nodeValue
+                            except (IndexError, KeyError, AttributeError):
+                                continue 
         except IOError:
             return ''
         else:
