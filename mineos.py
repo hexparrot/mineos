@@ -265,8 +265,8 @@ class mc(object):
                 'profile': '',
                 },
             'crontabs': {
-                'archive_interval': 0,
-                'backup_interval': 0,
+                'archive_interval': '',
+                'backup_interval': '',
                 'restart_interval': '',
                 },
             'onreboot': {
@@ -283,6 +283,9 @@ class mc(object):
 
         sanitize_integers = set([('java', 'java_xmx'),
                                  ('java', 'java_xms'),
+                                 ('crontabs', 'archive_interval'),
+                                 ('crontabs', 'backup_interval'),
+                                 ('crontabs', 'restart_interval')
                                  ])
 
         d = defaults.copy()
