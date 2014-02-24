@@ -879,6 +879,9 @@ class mc(object):
                                           'players_online',
                                           'max_players'])
 
+        error_ping = server_ping(None,None,self.server_properties['motd'::''],
+                                 '-1',self.server_properties['max-players'])
+
         if self.server_type == 'bungee':
             return server_ping(None,None,'','0',1)
         elif self.up:
@@ -890,17 +893,20 @@ class mc(object):
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
             except socket.error:
-                return server_ping(None,None,self.server_properties['motd'::''],
-                                   '-1',self.server_properties['max-players'])
+                return error_ping
             finally:
                 s.close()
 
-            assert d[0] == '\xff'
-            d = d[3:].decode('utf-16be')
-            assert d[:3] == u'\xa7\x31\x00'
-            segments = d[3:].split('\x00')
-
-            return server_ping(*segments)
+            if d[0] == '\xff':
+                d = d[3:].decode('utf-16be')
+                if d[:3] == u'\xa7\x31\x00': #modern protocol [u'127', u'1.7.4', u'A Minecraft Server', u'0', u'20']
+                    segments = d[3:].split('\x00')
+                    return server_ping(*segments)
+                else: #1.2-era protocol [u'A Minecraft Server', u'0', u'20']
+                    segments = d.split(u'\xa7')
+                    return server_ping(None,None,*segments)
+                    
+            return error_ping
         else:
             if self.server_name in self.list_servers(self.base):
                 return server_ping(None,None,self.server_properties['motd'::''],
