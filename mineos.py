@@ -905,7 +905,7 @@ class mc(object):
                     return server_ping(*segments)
                 else: #1.2-era protocol [u'A Minecraft Server', u'0', u'20']
                     segments = d.split(u'\xa7')
-                    return server_ping(None,None,*segments)
+                    return server_ping(None,self.server_milestone_long,*segments)
                     
             return error_ping
         else:
@@ -937,6 +937,17 @@ class mc(object):
         jar_path = os.path.join(self.env['cwd'], jar_file)
         return self.server_version(jar_path,
                                    self.profile_config[self.profile:'url']) or 'unknown'
+
+    @property
+    def server_milestone_long(self):
+        """Returns best guessed server major, minor versions, release"""
+        import re
+
+        try:
+            version = re.match(r'(\d)\.(\d)\.(\d)', self.server_milestone)
+            return '%s.%s.%s' % (version.group(1), version.group(2), version.group(3))
+        except (AttributeError, TypeError):
+            return '0.0.0'
 
     @property
     def server_milestone_short(self):
