@@ -61,7 +61,7 @@
                             <div class="body-inner">
                                 <!-- START Logo -->
                                 <div class="logo" align="center">
-                                    <a href="#"><img src="/img/logo-dark.png"></a>
+                                    <img src="/img/logo-dark.png">
                                 </div>
                                 <!--/ END Logo -->
                                 
@@ -162,19 +162,22 @@
     <!--/ Javascript (Application) -->
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            try {
-                $('input[name=password]').attr('type', 'textbox');
-                $('input[name=hide]').on('ifChanged', function() {
-                    if ($(this).is(':checked'))
-                        $('input[name=password]').attr('type', 'password');
-                    else
-                        $('input[name=password]').attr('type', 'textbox');
-                })
-            } catch (e) {
+      $(document).ready(function () {
+        var show_pass = true;
+        if (show_pass) {
+          try {
+            $('input[name=password]').attr('type', 'textbox');
+            $('input[name=hide]').on('ifChanged', function () {
+              if ($(this).is(':checked'))
                 $('input[name=password]').attr('type', 'password');
-            }
-        })
+              else
+                $('input[name=password]').attr('type', 'textbox');
+            })
+          } catch (e) {
+            $('input[name=password]').attr('type', 'password');
+          }
+        }
+      })
     </script>
 
     </body>

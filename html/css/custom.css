@@ -6,7 +6,10 @@
  *
  */
 
-
+input[name=password] {
+  padding-left: 6px !important;
+  margin-bottom: 10px;
+}
 li.accordion-group a, ul.nav, .pointer  {
     cursor: pointer;
 }
