@@ -163,20 +163,20 @@
 
     <script type="text/javascript">
       $(document).ready(function () {
-        var show_pass = true;
-        if (show_pass) {
-          try {
-            $('input[name=password]').attr('type', 'textbox');
-            $('input[name=hide]').on('ifChanged', function () {
-              if ($(this).is(':checked'))
-                $('input[name=password]').attr('type', 'password');
-              else
-                $('input[name=password]').attr('type', 'textbox');
-            })
-          } catch (e) {
-            $('input[name=password]').attr('type', 'password');
-          }
+        try {
+          $('input[name=password]').attr('type', 'textbox');
+          $('input[name=hide]').on('ifChanged', function () {
+            if ($(this).is(':checked'))
+              $('input[name=password]').attr('type', 'password');
+            else
+              $('input[name=password]').attr('type', 'textbox');
+          })
+        } catch (e) {
+          $('input[name=password]').attr('type', 'password');
         }
+        var hide_pass = false;
+        if (hide_pass)
+          $('input[name=hide]').iCheck('check');
       })
     </script>
 
