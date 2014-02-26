@@ -8,12 +8,12 @@ __version__ = "0.6.0"
 __email__ = "wdchromium@gmail.com"
  
 STOCK_PROFILES = {
-    'vanilla174': {
-        'name': 'vanilla174',
+    'vanilla175': {
+        'name': 'vanilla175',
         'type': 'standard_jar',
-        'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.7.4/minecraft_server.1.7.4.jar',
-        'save_as': 'minecraft_server.1.7.4.jar',
-        'run_as': 'minecraft_server.1.7.4.jar',
+        'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.7.5/minecraft_server.1.7.5.jar',
+        'save_as': 'minecraft_server.1.7.5.jar',
+        'run_as': 'minecraft_server.1.7.5.jar',
         'ignore': '',
         'desc': 'official minecraft_server.jar'
         },
