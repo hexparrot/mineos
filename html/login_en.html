@@ -174,9 +174,12 @@
         } catch (e) {
           $('input[name=password]').attr('type', 'password');
         }
-        var hide_pass = false;
-        if (hide_pass)
-          $('input[name=hide]').iCheck('check');
+
+        $.getJSON('/mask_password', function(data) {
+          if (data.mask_password)
+            $('input[name=hide]').iCheck('check');
+        })
+        
       })
     </script>
 

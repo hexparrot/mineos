@@ -217,6 +217,14 @@ class Root(object):
         self.html_directory = cherrypy.config['misc.html_directory']
         self.base_directory = cherrypy.config['misc.base_directory']
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def mask_password(self):
+        try:
+            return {'mask_password': cherrypy.config['misc.mask_password']}
+        except KeyError:
+            return {'mask_password': False}
+
     @property
     def login(self):
         return str(cherrypy.session['_cp_username'])
