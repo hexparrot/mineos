@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+    <!-- START META SECTION -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>MineOS - Панель управления</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1.0">
+    <meta http-equiv="Content-Language" content="en" />
+    <!--/ END META SECTION -->
+
+    <!-- START STYLESHEET SECTION -->
+    <!-- IMPORTANT! : This is for demo purpose only. All the available plugin will be loaded at once -->
+    <!-- Stylesheet(Bootstrap) -->
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap-responsive.min.css">
+    <!--/ Stylesheet(Bootstrap) -->
+
+    <!-- Stylesheet(Application) -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" id="base-color" href="css/color/serene.css"><!-- Base Theme Color -->
+    <link rel="stylesheet" id="base-bg" href="css/background/bg1.css"><!-- Boxed Background -->
+    <!--/ Stylesheet(Application) -->
+
+    <!-- Stylesheet(Plugins) -->
+    <link rel="stylesheet" href="assets/jui/css/jquery-ui-1.10.3.min.css">
+    <link rel="stylesheet" href="assets/icheck/css/jquery.icheck.min.css">
+    <link rel="stylesheet" href="assets/daterangepicker/css/daterangepicker.min.css">
+    <link rel="stylesheet" href="assets/formvalidation/validationengine/css/jquery.validationEngine.min.css">
+    <link rel="stylesheet" href="assets/tagit/css/jquery.tagit.min.css">
+    <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
+    <!--/ Stylesheet(Plugins) -->
+    <!--/ END STYLESHEET SECTION -->
+
+    <!-- START JAVASCRIPT SECTION - Load only modernizr script here -->
+    <!-- Javascript(Modernizr) -->
+    <script src="assets/modernizr/js/modernizr-2.6.2.min.js"></script>
+    <!--/ Javascript(Modernizr) -->
+    <!--/ END JAVASCRIPT SECTION -->
+</head>
+<body>
+    <!-- START Template Wrapper -->
+    <!-- If you want to enable the fixed sidebar or fixed header, just add `.fixed-sidebar` or `.fixed-header` class to the `#wrapper` div below -->
+    <!-- IMPORTANT! : fixed sidebar will automatically add `.fixed-header` class to the `#wrapper` div -->
+    <!-- If you want to enable the boxed layout, just add `.boxed-layout` class to the `#wrapper` div below -->
+    <div id="wrapper" class="boxed-layout fixed-sidebar fixed-header">
+        <!-- START Template Canvas -->
+        <div id="canvas">
+
+            <!-- START Template Header -->
+            <header id="header">
+                <!-- START Logo -->
+                <div class="logo hidden-phone hidden-tablet">
+                    <a href="#"><img src="img/logo-white.png" alt=""></a>
+                    <small class="version" data-bind=""></small>
+                </div>
+                <!--/ END Logo -->
+
+                <!-- START Mobile Sidebar Toggler -->
+                <a href="#" class="toggler" data-toggle="sidebar"><span class="icon icone-reorder"></span></a>
+                <!--/ END Mobile Sidebar Toggler -->
+
+                <!-- START Toolbar -->
+                <ul class="toolbar" id="toolbar">
+                    <li>
+                        <a data-bind="attr: {href: 'https://github.com/hexparrot/mineos/commit/'+dashboard.git_hash()}, text: 'Версия панели: '+dashboard.git_hash()"></a>
+                    </li>
+                    <!-- START Profile -->
+                    <li class="profile">
+                        <a href="#" data-toggle="dropdown">
+                            <span class="avatar"><img src="img/avatar/avatar.png" alt=""></span>
+                            <span class="text"><span data-bind="text: dashboard.whoami">&nbsp;</span><span class="role" data-bind="text: dashboard.group">&nbsp;</span></span>
+                            <span class="arrow icone-caret-down"></span>
+                        </a>
+                        <!-- START Dropdown Menu -->
+                        <div class="dropdown-menu" role="menu">
+                            <ul class="body" data-bind="foreach: vmdata.pings">
+                                <li data-bind="click: $root.select_server">
+                                    <a class="text"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
+                                    <span class="action show"><a href="" class="label" data-bind="text: (up ? capacity() : 'offline'), css: {'label-success': up, 'label-important': !up}"></a></span>
+                                </li>
+                            </ul>
+                            <footer>
+                                <a href="/auth/logout" class="text"><span class="icon icone-off"></span> Выход</a>
+                            </footer>
+                        </div>
+                        <!--/ END Dropdown Menu -->
+                    </li>
+                    <!--/ END Profile -->
+                </ul>
+                <!--/ END Toolbar -->
+            </header>
+            <!--/ END Template Header -->
+
+            <!-- START Template Sidebar -->
+            <aside id="sidebar">
+                <!-- START Sidebar Content -->
+                <div class="sidebar-content">
+                    <!-- START Tab Content -->
+                    <div class="tab-content">
+                        <!-- START Tab Pane(menu) -->
+                        <div class="tab-pane active" id="tab-menu">
+                            <!-- START Sidebar Menu -->
+                            <nav id="nav" class="accordion">
+                                <ul id="navigation">
+                                    <!-- START Menu Divider -->
+                                    <li class="divider">Системные настройки</li>
+                                    <!--/ END Menu Divider -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'dashboard'}">
+                                        <a data-bind="click: show_page" data-page="dashboard">
+                                            <span class="icon icone-dashboard"></span>
+                                            <span class="text">Обзор</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'profiles' || page() == 'define_profile'}">
+                                        <a data-bind="click: show_page" data-page="profiles">
+                                            <span class="icon icone-tags"></span>
+                                            <span class="text">Профили</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'create_server'}">
+                                        <a data-bind="click: show_page" data-page="create_server">
+                                            <span class="icon icone-share"></span>
+                                            <span class="text">Создать новый сервер</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
+                                        <a data-bind="click: show_page" data-page="importable">
+                                            <span class="icon icone-share"></span>
+                                            <span class="text">Создать сервер из архива</span>
+                                            <span class=""></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu Divider -->
+                                    <li class="divider">Настройки сервера</li>
+                                    <!--/ END Menu Divider -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_status'}">
+                                        <a data-bind="click: show_page" data-page="server_status">
+                                            <span class="icon icone-globe"></span>
+                                            <span class="text">Состояние сервера</span>
+                                            <span class="label label-inverse" data-bind="text: server().capacity"></span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+                                    
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'backup_list'}">
+                                        <a data-bind="click: show_page" data-page="backup_list">
+                                            <span class="icon icone-hdd"></span>
+                                            <span class="text">Точки восстановления</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'archive_list'}">
+                                        <a data-bind="click: show_page" data-page="archive_list">
+                                            <span class="icon icone-hdd"></span>
+                                            <span class="text">Архивы</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+                                    
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_properties'}">
+                                        <a data-bind="click: show_page" data-page="server_properties">
+                                            <span class="icon iconm-pencil-5"></span>
+                                            <span class="text">Свойства сервера</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_config'}">
+                                        <a data-bind="click: show_page" data-page="server_config">
+                                            <span class="icon iconm-pencil-5"></span>
+                                            <span class="text">Конфигурация сервера</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+
+                                    <!-- START Menu -->
+                                    <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'console'}">
+                                        <a data-bind="click: show_page" data-page="console">
+                                            <span class="icon icone-desktop"></span>
+                                            <span class="text">Консоль</span>
+                                        </a>
+                                    </li>
+                                    <!--/ END Menu -->
+                                </ul>
+                            </nav>
+                            <!--/ END Sidebar Menu -->
+                        </div>
+                        <!--/ END Tab Pane(menu) -->
+                    </div>
+                    <!--/ END Tab Content -->
+                </div>
+                <!--/ END Sidebar Content -->
+            </aside>
+            <!--/ END Template Sidebar -->
+
+            <!-- START Template Main Content -->
+            <section id="main">
+                <!-- START Bootstrap Navbar -->
+                <div class="navbar navbar-static-top">
+                    <div class="navbar-inner">
+                        <!-- Breadcrumb -->
+                        <ul class="breadcrumb">
+                            <li data-bind="if: server().server_name">Выбранный сервер: <strong><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a></strong>
+                        </ul>
+                        <!--/ Breadcrumb -->
+                    </div>
+                    <div class="navbar-outer">
+                        <div class="alert alert-success" data-bind="visible: dashboard.whoami() == 'root'">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            <strong>Вы вошли как root.</strong> Вы можете управлять серверами как <strong>root</strong>, но создавать новые нужно от непривилегированного пользователя.
+                        </div>
+                        <div class="alert" data-bind="visible: !dashboard.pc_permissions() && (page() == 'profiles' || page() == 'define_profile')">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            У Вас нет прав на <strong>/profiles/profile.config</strong>, поэтому Вы сможете использовать профили, но не создавать их.
+                        </div>
+                        <div class="alert alert-error" data-bind="visible: !parseInt(vm.server().java_xmx) > 0 && !$.isEmptyObject(vm.server())">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            Файл <strong>server.config</strong> не содержит корректного положительного значения максимального количества памяти java heapsize (java_xmx) для этого сервера.
+                        </div>
+                    </div>
+                </div>
+                <!--/ END Bootstrap Navbar -->
+
+                <!-- START Content -->
+                <div id="dashboard" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget">
+                            <header>
+                                <h4 class="title">Состояние системы</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li>
+                                        <a href="#" class="link" data-toggle="dropdown">
+                                            <span data-bind="click: toggle_loadaverages, css: {'icon-pause': load_averages.autorefresh(), 'icon-play': !load_averages.autorefresh()}" class="icon"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <div class="span12 pull-left">
+                                        <!-- START Summary -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle green"><span class="icone-ok"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: dashboard.servers_up"></span><small>Работающие серверы</small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle lime"><span class="icone-time"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: dashboard.uptime"></span><small>Время работы</small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle teal"><span class="icone-ticket"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: dashboard.memfree"></span><small>Свободно памяти, Мб</small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Circular 1 -->
+                                        <figure class="stats circular">
+                                            <div class="gauge" data-bind="attr: {'data-percent': dashboard.disk_usage_pct}" data-percent="">
+                                                <span><span class="text" data-bind="text: dashboard.disk_usage_pct"></span>%</span>
+                                            </div>
+                                            <figcaption>
+                                                <h4><span data-bind="text: dashboard.disk_usage_pct"></span><span>%</span><small>Использование диска</small></h4>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Circular 1 -->
+
+                                    </div>
+
+                                    <!-- START Auto Update Chart -->
+                                    <div class="span11 pull-left widget">
+                                        <header>
+                                            <h4 class="title">Загрузка процессора за последнюю минуту</h4>
+                                        </header>
+                                        <div class="flot" id="load_averages"></div>
+                                    </div>
+                                    <!--/ END Auto Update Chart -->
+
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_status" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col">Имя</th>
+                              <th scope="col">Профиль</th>
+                              <th scope="col">Порт</th>
+                              <th scope="col">Состояние</th>
+                              <th scope="col">Игроков</th>
+                              <th scope="col">Память</th>
+                            </tr>
+                          </thead>
+                          <tbody data-bind="foreach: vmdata.pings">
+                            <tr>
+                              <td data-bind="text: server_name, click: $root.select_server"></td>
+                              <td data-bind="text: profile"></td>
+                              <td data-bind="text: port"></td>
+                              <td data-bind=""><span class="label" data-bind="text: (up ? 'Работает' : 'Выключен'), css: {'label-success': up, 'label-important': !up}"></span></td>
+                              <td data-bind="text: capacity"></td>
+                              <td data-bind="text: mem_utilization, style: {color: overextended() ? 'orange' : 'black'}"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="server_status" class="container-fluid" data-bind="if: server().server_name">
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4><span data-bind="text: server().server_name"></span><small data-bind="text: server().profile"></small></h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Circular Summary -->
+                        <div class="span12 widget">
+                            <header><h4 class="title">Сводка данных о сервере</h4></header>
+                            <section class="body">
+                                <div class="body-inner" data-bind="with: server()">
+                                    <!-- START Summary -->
+                                    <figure class="stats summary pull-left">
+                                        <div data-bind="css: {'green': up, 'red': !up}" class="icon circle"><span data-bind="css: {'icone-ok': up, 'icone-off': !up}"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: (up ? 'Работает' : 'Выключен')"></span><small data-bind="text: port"></small></h3>
+                                        </figcaption>
+                                    </figure>
+                                    <!--/ END Summary -->
+
+                                    <!-- START Circular 1 -->
+                                    <figure class="stats circular stacked">
+                                        <div class="gauge" data-bind="attr: {'data-percent': online_pct}" data-percent="">
+                                            <span><span class="text" data-bind="text: online_pct"></span>%</span>
+                                        </div>
+                                        <figcaption>
+                                            <h4><span data-bind="text: capacity"></span><small>Игроков на сервере</small></h4>
+                                        </figcaption>
+                                    </figure><!--/ END Circular 1 -->
+
+                                    <!-- START Circular 2 -->
+                                    <figure class="stats circular stacked">
+                                        <div class="gauge" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
+                                            <span class="text" data-bind="text: memory_pct() + '%', style: {color: overextended() ? 'orange' : 'black'}"></span>
+                                        </div>
+                                        <figcaption>
+                                            <h4><span data-bind="text: mem_utilization, style: {color: overextended() ? 'orange' : 'black'}"></span><small>Использовано памяти</small></h4>
+                                        </figcaption>
+                                    </figure><!--/ END Circular 2 -->
+
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Circular Summary -->
+                    </div>
+                    <!--/ END Row -->
+         
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <button data-required="server_name" data-cmd="start" data-bind="click: $root.command" type="button" class="btn btn-success span2" data-refresh="5000">Запустить</button> 
+                        <!-- Button Dropdown -->
+                        <div class="btn-group">
+                            <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Выключить <span class="caret"></span></button>
+                            <ul class="dropdown-menu">
+                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Остановить</a></li> 
+                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: $root.command" data-refresh="2000">Снять задачу</a></li>
+                            </ul>
+                        </div><!--/ Button Dropdown -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Default Widget -->
+                        <div class="span6 widget" data-bind="">
+                            <header>
+                            	<h4 class="title" data-bind="click: show_page" data-page="backup_list"><span class="icon icone-bookmark"></span> Точки восстановления</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                                <span class="label label-success pull-right" data-bind="text: vmdata.increments().length"></span>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                	<p>Самая ранняя точка восстановления: <strong data-bind="text: summary.backup.first"></strong></p>
+                                    <p>Последняя точка восстановления: <strong data-bind="text: summary.backup.most_recent"></strong></p>
+                                    <p>Использовано места для восстановления: <strong data-bind="text: summary.backup.cumulative"></strong></p>
+                                    <p><a class="link pointer" data-widget="refresh" data-required="server_name" data-cmd="backup" data-bind="click: $root.command">Создать точку восстановления</a></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+
+                        <!-- START Default Widget -->
+                        <div class="span6 widget">
+                            <header>
+                                <h4 class="title" data-bind="click: show_page" data-page="archive_list"><span class="icon icone-bookmark"></span> Архивы</h4>
+                                <!-- START Toolbar -->
+                                <ul class="toolbar pull-right">
+                                    <li><a class="link" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command"><span class="icon icone-plus-sign"></span></a></li>
+                                </ul>
+                                <!--/ END Toolbar -->
+                                <span class="label label-success pull-right" data-bind="text: vmdata.archives().length"></span>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                	<p>Самый ранний архив: <strong data-bind="text: summary.archive.first"></strong></p>
+                                    <p>Последний архив: <strong data-bind="text: summary.archive.most_recent"></strong></p>
+                                    <p>Использовано места для архивов: <strong data-bind="text: summary.archive.cumulative"></strong></p>
+                                    <p><a class="link pointer" data-widget="refresh" data-required="server_name" data-cmd="archive" data-bind="click: $root.command">Создать новый архив</a></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Default Widget -->
+                        <div class="span6 widget" data-bind="">
+                            <header>
+                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Владельцы и использование диска</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Владелец: <strong data-bind="text: summary.owner"></strong></p>
+                                    <p>Группа владельцев: <select id="available_groups" data-bind="options: $root.dashboard.groups, event: { change: $root.change_group } "></select></p>
+                                    <p>Использование диска файлами сервера: <strong data-bind="text: summary.du_cwd"></strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+                        <!-- START Default Widget -->
+                        <div id="delete_server" class="span6 widget" data-bind="">
+                            <header>
+                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Удалить сервер</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <div class="controls" id="delete_confirmations">
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Удалить <span data-bind="text: $root.dashboard.base_directory"></span>/servers/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Удалить <span data-bind="text: $root.dashboard.base_directory"></span>/backup/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <label class="checkbox">
+                                            <input type="checkbox" value="true"> Удалить <span data-bind="text: $root.dashboard.base_directory"></span>/archive/<span data-bind="text: $root.server().server_name"></span>
+                                        </label>
+                                        <button class="btn btn-warning btn-mini" data-bind="click: $root.delete_server">Удалить </button>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Default Widget -->
+                    </div>
+                    <!--/ END Row -->
+
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="backup_list" class="container-fluid" data-bind="if: server().server_name">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <div class="control-group">
+                            <label class="control-label">Удалить точки восстановления старше чем:</label>
+                            <div class="controls">
+                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Введите дату или шаг"> <button data-bind="click: prune_increments, visible: pruning.increments.remove_count() > 0" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Удалить точки восстановления</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid" data-bind="if: pruning.increments.user_input().length > 0">
+                        <!-- START Icon Statistic - Circle -->
+                        <div class="span12 widget">
+                            <header><h4 class="title">Результат удаления</h4></header>
+                            <section class="body">
+                                <div class="body-inner" style="">
+                                    <!-- START Summary 1 -->
+                                    <figure class="stats summary shadowed">
+                                        <div class="icon circle lime"><span class="icone-folder-close"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: pruning.increments.remove_count"></span><small>Точек восстановления</small></h3>
+                                        </figcaption>
+                                    </figure><!--/ END Summary 1 -->
+
+                                    <!-- START Summary 2 -->
+                                    <figure class="stats summary shadowed">
+                                        <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: pruning.increments.space_reclaimed"></span><small>Мб освобождено</small></h3>
+                                        </figcaption>
+                                    </figure><!--/ END Summary 2 -->
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Icon Summary - Circle -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table class="table table-hover" data-bind="">
+                          <thead>
+                            <tr>
+                              <th scope="col">Шаг</th>
+                              <th scope="col">Время и дата</th>
+                              <th scope="col">Размер шага</th>
+                              <th scope="col">Нарастающий итог</th>
+                              <th scope="col"></th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.increments">
+                            <tr>
+                              <td data-bind="text: $data.step"></td>
+                              <td data-bind="text: $data.timestamp"></td>
+                              <td data-bind="text: $data.increment_size"></td>
+                              <td data-bind="text: $data.cumulative_size"></td>
+                              <td><button data-required="server_name,step,force" data-cmd="restore" data-bind="click: $root.command" class="btn btn-success btn-mini">Откатить</button></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="archive_list" class="container-fluid" data-bind="if: server().server_name">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <div class="control-group">
+                            <label class="control-label">Удалить архивы старше чем:</label>
+                            <div class="controls">
+                                <input type="text" id="prune_archive_input" data-bind="value: pruning.archives.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="введите дату"> <button data-bind="visible: pruning.archives.remove_count, click: prune_archives" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid" data-bind="if: pruning.archives.remove_count() > 0">
+                        <!-- START Icon Statistic - Circle -->
+                        <div class="span12 widget">
+                            <header><h4 class="title">Результат удаления</h4></header>
+                            <section class="body">
+                                <div class="body-inner" style="">
+                                    <!-- START Summary 1 -->
+                                    <figure class="stats summary shadowed">
+                                        <div class="icon circle lime"><span class="icone-folder-close"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: pruning.archives.remove_count"></span><small>Архивов</small></h3>
+                                        </figcaption>
+                                    </figure><!--/ END Summary 1 -->
+
+                                    <!-- START Summary 2 -->
+                                    <figure class="stats summary shadowed">
+                                        <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
+                                        <figcaption>
+                                            <h3><span data-bind="text: pruning.archives.space_reclaimed"></span><small>Мб освобождено</small></h3>
+                                        </figcaption>
+                                    </figure><!--/ END Summary 2 -->
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Icon Summary - Circle -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table class="table table-hover" data-bind="">
+                          <thead>
+                            <tr>
+                              <th scope="col">Время и дата</th>
+                              <th scope="col">Размер архива</th>
+                              <th scope="col">Имя файла</th>
+                              <th scope="col"></th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.archives">
+                            <tr>
+                              <td data-bind="text: $data.friendly_timestamp"></td>
+                              <td data-bind="text: bytes_to_mb($data.size)"></td>
+                              <td data-bind="text: $data.filename"></td>
+                              <td>
+                                <div class="btn-group">
+                                    <button class="btn dropdown-toggle" data-toggle="dropdown">Действия <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Создать сервер из архива</a></li>
+                                        <li>&nbsp;</li>
+                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Удалить</a></li>
+                                    </ul>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="importable" class="container-fluid" data-bind="">
+
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() == 'root'">
+                        <!-- START General Elements -->
+                        <div class="" data-bind="">
+                            <header>
+                                <h4 class="title">Создать сервер из архива</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Создавать и запускать сервер следует исключительно от имени непривилегированного пользователя, чтобы предотвратить возможное причинение вреда от использования уязвимостей сервера, сбойных плагинов или проблем с безопасностью в java.</p>
+                                    <p>Вы можете создать пользователя из командной строки используя <strong>adduser</strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+
+                        <div class="widget">
+                            <section class="body">
+                                <div class="body-inner">
+                                    <pre class="bash">
+root@core ~# adduser will
+Adding user `will' ...
+Adding new group `will' (1001) ...
+Adding new user `will' (1000) with group `will' ...
+Creating home directory `/home/will' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+Changing the user information for will
+Enter the new value, or press ENTER for the default
+Full Name []:
+Room Number []:
+Work Phone []:
+Home Phone []:
+Other []:
+Is the information correct? [Y/n]
+
+                                    </pre>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Syntax Highlighter -->
+                    </div>
+
+                    <!-- START Row -->
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
+                        <header>
+                            <h4 class="title">Создать сервер из архива</h4>
+                        </header>
+                        <section class="body">
+                            <div class="body-inner">
+                                <p>Перечисленные ниже файлы находятся в директории <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Допускаются архивы типа .tar, .tar.gz, .tgz, и .zip"><span data-bind="text: $root.dashboard.base_directory"></span>/import</strong> файловой системы сервера.</p>
+                            </div>
+                        </section>
+                        <table id="table_importable" class="table table-hover" data-bind="">
+                          <thead>
+                            <tr>
+                              <th scope="col">Имя файла</th>
+                              <th scope="col"></th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.importable">
+                            <tr>
+                              <td data-bind="text: filename"></td>
+                              <td>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Создать сервер из </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="profiles" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>Профили серверов</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_profiles_view" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col">Профиль</th>
+                              <th scope="col">Запускаемый Jar-файл</th>
+                              <th scope="col">Ссылка URL</th>
+                              <th scope="col">OK</th>
+                              <th scope="col"></th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.profiles">
+                            <tr>
+                                <td class="pointer" data-bind="text: profile, click: $root.select_profile"></td>
+                                <td data-bind="text: run_as"></td>
+                                <td data-bind="text: url"></td>
+                                <td data-bind=""><span class="icon" data-bind="css: {'icon-ok': run_as_md5, 'icon-remove': !run_as_md5}"></span></td>
+                                <td>
+                                	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Обновить </button>
+                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Удалить </button>
+                                </td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="6">
+                                <button class="btn" data-toggle="dropdown" data-bind="click: show_page" data-page="define_profile">Создать пользовательский профиль</button>
+                              	<div class="btn-group">
+                                    <button class="btn dropdown-toggle" data-toggle="dropdown">Создать базовый профиль <span class="caret"></span></button>
+                                    <ul class="dropdown-menu" data-bind="foreach: $root.dashboard.stock_profiles">
+                                        <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command, attr: {'data-profile': $data}, text: $data"></a></li>
+                                    </ul>
+                                </div>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <section class="body">
+                            <div class="body-inner">
+                                <p>Профили сервера могут быль использованы любым пользователем, но редактировать их может пользователь с правами записи в <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="chmod g+w profile.config">profile.config</strong>.
+                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">Пользователь <strong>root</strong> может расширить эти привилегии на дополнительных пользователей, присвоив файл <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> новой группе, а затем добавляя в неё доверенных пользователей.</span>
+                                <span data-bind="visible: $root.dashboard.whoami() == 'root'">Вы можете предоставить это право другим пользователям, назначая файлу <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> новую группу и добавляя в неё доверенных пользователей.</span></p>
+                                Члены этой группы могут редактировать и удалять профили серверов: 
+                                <select id="pc_group" name="pc_group" data-bind="visible: $root.dashboard.whoami() == 'root', options: $root.dashboard.groups, event: { change: $root.change_pc_group }"></select>
+                                <strong data-bind="visible: $root.dashboard.whoami() != 'root', text: $root.dashboard.pc_group"></strong>
+                            </div>
+                        </section>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="profile_view" class="container-fluid" data-bind="if: profile().profile">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget" data-bind="with: profile()">
+                            <header>
+                                <h4 class="title">Определение профиля</h4>
+                                <!-- START Toolbar -->
+                                <!--/ END Toolbar -->
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <div class="span12 pull-left">
+                                        <!-- START Summary -->
+                                        <figure class="stats summary pull-left">
+                                            <div data-bind="css: {'green': run_as_md5, 'red': !run_as_md5}" class="icon circle"><span data-bind="css: {'icone-ok': run_as_md5, 'icone-off': !run_as_md5}"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: run_as"></span><small><a class="pointer" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Скачать</a></small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle lime"><span class="icone-time"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: run_as_mtime + '&nbsp;'"></span><small data-bind="text: 'MD5: ' + run_as_md5"></small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!--/ END Summary -->
+
+                                        <!-- START Summary -->
+                                        <!-- ko if: version -->
+                                        <figure class="stats summary">
+                                            <div class="icon circle teal"><span class="icone-trophy"></span></div>
+                                            <figcaption>
+                                                <h3><span data-bind="text: version"></span><small>Обнаружена версия</small></h3>
+                                            </figcaption>
+                                        </figure>
+                                        <!-- /ko -->
+                                        <!--/ END Summary -->
+
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <div class="row-fluid">
+                        <!-- START General Elements -->
+                        <div class="span12 widget dark" data-bind="with: profile()">
+                            <header>
+                                <h4 class="title"><span class="icon icone-keyboard"></span> Комментарий к профилю</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <!-- Autosize Textarea -->
+                                    <div class="control-group">
+                                        <div class="controls">
+                                            <textarea data-bind="value: description" class="span12 autosize" rows="4" style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 90px;"></textarea>
+                                        </div>
+                                    </div><!--/ Autosize Textarea -->
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+                    </div>
+
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="create_server" class="container-fluid">
+
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() == 'root'">
+                        <!-- START General Elements -->
+                        <div class="" data-bind="">
+                            <header>
+                                <h4 class="title">Создание сервера</h4>
+                            </header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <p>Создавать и запускать сервер следует исключительно от имени непривилегированного пользователя, чтобы предотвратить возможное причинение вреда от использования уязвимости сервера, сбойных плагинов или проблем с безопасностью в java.</p>
+                                    <p>Вы можете создать пользователя из командной строки используя <strong>adduser</strong></p>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END General Elements -->
+
+                        <div class="widget">
+                            <section class="body">
+                                <div class="body-inner">
+                                    <pre class="bash">
+root@core ~# adduser will
+Adding user `will' ...
+Adding new group `will' (1001) ...
+Adding new user `will' (1000) with group `will' ...
+Creating home directory `/home/will' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password:
+Retype new UNIX password:
+passwd: password updated successfully
+Changing the user information for will
+Enter the new value, or press ENTER for the default
+Full Name []:
+Room Number []:
+Work Phone []:
+Home Phone []:
+Other []:
+Is the information correct? [Y/n]
+
+                                    </pre>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Syntax Highlighter -->
+                    </div>
+
+                    <!-- START Row -->
+                    <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
+                        <!-- START Form Wizard With Validation -->
+                        <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="createnewserver">
+                            <header><h4 class="title">Создать новый сервер</h4></header>
+                            <section class="body">
+                                <div class="body-inner">
+                                    <fieldset class="step" id="step1">
+                                        <div class="step-title">
+                                            <span class="icon icone-lock lime"></span>
+                                            <h5>
+                                                ШАГ 1<br/>
+                                                <small>Информация о владельце</small>
+                                            </h5>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Имя сервера:</label>
+                                            <div class="controls">
+                                                <input type="text" name="server_name" class="input-medium required" required>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Членство в группе:</label>
+                                            <div class="controls">
+                                                <select name="group" data-bind="options: $root.dashboard.groups"></select>
+                                                <span class="help-block">Другие члены этой группы будут иметь полный доступ к управлению сервером</span>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                    <fieldset id="step2" class="step">
+                                        <div class="step-title">
+                                            <span class="icon icone-lightbulb yellow"></span>
+                                            <h5>
+                                                ШАГ 2<br/>
+                                                <small>Свойства сервера (server.properties)</small>
+                                            </h5>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Порт сервера (server-port)</label>
+                                            <div class="controls"><input type="text" name="server-port" class="input-medium" placeholder="25565"></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Привязка к IP (server-ip)</label>
+                                            <div class="controls">
+                                                <input type="text" name="server-ip" class="input-medium" placeholder="0.0.0.0">
+                                                <span class="help-block">Значение по умолчанию "0.0.0.0" означает, что сервер будет принимать подключения на всех доступных сетевых интерфейсах</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Максимальное количество игроков (max-players)</label>
+                                            <div class="controls"><input type="text" name="max-players" class="input-medium" placeholder="20"></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Название мира (level-name)</label>
+                                            <div class="controls"><input type="text" name="level-name" class="input-medium" placeholder="world"></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Сид (level-seed)</label>
+                                            <div class="controls">
+                                                <input type="text" name="level-seed" class="input-medium" placeholder="">
+                                                <span class="help-block">Сид должен быть введен до того, как сервер будет запущен в первый раз, иначе будет сгенерирован случайный сид.</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="control-group">
+                                            <label class="control-label">Уровень сложности (difficulty)</label>
+                                            <div class="controls">
+                                            <select class="input-medium" name="difficulty" data-bind="">
+                                                <option value="0">Мирный</option><option value="1">Лёгкий</option><option value="2">Нормальный</option><option value="3">Сложный</option>
+                                            </select></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Режим игры (gamemode)</label>
+                                            <div class="controls">
+                                            <select class="input-medium" name="gamemode" data-bind="">
+                                                <option value="0">Выживание (Survival)</option><option value="1">Строительство (Creative)</option><option value="2">Приключения (Adventure)</option>
+                                            </select></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Тип мира (level-type)</label>
+                                            <div class="controls">
+                                            <select class="input-medium" name="level-type" data-bind="">
+                                                <option value="DEFAULT">Обычный (DEFAULT)</option><option value="FLAT">Плоский (FLAT)</option><option value="LARGEBIOMES">Большие биомы (LARGEBIOMES)</option>
+                                            </select></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Создавать строения (Generate Structures)</label>
+                                            <div class="controls">
+                                                <label class="checkbox">
+                                                    <input type="checkbox" name="generate-structures" value="true" checked>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset id="step3" class="step">
+                                        <div class="step-title">
+                                            <span class="icon icone-lightbulb yellow"></span>
+                                            <h5>
+                                                ШАГ 3<br/>
+                                                <small>Конфигурация сервера (server.config)</small>
+                                            </h5>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Профиль</label>
+                                            <div class="controls">
+                                                <select class="input-medium" data-section="minecraft" name="profile" data-bind="foreach: vmdata.profiles" required>
+                                                    <option data-bind="text: profile, attr: {value: profile}"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Максимальная память (java_xmx)</label>
+                                            <div class="controls">
+                                                <input type="text" data-section="java" name="java_xmx" class="input-medium" placeholder="256">
+                                                <span class="help-block">Максимальный объём памяти, доступный исключительно серверу Minecraft (не включая накладные расходы)</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Минимальная память (java_xms)</label>
+                                            <div class="controls">
+                                                <input type="text" data-section="java" name="java_xms" class="input-medium" placeholder="256">
+                                                <span class="help-block">Минимальный объём памяти, который займёт Minecraft (рекомендуется тот же, что и java_xmx)</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Ключи Java (java_tweaks)</label>
+                                            <div class="controls">
+                                                <input type="text" data-section="java" name="java_tweaks" class="input-medium" placeholder="">
+                                                <span class="help-block">Дополнительные аргументы командной строки java, введите -server -Dfile.encoding=UTF-8 для поддержки кириллицы</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Интервал архивации</label>
+                                            <div class="controls">
+                                            <select class="input-medium" data-section="crontabs" name="archive_interval" data-bind="">
+                                                <option value="">Без архивации</option>
+                                                <option value="30">Каждые 30 минут</option>
+                                                <option value="60">Раз в час</option>
+                                                <option value="120">Раз в 2 часа</option>
+                                                <option value="180">Раз в 3 часа</option>
+                                                <option value="360">Раз в 6 часов</option>
+                                                <option value="720">Раз в 12 часов</option>
+                                                <option value="0">Раз в сутки</option>
+                                            </select></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Интервал создания резервной копии</label>
+                                            <div class="controls">
+                                            <select class="input-medium" data-section="crontabs" name="backup_interval" data-bind="">
+                                                <option value="">Без создания</option>
+                                                <option value="30">Каждые 30 минут</option>
+                                                <option value="60">Раз в час</option>
+                                                <option value="120">Раз в 2 часа</option>
+                                                <option value="180">Раз в 3 часа</option>
+                                                <option value="360">Раз в 6 часов</option>
+                                                <option value="720">Раз в 12 часов</option>
+                                                <option value="0">Раз в сутки</option>
+                                            </select></div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Запускать сервер при загрузке</label>
+                                            <div class="controls">
+                                                <label class="checkbox">
+                                                    <input data-section="onreboot" type="checkbox" name="start" value="true">
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                    
+                                    <div class="form-actions">
+                                        <input class="btn" id="back-1" value="Назад" type="reset">
+                                        <input type="submit" class="btn btn-primary" id="next-1" value="Далее">
+                                    </div>
+                                </div>
+                            </section>
+                        </form>
+                        <!--/ END Form Wizard With Validation -->
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="server_properties" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>Свойства сервера (server.properties)</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_properties" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="span4">Параметр</th>
+                              <th scope="col">Значение</th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                            <tr>
+                            	<td><button class="btn btn-primary" data-config="sp" data-bind="click: new_property"><span class="icone-edit"></span> Новый параметр</button></td>
+                            </tr>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.sp">
+                            <tr>
+                              <td>
+                                <div class="">
+                                  <span data-bind="text: option, visible: !$data.newly_created()" class=""></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: option" class="input-large">
+                              	</div>
+                              </td>
+                              <td>
+                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
+                                    <div class="controls">
+                                        <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
+                                        <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
+                                            <input type="checkbox" data-bind="checked: val" class="truefalse">
+                                        </span>
+                                    </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="server_config" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Page/Section header -->
+                        <div class="span12">
+                            <div class="page-header line1">
+                                <h4>Конфигурация сервера (server.config)</h4>
+                            </div>
+                        </div>
+                        <!--/ END Page/Section header -->
+                    </div>
+                    <!--/ END Row -->
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <table id="table_config" class="table table-hover">
+                          <thead>
+                            <tr>
+                              <th scope="col" class="span3">Раздел</th>
+                              <th scope="col" class="span4">Параметр</th>
+                              <th scope="col">Значение</th>
+                            </tr>
+                          </thead>
+                          <tfoot>
+                            <tr>
+                            	<td><button class="btn btn-primary" data-config="sc" data-bind="click: new_property"><span class="icone-edit"></span> Новый параметр</button></td>
+                            </tr>
+                          </tfoot>
+                          <tbody data-bind="foreach: vmdata.sc">
+                            <tr>
+                              <td><span data-bind="text: section, visible: !$data.newly_created()"></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: section" class="input-large">
+                              </td>
+                              <td><span data-bind="text: option, visible: !$data.newly_created()" class=""></span>
+                              	  <input type="text" data-bind="visible: $data.newly_created(), value: option" class="input-large">
+                              </td>
+                              <td>
+                                <div class="control-group" data-bind="css: {'success': success, 'error': success == false}">
+                                    <div class="controls">
+                                        <input type="text" data-bind="visible: $data.type == 'textbox', value: val" class="input-large">
+                                        <span data-bind="if: $data.type == 'truefalse', click: $data.toggle">
+                                            <input type="checkbox" data-bind="checked: val" class="truefalse">
+                                        </span>
+                                        <span data-bind="if: $data.type == 'interval'">
+                                            <select class="input-medium" data-bind="attr: {id: $data.id}, event: { change: $data.change_select }">
+                                                <option value="">Не выполнять</option>
+                                                <option value="30">Каждые 30 минут</option>
+                                                <option value="60">Раз в час</option>
+                                                <option value="120">Раз в 2 часа</option>
+                                                <option value="180">Раз в 3 часа</option>
+                                                <option value="240">Раз в 4 часа</option>
+                                                <option value="360">Раз в 6 часов</option>
+                                                <option value="720">Раз в 12 часов</option>
+                                                <option value="0">Раз в сутки</option>
+                                            </select>
+                                        </span>
+                                    </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="define_profile" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Form Wizard With Validation -->
+                        <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="definenewprofile">
+                            <header><h4 class="title">Создать новый профиль сервера</h4></header>
+                            <section class="body">
+                                <div class="body-inner">
+
+                                    <fieldset id="step1" class="step">
+                                        <div class="control-group">
+                                            <label class="control-label">Название профиля</label>
+                                            <div class="controls">
+                                                <input type="text" name="name" class="input-medium required" placeholder="vanilla162">
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Тип</label>
+                                            <div class="controls">
+                                                <select class="input-xlarge" name="type" data-bind="value: profile_type">
+                                                    <option value="standard_jar">Отдельный запускаемый файл JAR</option>
+                                                    <option value="archived_jar">Архив, содержащий запускаемый файл JAR</option>
+                                                    <option value="unmanaged">Необновляемый</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
+                                            <label class="control-label">Ссылка URL для загрузки</label>
+                                            <div class="controls">
+                                                <input type="text" name="url" class="input-xlarge" placeholder="http://dl.bukkit.org/latest-rb/craftbukkit.jar">
+                                                <span class="help-block">Предпочтительно вводите прямую ссылку, нежели ссылку с серверной переадресацией</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
+                                            <label class="control-label">Сохранять загруженный файл как</label>
+                                            <div class="controls">
+                                                <input type="text" name="save_as" class="input-xlarge" placeholder="craftbukkit.jar">
+                                                <span class="help-block">Здесь должно быть <em>исключительно</em> имя файла</span>
+                                            </div>
+                                        </div>
+                                        <div class="control-group">
+                                            <label class="control-label">Запускать файл Jar</label>
+                                            <div class="controls">
+                                            <input type="text" name="run_as" class="input-xlarge" placeholder="craftbukkit.jar" required>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'standard_jar'">В большинстве случаев, здесь должно быть то же самое, что и в строчке 'Сохранять загруженный файл как'.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'archived_jar'">Имя исполняемого файла jar в архиве.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'unmanaged'">Вручную скопируйте этот файл в директорию <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title=".../servers/servername/jarfile.jar">, где находятся файлы сервера</strong>.</span>
+                                            </div>
+                                        </div>
+                                     	<div class="control-group">
+                                            <label class="control-label">Аргументы файла Jar</label>
+                                            <div class="controls">
+                                            <input type="text" name="jar_args" class="input-xlarge" placeholder="nogui">
+                                                <span class="help-block"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Tags -->
+                                        <div class="control-group" data-bind="visible: profile_type() == 'archived_jar'">
+                                            <label class="control-label">Файлы, которые не будут обрабатываться</label>
+                                            <div class="controls">
+                                                <ul class="input-xlarge" id="ignore_files">
+                                                </ul>
+                                                <span class="help-block">Файлы, которые <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Некоторые архивы комплектуются настройками по умолчанию, например, server.properties. Добавьте такие файлы в список исключений для сохранения пользовательских настроек">не должны</strong> быть скопированы из архива в директорию сервера.</span>
+                                            </div>
+                                        </div><!--/ Tags -->
+                                    </fieldset>
+
+                                    <div class="form-actions">
+                                        <input type="submit" class="btn btn-primary" value="Далее">
+                                    </div>
+                                </div>
+                            </section>
+                        </form>
+                        <!--/ END Form Wizard With Validation -->
+                    </div>
+                    <!--/ END Row -->
+                </div>
+                <!--/ END Content -->
+
+                <!-- START Content -->
+                <div id="console" class="container-fluid">
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12 widget">
+                            <header>
+                                <h4 class="title">Журнал сервера</h4>
+                            </header>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Line Chart - Filled -->
+                        <div class="span12">
+                            <form data-bind="submit: console_command">
+                                <input type="text" name="console_command" class="span12" placeholder="Отправить команду консоли сервера">
+                            </form>
+                        </div>
+                        <!--/ END Line Chart - Filled -->
+                    </div>
+                    <!--/ END Row -->
+
+                    <!-- START Row -->
+                    <div class="row-fluid">
+                        <!-- START Datatable 1 -->
+                        <div class="span12 widget stacked">
+                            <section class="body">
+                                <div class="body-inner no-padding">
+                                    <table class="table table-bordered table-striped table-hover" id="logs">
+                                        <thead>
+                                            <tr>
+                                                <th>Запись
+                                                    <div class="btn-group pull-right">
+                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">В обратном порядке</a>
+                                                        <!--<a href="#" class="btn btn-small" data-bind="click: reset_logs">Показать последние 100 строк</a>-->
+                                                    </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <!-- ko if: logs.reversed() -->
+                                        <tbody data-bind=", foreach: vmdata.logs.slice(0).reverse()">
+                                            <tr>
+                                              <td data-bind="html: entry"></td>
+                                            </tr>
+                                        </tbody>
+                                        <!-- /ko -->
+                                        <!-- ko if: !logs.reversed() -->
+                                        <tbody data-bind=", foreach: vmdata.logs">
+                                            <tr>
+                                              <td data-bind="html: entry"></td>
+                                            </tr>
+                                        </tbody>
+                                        <!-- /ko -->
+                                    </table>
+                                </div>
+                            </section>
+                        </div>
+                        <!--/ END Datatable 1 -->
+                    </div>
+                    <!--/ END Row -->
+
+                </div>
+                <!--/ END Content -->
+
+                <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4 id="myModalLabel">Создать новый сервер из существующего архива</h4>
+                    </div>
+                    <div class="modal-body" data-bind="if: $root.import_information()">
+                        <p><strong data-bind="text: $root.import_information().filename"></strong> будет распакован.</p>
+                        <p>Введите имя нового сервера:</p>
+                        <input type="text" name="newname" class="input-medium required" placeholder="server_name">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Отменить</button>
+                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Создать сервер</button>
+                    </div>
+                </div>
+
+                <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
+                    <div class="modal-header">
+                        <h4>Удалить <span data-bind="text: pruning.profiles.profile"></span> из доступных профилей?</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Все скачанные файлы для этого профиля будут удалены.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Сохранить профиль</button>
+                        <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Удалить профиль</button>
+                    </div>
+                </div>
+
+            </section>
+            <!--/ END Template Main Content -->
+
+            <!-- START Template Footer -->
+            <footer id="footer" class="">
+                <div><span><a href="http://minecraft.codeemo.com">MineOS</a> создан и поддерживается <a href="mailto:wdchromium@gmail.com">William Dizon</a></span> 
+                - <span>Распространяется по лицензии <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3.0</a></span> - 
+                    <span>MineOS - свободное ПО; окажите поддержку через Paypal!
+                        <form id="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+                          <input type="hidden" name="cmd" value="_s-xclick">
+                          <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----MIIHPwYJKoZIhvcNAQcEoIIHMDCCBywCAQExggEwMIIBLAIBADCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwDQYJKoZIhvcNAQEBBQAEgYBRScWc9zfX0apUl0Np08elgF0JArg07bc2GeK3JA/6lG9oenLG2Q1soVTl/u8F92EqRqTsgTuxsv2t26qQGSapq8zdjnHrD9WXw6Dk04vGUCNZtaC1ir93Dd/XobfUsr5RxukvYny9a6to5/uGlhENvz5qR/mIlYIsahc3lU3WUzELMAkGBSsOAwIaBQAwgbwGCSqGSIb3DQEHATAUBggqhkiG9w0DBwQIRsucaFJx6LKAgZhao5meFlIEmKLdjPebD/SkKXR79LjLkjMdAkRPlN6AtjT5jJm4CDYC+DCCi+TKW+CTLNrFEMiqOnIic1qBaqtpzV+U3mmsXMQHlbw7ZAW0Mert2fpWbxH4XyeXs0hg0nsB4lriNcCR1yXuNSnzdo33Y2XSGoUeWTvUeZAgtvegEBoOM6ba3fnTSjI5i0M9zBW6HgEhkGKoZ6CCA4cwggODMIIC7KADAgECAgEAMA0GCSqGSIb3DQEBBQUAMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbTAeFw0wNDAyMTMxMDEzMTVaFw0zNTAyMTMxMDEzMTVaMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAwUdO3fxEzEtcnI7ZKZL412XvZPugoni7i7D7prCe0AtaHTc97CYgm7NsAtJyxNLixmhLV8pyIEaiHXWAh8fPKW+R017+EmXrr9EaquPmsVvTywAAE1PMNOKqo2kl4Gxiz9zZqIajOm1fZGWcGS0f5JQ2kBqNbvbg2/Za+GJ/qwUCAwEAAaOB7jCB6zAdBgNVHQ4EFgQUlp98u8ZvF71ZP1LXChvsENZklGswgbsGA1UdIwSBszCBsIAUlp98u8ZvF71ZP1LXChvsENZklGuhgZSkgZEwgY4xCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEUMBIGA1UEChMLUGF5UGFsIEluYy4xEzARBgNVBAsUCmxpdmVfY2VydHMxETAPBgNVBAMUCGxpdmVfYXBpMRwwGgYJKoZIhvcNAQkBFg1yZUBwYXlwYWwuY29tggEAMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEAgV86VpqAWuXvX6Oro4qJ1tYVIT5DgWpE692Ag422H7yRIr/9j/iKG4Thia/Oflx4TdL+IFJBAyPK9v6zZNZtBgPBynXb048hsP16l2vi0k5Q2JKiPDsEfBhGI+HnxLXEaUWAcVfCsQFvd2A1sxRr67ip5y2wwBelUecP3AjJ+YcxggGaMIIBlgIBATCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwCQYFKw4DAhoFAKBdMBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTEwMTIyOTAyNTk1OVowIwYJKoZIhvcNAQkEMRYEFPR5aY3Y3NaNcJjSdwdfjTImf9RSMA0GCSqGSIb3DQEBAQUABIGAlXdWb1Dmy1YQmthx17LHN7n4q9T76/pAilWpoAfwaNUwG6BRLNsTKSyHVblUoaRH8NIknnEcq0vKnCpRqp4k8HYl0e+0K8+CR1zkCAQygQabtIzLnnJXQ7NDJes1SqZ8KLKi3RNu0D5FPPyen5ALPlF1wGHmj8FfFAH7MvKyFWk=-----END PKCS7-----
+                        ">
+                          <input type="image" src="https://www.paypal.com/ru_RU/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+                          <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+                        </form>
+                    </span>
+
+                </div>
+
+                <!-- START To Top Scroller -->
+                <a href="#" class="totop"><span class="icon icone-angle-up"></span></a>
+                <!--/ END To Top Scroller -->
+            </footer>
+            <!--/ END Template Footer -->
+        </div>
+        <!--/ END Template Canvas -->
+    </div>
+    <!--/ END Template Wrapper -->
+
+    <!-- START JAVASCRIPT SECTION - Include at the bottom of the page to reduce load time -->
+    <!-- Javascript(Vendors) -->
+    <script src="assets/jquery/js/jquery-2.0.3.min.js"></script>
+    <script src="assets/jui/js/jquery-ui-1.10.3.min.js"></script>
+    <!--/ Javascript(Vendors) -->
+
+    <!-- Javascript(Plugins) -->
+    <!--[if IE 8]><script src="/assets/respond/js/respond.min.js"></script><![endif]-->
+    <script src="assets/autosize/js/jquery.autosize.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/easypiechart/js/jquery.easypiechart.min.js"></script>
+    <script src="assets/formwizard/js/jquery.formwizard.min.js"></script>
+    <script src="assets/icheck/js/jquery.icheck.min.js"></script>
+    <script src="assets/ie-placeholder/js/jquery.placeholder.min.js"></script>
+    <script src="assets/inputmask/js/jquery.inputmask.min.js"></script>
+    <script src="assets/moment/js/moment.min.js"></script>
+    <script src="assets/mousewheel/js/jquery.mousewheel.min.js"></script>
+    <script src="assets/daterangepicker/js/daterangepicker.min.js"></script>
+    <script src="assets/tagit/js/tag-it.min.js"></script>
+    <script src="assets/gritter/js/jquery.gritter.min.js"></script>
+
+    <!-- Form Validation -->
+    <script src="assets/formvalidation/bassistance/js/jquery.validate.min.js"></script>
+    <script src="assets/formvalidation/validationengine/js/lang/jquery.validationEngine-en.min.js"></script>
+    <script src="assets/formvalidation/validationengine/js/jquery.validationEngine.min.js"></script>
+
+    <!-- Chart -->
+    <script src="assets/flot/jquery.flot.min.js"></script>
+    <script src="assets/flot/jquery.flot.pie.min.js"></script>
+    <script src="assets/flot/jquery.flot.categories.min.js"></script>
+    <script src="assets/flot/jquery.flot.tooltip.min.js"></script>
+    <script src="assets/flot/jquery.flot.resize.min.js"></script>
+    <script src="assets/flot/excanvas.min.js"></script>
+    <!--/ Javascript(Plugins) -->
+
+    <!-- Javascript (Application) -->
+    <script src="js/plugins.js"></script>
+    <script src="js/application.js"></script>
+
+    <script src="js/knockout-min.js"></script>
+    <script src="js/ansi_up.js"></script>
+    <script src="js/scriptin.js"></script>
+    <!--/ Javascript (Application) -->
+    
+    <script type="text/javascript">
+        var vm = new webui();
+        
+        $(document).ready(function() {
+            ko.applyBindings(vm);
+        });
+
+    </script>
+    <!--/ END JAVASCRIPT SECTION -->
+</body>
+</html>
