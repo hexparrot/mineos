@@ -219,11 +219,8 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def mask_password(self):
-        try:
-            return {'mask_password': cherrypy.config['misc.mask_password']}
-        except KeyError:
-            return {'mask_password': False}
+    def webui_config(self):
+        return {k.lstrip('webui.'):v for k,v in cherrypy.config.iteritems() if k.startswith('webui.')}
 
     @property
     def login(self):
