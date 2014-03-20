@@ -174,6 +174,14 @@ function model_profile(data) {
 		$.getJSON('/host', params)
 	}, self)
 }
+                                                                                                                                                                                            
+function SecondsToString(seconds){
+var numdays = Math.floor(seconds / 86400);
+var numhours = Math.floor((seconds % 86400) / 3600);
+var numminutes = Math.floor(((seconds % 86400) % 3600) / 60);
+var numseconds = ((seconds % 86400) % 3600) % 60;
+return numdays + " days " + ('0' + numhours).slice(-2) + ":" + ('0' + numminutes).slice(-2) + ":" + ('0' + numseconds).slice(-2);
+}
 
 function webui() {
 	var self = this;
@@ -734,7 +742,7 @@ function webui() {
 
 	self.refresh = {
 		dashboard: function(data) {
-			self.dashboard.uptime(seconds_to_time(parseInt(data.uptime)));
+			self.dashboard.uptime(SecondsToString(parseInt(data.uptime)));
 			self.dashboard.memfree(data.memfree);
 			self.dashboard.whoami(data.whoami);
 			self.dashboard.group(data.group);
