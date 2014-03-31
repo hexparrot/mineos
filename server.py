@@ -42,6 +42,7 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             except RuntimeError:
                 pass
             else:
+                cherrypy.log('[%s] commit command received by process; sleeping %ssec' % (server, self.commit_delay))
                 sleep(self.commit_delay)
 
         for action, server in crons:
@@ -55,16 +56,22 @@ class cron(cherrypy.process.plugins.SimplePlugin):
                 except RuntimeError:
                     pass
                 else:
+                    cherrypy.log('[%s] stop command received by process; sleeping %ssec' % (server, self.commit_delay))
                     sleep(self.commit_delay)
             elif action in ('backup', 'archive'):
-                cherrypy.log('[%s] %s' % (server, action))
+                cherrypy.log('[%s] %s (Server Up: %s)' % (server, action, instance.up))
                 try:
                     getattr(instance, action)()
                 except CalledProcessError as e:
                     cherrypy.log('[%s] %s exception: returncode %s' % (server, action, e.returncode))
                     cherrypy.log(e.output)
+                except RuntimeError:
+                    cherrypy.log('[%s] %s exception: server state changed since beginning of %s.' % (server, action, action))
+                    cherrypy.log('[%s] %s (Server Up: %s)' % (server, action, instance.up))
+                    cherrypy.log('You may need to increase mineos.conf => server.commit_delay')
                 else:
-                    sleep(self.commit_delay)
+                    cherrypy.log('[%s] %s return code reports success; sleeping 3sec' % (server, action))
+                    sleep(3)
                 
         for action, server in crons:
             path_ = os.path.join(self.base_directory, mc.DEFAULT_PATHS['servers'], server)
@@ -72,7 +79,7 @@ class cron(cherrypy.process.plugins.SimplePlugin):
             
             if action == 'restart':
                 if instance.up:
-                    cherrypy.log('[%s] extra delay' % server)
+                    cherrypy.log('[%s] extra delay; sleeping %s seconds' % (server, self.commit_delay))
                     sleep(self.commit_delay)
 
                 cherrypy.log('[%s] start' % server)
@@ -81,6 +88,7 @@ class cron(cherrypy.process.plugins.SimplePlugin):
                 except RuntimeError:
                     pass
                 else:
+                    cherrypy.log('[%s] started; sleeping %s seconds' % (server, self.commit_delay))
                     sleep(self.commit_delay)
 
 def tally():
