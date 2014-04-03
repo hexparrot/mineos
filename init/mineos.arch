@@ -1,0 +1,10 @@
+[Unit]
+Description=MineOS webui startup script
+
+[Service]
+ExecStart=/usr/games/minecraft/server.py -c /etc/mineos.conf
+Type=forking
+PIDFile=/var/run/mineos.pid
+
+[Install]
+WantedBy=multi-user.target

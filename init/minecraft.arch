@@ -1,0 +1,14 @@
+[Unit]
+Description=Minecraft server startup script
+
+[Service]
+Type=forking
+ExecStartPre=/usr/games/minecraft/mineos_console.py -d /var/games/minecraft restore
+ExecStart=/usr/games/minecraft/mineos_console.py -d /var/games/minecraft start
+ExecStop=/usr/games/minecraft/mineos_console.py -d /var/games/minecraft stop
+TimeoutSec=10
+KillMode=none
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target
