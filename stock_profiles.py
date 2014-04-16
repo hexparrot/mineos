@@ -8,7 +8,7 @@ __version__ = "0.6.0"
 __email__ = "wdchromium@gmail.com"
  
 STOCK_PROFILES = {
-    'vanilla175': {
+    'vanilla179': {
         'name': 'vanilla179',
         'type': 'standard_jar',
         'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.7.9/minecraft_server.1.7.9.jar',
