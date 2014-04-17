@@ -367,6 +367,15 @@ class mc(object):
         self._command_stuff('save-all')
 
     @server_exists(True)
+    @server_up(True)
+    def stop(self):
+        """Stop a server"""
+        if self.server_type == 'bungee':
+            self._command_stuff('end')
+        else:
+            self._command_stuff('stop')
+
+    @server_exists(True)
     def archive(self):
         """Creates a timestamped, gzipped tarball of the server contents."""
         self._make_directory(self.env['awd'])
