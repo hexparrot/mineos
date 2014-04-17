@@ -662,6 +662,9 @@ class mc(object):
         from subprocess import check_call
         from shlex import split
 
+        if self.server_type == 'bungee' and stuff_text.find('stop') == 0:
+            stuff_text = 'end'
+
         command = """%s -S %d -p 0 -X eval 'stuff "%s\012"'""" % (self.BINARY_PATHS['screen'],
                                                                   self.screen_pid,
                                                                   stuff_text)
