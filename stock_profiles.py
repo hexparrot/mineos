@@ -7,8 +7,8 @@ __license__ = "GNU GPL v3.0"
 __version__ = "0.6.0"
 __email__ = "wdchromium@gmail.com"
  
-STOCK_PROFILES = {
-    'vanilla179': {
+STOCK_PROFILES = [
+    {
         'name': 'vanilla179',
         'type': 'standard_jar',
         'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.7.9/minecraft_server.1.7.9.jar',
@@ -17,7 +17,7 @@ STOCK_PROFILES = {
         'ignore': '',
         'desc': 'official minecraft_server.jar'
         },
-    'vanilla164': {
+    {
         'name': 'vanilla164',
         'type': 'standard_jar',
         'url': 'https://s3.amazonaws.com/Minecraft.Download/versions/1.6.4/minecraft_server.1.6.4.jar',
@@ -26,7 +26,7 @@ STOCK_PROFILES = {
         'ignore': '',
         'desc': 'official minecraft_server.jar'
         }, 
-    'bukkit-recommended': {
+    {
         'name': 'bukkit-recommended',
         'type': 'standard_jar',
         'url': 'http://dl.bukkit.org/latest-rb/craftbukkit.jar',
@@ -34,7 +34,7 @@ STOCK_PROFILES = {
         'run_as': 'craftbukkit.jar',
         'ignore': '',
         }, 
-    'bukkit-beta': {
+    {
         'name': 'bukkit-beta',
         'type': 'standard_jar',
         'url': 'http://dl.bukkit.org/latest-beta/craftbukkit.jar',
@@ -42,15 +42,15 @@ STOCK_PROFILES = {
         'run_as': 'craftbukkit.jar',
         'ignore': '',
         }, 
-    'bukkit-dev': {
+    {
         'name': 'bukkit-dev',
         'type': 'standard_jar',
         'url': 'http://dl.bukkit.org/latest-dev/craftbukkit.jar',
         'save_as': 'craftbukkit.jar',
         'run_as': 'craftbukkit.jar',
         'ignore': '',
-        },
-    'spigot': {
+        }, 
+    {
         'name': 'spigot',
         'type': 'standard_jar',
         'url': 'http://ci.md-5.net/job/Spigot/lastSuccessfulBuild/artifact/Spigot-Server/target/spigot.jar',
@@ -58,4 +58,4 @@ STOCK_PROFILES = {
         'run_as': 'spigot.jar',
         'ignore': '',
         }
-    }
+]

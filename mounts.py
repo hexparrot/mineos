@@ -194,7 +194,7 @@ class ViewModel(object):
             'pc_permissions': profile_editable,
             'pc_group': pc_group,
             'git_hash': git_hash(os.path.dirname(os.path.abspath(__file__))),
-            'stock_profiles': STOCK_PROFILES.keys(),
+            'stock_profiles': [i['name'] for i in STOCK_PROFILES],
             'base_directory': self.base_directory,
             }
 
@@ -291,7 +291,7 @@ class Root(object):
             elif command == 'stock_profile':
                 from stock_profiles import STOCK_PROFILES
                 
-                profile = STOCK_PROFILES[args['profile']]
+                profile = iter([i for i in STOCK_PROFILES if i['name'] == args['profile']]).next()
                 mc('throwaway', None, self.base_directory).define_profile(profile)
                 retval = '%s profile created' % profile['name']
             elif command == 'modify_profile':

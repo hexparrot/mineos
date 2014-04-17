@@ -101,7 +101,8 @@ if __name__=="__main__":
                 print ex.message
         elif args.cmd == 'stock_profile':
             from stock_profiles import STOCK_PROFILES
-            mc(**init_args).define_profile(STOCK_PROFILES[arguments[0]])
+            profile = iter([i for i in STOCK_PROFILES if i['name'] == arguments[0]]).next()
+            mc(**init_args).define_profile(profile)
         elif args.cmd == 'define_profile':
             from collections import OrderedDict
             profile = OrderedDict([(k,None) for k in ('name', 'type', 'url',
