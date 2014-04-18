@@ -72,7 +72,9 @@ function model_property(server_name, option, value, section, new_prop) {
 				{option: 'spawn-npcs', type: 'truefalse'},
 				{option: 'snooper-enabled', type: 'truefalse'},
 				{option: 'white-list', type: 'truefalse'},
-				{option: 'enable-rcon', type: 'truefalse'}
+				{option: 'enable-rcon', type: 'truefalse'},
+				{option: 'announce-player-achievements', type: 'truefalse'},
+				{option: 'enable-command-block', type: 'truefalse'}
 			]
 
 			$.each(fixed, function(i,v) {
