@@ -185,7 +185,7 @@ class ViewModel(object):
         primary_group = getgrgid(getpwnam(self.login).pw_gid).gr_name
     
         return {
-            'uptime': str(proc_uptime()[0]),
+            'uptime': int(proc_uptime()[0]),
             'memfree': mb_free,
             'whoami': self.login,
             'group': primary_group,
