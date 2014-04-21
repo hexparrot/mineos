@@ -185,7 +185,8 @@ if __name__ == "__main__":
             'server.socket_host': args.ip_address,
             'server.socket_port': int(args.port),
             'log.screen': not args.daemon,
-            'log.error_file': logfile
+            'log.error_file': logfile,
+            'misc.base_directory': base_dir
             }
 
         if not args.http: #use https instead
