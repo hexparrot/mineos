@@ -381,8 +381,10 @@ class mc(object):
         self._make_directory(self.env['awd'])
         if self.up:
             self._command_stuff('save-off')
-            self._command_direct(self.command_archive, self.env['cwd'])
-            self._command_stuff('save-on')
+            try:
+                self._command_direct(self.command_archive, self.env['cwd'])
+            finally:
+                self._command_stuff('save-on')
         else:
             self._command_direct(self.command_archive, self.env['cwd'])
 
