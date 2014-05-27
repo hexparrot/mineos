@@ -189,7 +189,7 @@ class ViewModel(object):
             'memfree': mb_free,
             'whoami': self.login,
             'group': primary_group,
-            'df': dict(disk_free('/')._asdict()),
+            'df': dict(disk_free(cherrypy.config['misc.base_directory'])._asdict()),
             'groups': [i.gr_name for i in getgrall() if self.login in i.gr_mem or self.login == 'root'] + [primary_group],
             'pc_permissions': profile_editable,
             'pc_group': pc_group,
