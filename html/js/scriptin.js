@@ -27,6 +27,13 @@ function model_server(data) {
 	self.memory_pct = ko.computed(function() {
 		return parseInt((parseInt(self.memory) / parseInt(self.java_xmx)) * 100)
 	})
+
+	if (self.eula == null)
+		self.eula_ok = true;
+	else if (self.eula.toLowerCase() == 'false')
+		self.eula_ok = false;
+	else
+		self.eula_ok = true;
 }
 
 function model_property(server_name, option, value, section, new_prop) {

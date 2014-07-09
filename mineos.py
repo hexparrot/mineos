@@ -480,7 +480,8 @@ class mc(object):
 
         with open(os.path.join(self.env['cwd'], 'eula.txt'), 'w') as eula:
             eula.write('#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).')
-            eula.write('\neula=true\n')            
+            eula.write('\neula=true')
+            eula.write('\n')
 
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""

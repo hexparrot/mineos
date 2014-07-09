@@ -246,6 +246,10 @@
                             <button type="button" class="close" data-dismiss="alert">×</button>
                             Файл <strong>server.config</strong> не содержит корректного положительного значения максимального количества памяти java heapsize (java_xmx) для этого сервера.
                         </div>
+                        <div class="alert alert-error" data-bind="visible: server().eula_ok === false">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            Your current selected server requires acceptance of the <strong>Mojang EULA</strong> in order to start. Please review the <a href="https://account.mojang.com/documents/minecraft_eula">terms and conditions</a> within before clicking the 'Accept EULA' button.
+                        </div>
                     </div>
                 </div>
                 <!--/ END Bootstrap Navbar -->
@@ -416,7 +420,8 @@
          
                     <!-- START Row -->
                     <div class="row-fluid">
-                        <button data-required="server_name" data-cmd="start" data-bind="click: $root.command" type="button" class="btn btn-success span2" data-refresh="5000">Запустить</button> 
+                        <button data-required="server_name" data-cmd="start" data-bind="click: $root.command, visible: server().eula_ok" type="button" class="btn btn-success span2" data-refresh="5000">Запустить</button> 
+                        <button data-required="server_name" data-cmd="accept_eula" data-bind="click: $root.command, visible: !server().eula_ok" type="button" class="btn btn-info span2" data-refresh="1000">Accept EULA</button> 
                         <!-- Button Dropdown -->
                         <div class="btn-group">
                             <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Выключить <span class="caret"></span></button>

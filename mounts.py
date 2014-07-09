@@ -56,7 +56,8 @@ class ViewModel(object):
                 'ip_address': instance.ip_address,
                 'port': instance.port,
                 'memory': instance.memory,
-                'java_xmx': java_xmx
+                'java_xmx': java_xmx,
+                'eula': instance.eula
                 }
 
             try:
