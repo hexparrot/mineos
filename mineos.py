@@ -474,6 +474,14 @@ class mc(object):
         """Deletes server files from system"""
         self._command_direct(self.command_delete_server, self.env['pwd'])
 
+    @server_exists(True)
+    def accept_eula(self):
+        """Changes eula=False to eula=True in eula.txt, a 1.7.10 mojang additional measure"""
+
+        with open(os.path.join(self.env['cwd'], 'eula.txt'), 'w') as eula:
+            eula.write('#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).')
+            eula.write('\neula=true\n')            
+
     def remove_profile(self, profile):
         """Removes a profile found in profile.config at the base_directory root"""
         try:
@@ -979,6 +987,15 @@ class mc(object):
             '(%s) -' % self.server_milestone_short,
             self.server_milestone,
             ])
+            
+    @property
+    def eula(self):
+        """Returns state of eula.txt Eula property"""
+        try:
+            cf = config_file(os.path.join(self.env['cwd'], 'eula.txt'))
+            return cf['eula']
+        except (SyntaxError, KeyError):
+            return None
 
 # shell command constructor properties
 
