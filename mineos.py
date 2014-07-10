@@ -635,7 +635,7 @@ class mc(object):
                                 return xml.getElementsByTagName(tag)[0].firstChild.nodeValue
                             except (IndexError, KeyError, AttributeError):
                                 continue 
-        except IOError:
+        except (IOError, zipfile.BadZipfile):
             return ''
         else:
             import re
