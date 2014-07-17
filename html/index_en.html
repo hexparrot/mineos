@@ -1512,6 +1512,10 @@ Is the information correct? [Y/n]
             ko.applyBindings(vm);
         });
 
+        window.addEventListener('popstate', function(event) {
+            vm.restore_state(event.state);
+        })
+
     </script>
     <!--/ END JAVASCRIPT SECTION -->
 </body>

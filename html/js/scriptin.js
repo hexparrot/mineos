@@ -316,6 +316,30 @@ function webui() {
 
 	/* beginning root functions */
 
+	self.save_state = function() {
+		var state_to_save = {
+			page: self.page(),
+			server: JSON.stringify(self.server()),
+			profile: self.profile()
+		}
+		history.pushState(state_to_save, 'MineOS Web UI');
+	}
+
+	self.restore_state = function(state) {
+		var server = new model_server(JSON.parse(state.server));
+		$('.container-fluid').hide();
+
+		if ($.isEmptyObject(server)) {
+			self.server({})
+			$('#dashboard').show();
+		} else {
+			self.server(server);
+			self.page(state.page);
+			$('.container-fluid').hide();
+			$('#{0}'.format(self.page())).show();	
+		}
+	}
+
 	self.toggle_loadaverages = function() {
 		if (self.load_averages.autorefresh())
 			self.load_averages.autorefresh(false);
@@ -362,6 +386,7 @@ function webui() {
 
 		$('.container-fluid').hide();
 		$('#{0}'.format(self.page())).show();
+		self.save_state();
 	}
 
 	self.extract_required = function(required, element, vm) {
