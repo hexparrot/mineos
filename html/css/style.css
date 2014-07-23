@@ -3032,7 +3032,7 @@ ul.check li:last-child {
 }
 /* 1.6.2.3 Statistic Progress
 ----------------------------------------------------------------------------- */
-.stats.prog { padding: 5px 10px 0px; 10px; }
+.stats.prog { padding: 5px 10px 0px 10px; }
 .stats.prog [class^="icone-"], 
 .stats.prog [class*=" icone-"] {
 	font-size: 14px;
