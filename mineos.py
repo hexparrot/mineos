@@ -908,12 +908,13 @@ class mc(object):
         elif self.up:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(2.5)
                 s.connect((self.ip_address, self.port))
                 s.send(server_list_packet())
 
                 d = s.recv(1024)
                 s.shutdown(socket.SHUT_RDWR)
-            except socket.error:
+            except (socket.error, socket.timeout):
                 return error_ping
             finally:
                 s.close()
