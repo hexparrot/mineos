@@ -1762,7 +1762,7 @@ ul.check li:last-child {
 #sidebar #nav > ul {
 	display: block;
 	margin: 0;
-	*zoom: 1;
+	zoom: 1;
 }
 #sidebar #nav > ul > li {
 	display: block;
