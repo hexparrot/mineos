@@ -504,7 +504,7 @@ class Root(object):
             instance = mc(server_name, None, self.base_directory)
             instance.chown(self.login)
             instance.chgrp(getgrgid(getpwnam(self.login).pw_gid).gr_name)
-        except (RuntimeError, KeyError, OSError) as ex:
+        except (RuntimeError, KeyError, OSError, ValueError) as ex:
             response['result'] = 'error'
             retval = ex.message
         except CalledProcessError as ex:
