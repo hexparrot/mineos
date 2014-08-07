@@ -456,6 +456,8 @@ class mc(object):
 
             from shutil import rmtree
             rmtree(prefixed_dir)
+            
+        os.chmod(self.env['cwd'], 0775)
         
         self._load_config(generate_missing=True)
 
