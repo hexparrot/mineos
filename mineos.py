@@ -448,6 +448,7 @@ class mc(object):
                                'archive contains files with absolute path or ..')
         
         archive_.extractall(self.env['cwd'])
+        archive_.close()
 
         if not os.path.samefile(self.env['cwd'], os.path.join(self.env['cwd'], prefix_)):     
             prefixed_dir = os.path.join(self.env['cwd'], prefix_)
