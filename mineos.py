@@ -427,6 +427,7 @@ class mc(object):
         Might need additional review if run as root by server.py
         """
         import tarfile, zipfile
+        from shutil import rmtree
         
         filepath = os.path.join(path, filename)
 
@@ -454,12 +455,15 @@ class mc(object):
             from distutils.dir_util import copy_tree
             copy_tree(prefixed_dir, self.env['cwd'])
 
-            from shutil import rmtree
             rmtree(prefixed_dir)
             
         os.chmod(self.env['cwd'], 0775)
         
-        self._load_config(generate_missing=True)
+        try:
+            self._load_config(generate_missing=True)
+        except RuntimeError:
+            rmtree(self.env['cwd'])
+            raise
 
     @server_exists(True)
     def prune(self, step):
