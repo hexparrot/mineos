@@ -1024,7 +1024,9 @@ function seconds_to_time(seconds) {
 }
 
 function str_to_bytes(str) {
-	if (str.substr(-1) == 'G') 
+	if (str.substr(-1) == 'T') 
+		return parseFloat(str) * Math.pow(10,12);
+	else if (str.substr(-1) == 'G') 
 		return parseFloat(str) * Math.pow(10,9);
 	else if (str.substr(-1) == 'M') 
 		return parseFloat(str) * Math.pow(10,6);
