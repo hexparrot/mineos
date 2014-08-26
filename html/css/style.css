@@ -3354,6 +3354,8 @@ ul.check li:last-child {
 	.boxed-layout #sidebar,
 	.nav-open .boxed-layout #sidebar,
 	.boxed-layout #sidebar:before { left: 0; }
+	#sidebar #nav > ul > li > a > .text,
+        #sidebar #nav > ul > li > a > .icon { margin-top: 5px; margin-bottom: 5px; }
 
 	/* Main Content
 	------------------------------------------------------------------------- */
