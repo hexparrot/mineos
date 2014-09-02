@@ -86,7 +86,7 @@
                                 </li>
                             </ul>
                             <footer>
-                                <a href="/auth/logout" class="text"><span class="icon icone-off"></span> Sign Off</a>
+                                <a href="/auth/logout" class="text"><span class="icon icone-off"></span> Déconnexion</a>
                             </footer>
                         </div>
                         <!--/ END Dropdown Menu -->
@@ -109,14 +109,14 @@
                             <nav id="nav" class="accordion">
                                 <ul id="navigation">
                                     <!-- START Menu Divider -->
-                                    <li class="divider">Host Settings</li>
+                                    <li class="divider">Paramètres de l'hôte</li>
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'dashboard'}">
                                         <a data-bind="click: show_page" data-page="dashboard">
                                             <span class="icon icone-dashboard"></span>
-                                            <span class="text">Dashboard</span>
+                                            <span class="text">Tableau de bord</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -126,7 +126,7 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'profiles' || page() == 'define_profile'}">
                                         <a data-bind="click: show_page" data-page="profiles">
                                             <span class="icon icone-tags"></span>
-                                            <span class="text">Manage Profiles</span>
+                                            <span class="text">Gérer les profiles</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -136,7 +136,7 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'create_server'}">
                                         <a data-bind="click: show_page" data-page="create_server">
                                             <span class="icon icone-share"></span>
-                                            <span class="text">Create New Server</span>
+                                            <span class="text">Créer un serveur</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -146,21 +146,21 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
                                         <a data-bind="click: show_page" data-page="importable">
                                             <span class="icon icone-share"></span>
-                                            <span class="text">Create Server from Archive</span>
+                                            <span class="text">Créer un serveur via une archive</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
 
                                     <!-- START Menu Divider -->
-                                    <li class="divider">Server Settings</li>
+                                    <li class="divider">Paramètres du serveur</li>
                                     <!--/ END Menu Divider -->
 
                                     <!-- START Menu -->
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'server_status'}">
                                         <a data-bind="click: show_page" data-page="server_status">
                                             <span class="icon icone-globe"></span>
-                                            <span class="text">Server Status</span>
+                                            <span class="text">État du serveur</span>
                                             <span class="label label-inverse" data-bind="text: server().capacity"></span>
                                         </a>
                                     </li>
@@ -170,7 +170,7 @@
                                     <li class="accordion-group" data-bind="visible: server().server_name, css: {'active': page() == 'backup_list'}">
                                         <a data-bind="click: show_page" data-page="backup_list">
                                             <span class="icon icone-hdd"></span>
-                                            <span class="text">Restore Points</span>
+                                            <span class="text">Points de restauration</span>
                                         </a>
                                     </li>
                                     <!--/ END Menu -->
@@ -229,26 +229,26 @@
                     <div class="navbar-inner">
                         <!-- Breadcrumb -->
                         <ul class="breadcrumb">
-                            <li data-bind="if: server().server_name">Currently Selected Server: <strong><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a></strong>
+                            <li data-bind="if: server().server_name">Serveur sélectionné: <strong><a data-page="server_status" data-bind="text: server().server_name, click: show_page"></a></strong>
                         </ul>
                         <!--/ Breadcrumb -->
                     </div>
                     <div class="navbar-outer">
                         <div class="alert alert-success" data-bind="visible: dashboard.whoami() == 'root'">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            <strong>You are currently logged in as root.</strong> You may manage all servers as <strong>root</strong>, but creating new ones must be done as an unprivileged user.
+                            <strong>Vous êtes actuellement connecté en tant que root.</strong> Vous pouvez gérer tous les serveurs en tant que <strong>root</strong>, mais en créer de nouveaux doit être fait en tant qu'utilisateur non privilégié.
                         </div>
                         <div class="alert" data-bind="visible: !dashboard.pc_permissions() && (page() == 'profiles' || page() == 'define_profile')">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            You do not have rights on <strong>/profiles/profile.config</strong>, so you may prototype a profile but not update it.
+                            Vous n'avez pas les droits sur <strong>/profiles/profile.config</strong>, donc vous pouvez prototyper un profil mais pas le mettre à jour.
                         </div>
                         <div class="alert alert-error" data-bind="visible: !parseInt(vm.server().java_xmx) > 0 && !$.isEmptyObject(vm.server())">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            The <strong>server.config</strong> for this server does not contain a valid, positive integer for the maximum java heapsize (java_xmx).
+                            Le <strong>server.config</strong> pour ce serveur ne contient pas un nombre entier positif valide pour le heapsize java maximum (java_xmx).
                         </div>
                         <div class="alert alert-error" data-bind="visible: server().eula_ok === false">
                             <button type="button" class="close" data-dismiss="alert">×</button>
-                            Your current selected server requires acceptance of the <strong>Mojang EULA</strong> in order to start. Please review the <a href="https://account.mojang.com/documents/minecraft_eula">terms and conditions</a> within before clicking the 'Accept EULA' button.
+                            Votre serveur actuellement sélectionné nécessite l'acceptation de la <strong>Mojang EULA</strong> afin de démarrer. Merci d'examiner les <a href="https://account.mojang.com/documents/minecraft_eula">termes et conditions</a> avant de cliquer sur le bouton «Accepter l'EULA».
                         </div>
                     </div>
                 </div>
