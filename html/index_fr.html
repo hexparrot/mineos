@@ -531,9 +531,9 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <div class="control-group">
-                            <label class="control-label">Remove restore points older than:</label>
+                            <label class="control-label">Retirer les points de restauration âgés de plus de:</label>
                             <div class="controls">
-                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date or step"> <button data-bind="click: prune_increments, visible: pruning.increments.remove_count() > 0" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Restore Points</button>
+                                <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Choisissez une date ou étape"> <button data-bind="click: prune_increments, visible: pruning.increments.remove_count() > 0" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Nettoyer les points de restauration</button>
                             </div>
                         </div>
 
@@ -544,14 +544,14 @@
                     <div class="row-fluid" data-bind="if: pruning.increments.user_input().length > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
-                            <header><h4 class="title">Removal Summary</h4></header>
+                            <header><h4 class="title">Résumé des suppressions</h4></header>
                             <section class="body">
                                 <div class="body-inner" style="">
                                     <!-- START Summary 1 -->
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle lime"><span class="icone-folder-close"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: pruning.increments.remove_count"></span><small>Restore Points</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.remove_count"></span><small>Points de restauration</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 1 -->
 
@@ -559,7 +559,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: pruning.increments.space_reclaimed"></span><small>MB Reclaimed</small></h3>
+                                            <h3><span data-bind="text: pruning.increments.space_reclaimed"></span><small>Mo récupérés</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
                                 </div>
@@ -574,10 +574,10 @@
                         <table class="table table-hover" data-bind="">
                           <thead>
                             <tr>
-                              <th scope="col">Step</th>
-                              <th scope="col">Timestamp</th>
-                              <th scope="col">Increment Size</th>
-                              <th scope="col">Cumulative Size</th>
+                              <th scope="col">Étape</th>
+                              <th scope="col">Date</th>
+                              <th scope="col">Taille de l'étape</th>
+                              <th scope="col">Taille cumulée</th>
                               <th scope="col"></th>
                             </tr>
                           </thead>
@@ -589,7 +589,7 @@
                               <td data-bind="text: $data.timestamp"></td>
                               <td data-bind="text: $data.increment_size"></td>
                               <td data-bind="text: $data.cumulative_size"></td>
-                              <td><button data-required="server_name,step,force" data-cmd="restore" data-bind="click: $root.command" class="btn btn-success btn-mini">Restore</button></td>
+                              <td><button data-required="server_name,step,force" data-cmd="restore" data-bind="click: $root.command" class="btn btn-success btn-mini">Restaurer</button></td>
                             </tr>
                           </tbody>
                         </table>
@@ -604,9 +604,9 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <div class="control-group">
-                            <label class="control-label">Remove archives older than:</label>
+                            <label class="control-label">Retirer les archives âgés de plus de:</label>
                             <div class="controls">
-                                <input type="text" id="prune_archive_input" data-bind="value: pruning.archives.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Pick a date"> <button data-bind="visible: pruning.archives.remove_count, click: prune_archives" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Prune Archives</button>
+                                <input type="text" id="prune_archive_input" data-bind="value: pruning.archives.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Choisissez une date"> <button data-bind="visible: pruning.archives.remove_count, click: prune_archives" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Nettoyer les archives</button>
                             </div>
                         </div>
                     </div>
@@ -616,7 +616,7 @@
                     <div class="row-fluid" data-bind="if: pruning.archives.remove_count() > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
-                            <header><h4 class="title">Removal Summary</h4></header>
+                            <header><h4 class="title">Résumé des suppressions</h4></header>
                             <section class="body">
                                 <div class="body-inner" style="">
                                     <!-- START Summary 1 -->
@@ -631,7 +631,7 @@
                                     <figure class="stats summary shadowed">
                                         <div class="icon circle purple"><span class="icone-shopping-cart"></span></div>
                                         <figcaption>
-                                            <h3><span data-bind="text: pruning.archives.space_reclaimed"></span><small>MB Reclaimed</small></h3>
+                                            <h3><span data-bind="text: pruning.archives.space_reclaimed"></span><small>Mo récupérés</small></h3>
                                         </figcaption>
                                     </figure><!--/ END Summary 2 -->
                                 </div>
@@ -646,9 +646,9 @@
                         <table class="table table-hover" data-bind="">
                           <thead>
                             <tr>
-                              <th scope="col">Timestamp</th>
-                              <th scope="col">Increment Size</th>
-                              <th scope="col">Filename</th>
+                              <th scope="col">Date</th>
+                              <th scope="col">Taille</th>
+                              <th scope="col">Nom du fichier</th>
                               <th scope="col"></th>
                             </tr>
                           </thead>
@@ -663,9 +663,9 @@
                                 <div class="btn-group">
                                     <button class="btn dropdown-toggle" data-toggle="dropdown">Actions <span class="caret"></span></button>
                                     <ul class="dropdown-menu">
-                                        <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From</a></li>
+                                        <li><a data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Créer un serveur</a></li>
                                         <li>&nbsp;</li>
-                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Delete</a></li>
+                                        <li><a data-required="server_name,filename" data-cmd="prune_archives" data-bind="click: $root.command">Supprimer</a></li>
                                     </ul>
                                 </div>
                               </td>
@@ -684,12 +684,12 @@
                         <!-- START General Elements -->
                         <div class="" data-bind="">
                             <header>
-                                <h4 class="title">Create Server from an Archive</h4>
+                                <h4 class="title">Créer un serveur à partir d'une archive</h4>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <p>Creating and running a server should be done strictly as an unprivileged user to contain potential damage from server exploits, faulty plugins or java secuirty issues.</p>
-                                    <p>You can create a user from the command line using <strong>adduser</strong></p>
+                                    <p>La création et l'éxécution d'un serveur doit être effectué strictement par un utilisateur <strong>non privilégié</strong> pour éviter des dommages potentiels, des plugins défectueux ou les problèmes de sécurité de Java.</p>
+                                    <p>Vous pouvez créer un utilisateur à partir de la console avec la commande <strong>adduser</strong></p>
                                 </div>
                             </section>
                         </div>
@@ -699,7 +699,7 @@
                             <section class="body">
                                 <div class="body-inner">
                                     <pre class="bash">
-root@core ~# adduser will
+root@core ~# adduser will (remplacez "will" par le nom de votre choix)
 Adding user `will' ...
 Adding new group `will' (1001) ...
 Adding new user `will' (1000) with group `will' ...
@@ -727,17 +727,17 @@ Is the information correct? [Y/n]
                     <!-- START Row -->
                     <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
                         <header>
-                            <h4 class="title">Create Server from an Archive</h4>
+                            <h4 class="title">Créer un serveur à partir d'une archive</h4>
                         </header>
                         <section class="body">
                             <div class="body-inner">
-                                <p>The files listed below are those located in the <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Acceptable archives are .tar, .tar.gz, .tgz, and .zip"><span data-bind="text: $root.dashboard.base_directory"></span>/import</strong> directory of your Minecraft data files.</p>
+                                <p>Les fichiers ci-dessous sont ceux situés dans le répertoire <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Les archives acceptables sont : .tar, .tar.gz, .tgz, et .zip"><span data-bind="text: $root.dashboard.base_directory"></span></p>
                             </div>
                         </section>
                         <table id="table_importable" class="table table-hover" data-bind="">
                           <thead>
                             <tr>
-                              <th scope="col">Filename</th>
+                              <th scope="col">Nom du fichier</th>
                               <th scope="col"></th>
                             </tr>
                           </thead>
@@ -747,7 +747,7 @@ Is the information correct? [Y/n]
                             <tr>
                               <td data-bind="text: filename"></td>
                               <td>
-                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Create Server From </button>
+                                <button class="btn btn-success btn-mini" data-bind="click: $root.remember_import" data-toggle="modal" data-target="#import_server_modal">Créer un seveur à partir de </button>
                               </td>
                             </tr>
                           </tbody>
@@ -764,7 +764,7 @@ Is the information correct? [Y/n]
                         <!-- START Page/Section header -->
                         <div class="span12">
                             <div class="page-header line1">
-                                <h4>Server Profiles</h4>
+                                <h4>Profils des serveurs</h4>
                             </div>
                         </div>
                         <!--/ END Page/Section header -->
@@ -776,8 +776,8 @@ Is the information correct? [Y/n]
                         <table id="table_profiles_view" class="table table-hover">
                           <thead>
                             <tr>
-                              <th scope="col">Profile</th>
-                              <th scope="col">Runnable Jar</th>
+                              <th scope="col">Profil</th>
+                              <th scope="col">Jar éxécutable</th>
                               <th scope="col">URL</th>
                               <th scope="col">OK</th>
                               <th scope="col"></th>
