@@ -52,6 +52,7 @@ function model_property(server_name, option, value, section, new_prop) {
 				{section: 'java', option: 'java_debug', type: 'truefalse'},
 				{section: 'onreboot', option: 'restore', type: 'truefalse'},
 				{section: 'onreboot', option: 'start', type: 'truefalse'},
+				{section: 'onstop', option: 'backup', type: 'truefalse'},
 				{section: 'crontabs', option: 'archive_interval', type: 'interval'},
 				{section: 'crontabs', option: 'backup_interval', type: 'interval'},
 				{section: 'crontabs', option: 'restart_interval', type: 'interval'}

@@ -129,7 +129,8 @@ if __name__=="__main__":
                         srv_ = i.server_name
                         owner = path_owner(os.path.join(i.base_dir, mc.DEFAULT_PATHS['servers'], srv_))
                         print "sending '%s' to %s..." % (args.cmd, srv_),
-                        instance = mc(srv_, owner, i.base_dir)._command_stuff(args.cmd)
+                        instance = mc(srv_, owner, i.base_dir).stop()
+                        #instance = mc(srv_, owner, i.base_dir)._command_stuff(args.cmd)
                         print ' done'
                     except Exception as ex:
                         print ex.message               
