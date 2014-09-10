@@ -964,7 +964,7 @@ class mc(object):
         jar_file = self.valid_filename(self.profile_config[self.profile:'run_as'])
         jar_path = os.path.join(self.env['cwd'], jar_file)
         return self.server_version(jar_path,
-                                   self.profile_config[self.profile:'url']) or 'unknown'
+                                   self.profile_config[self.profile:'url':'']) or 'unknown'
 
     @property
     def server_milestone_long(self):
