@@ -368,6 +368,23 @@ class mc(object):
 
     @server_exists(True)
     @server_up(True)
+    def stop_and_backup(self):
+        """Stop a server, then initiate a backup"""
+        from time import sleep
+
+        last_mirror = self.list_increments().current_mirror
+
+        self._command_stuff('stop')
+        while self.up:
+            sleep(1)
+
+        self._command_direct(self.command_backup, self.env['cwd'])
+
+        while last_mirror == self.list_increments().current_mirror:
+            sleep(1)
+
+    @server_exists(True)
+    @server_up(True)
     def stop(self):
         """Stop a server"""
         if self.server_type == 'bungee':
