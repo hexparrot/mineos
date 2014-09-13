@@ -1343,7 +1343,7 @@ Is the information correct? [Y/n]
                         <!-- START Line Chart - Filled -->
                         <div class="span12 widget">
                             <header>
-                                <h4 class="title">Server Logs</h4>
+                                <h4 class="title">Logs du serveur</h4>
                             </header>
                         </div>
                         <!--/ END Line Chart - Filled -->
@@ -1355,7 +1355,7 @@ Is the information correct? [Y/n]
                         <!-- START Line Chart - Filled -->
                         <div class="span12">
                             <form data-bind="submit: console_command">
-                                <input type="text" name="console_command" class="span12" placeholder="send command to console">
+                                <input type="text" name="console_command" class="span12" placeholder="envoyer une commande à la console">
                             </form>
                         </div>
                         <!--/ END Line Chart - Filled -->
@@ -1371,9 +1371,9 @@ Is the information correct? [Y/n]
                                     <table class="table table-bordered table-striped table-hover" id="logs">
                                         <thead>
                                             <tr>
-                                                <th>Entry
+                                                <th>Entrées
                                                     <div class="btn-group pull-right">
-                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">Reverse Order</a>
+                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">Ordre inversé</a>
                                                         <!--<a href="#" class="btn btn-small" data-bind="click: reset_logs">Show most recent 100 lines</a>-->
                                                     </div>
                                                 </th>
@@ -1406,29 +1406,29 @@ Is the information correct? [Y/n]
 
                 <div id="import_server_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
                     <div class="modal-header">
-                        <h4 id="myModalLabel">Create a new server from an existing archive</h4>
+                        <h4 id="myModalLabel">Créer un serveur à partir d'une archive existante</h4>
                     </div>
                     <div class="modal-body" data-bind="if: $root.import_information()">
-                        <p><strong data-bind="text: $root.import_information().filename"></strong> will be extracted.</p>
-                        <p>Please enter the name of the new server to create:</p>
+                        <p><strong data-bind="text: $root.import_information().filename"></strong> sera extrait.</p>
+                        <p>Merci d'entrer le nom du serveur pour à créer :</p>
                         <input type="text" name="newname" class="input-medium required" placeholder="server_name">
                     </div>
                     <div class="modal-footer">
-                        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
-                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Create new Server</button>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Annuler</button>
+                        <button data-bind="click: $root.import_server" data-dismiss="modal" class="btn btn-success">Créer le serveur</button>
                     </div>
                 </div>
 
                 <div id="remove_profile_modal" class="modal hide fade" style="display: none;" aria-hidden="true">
                     <div class="modal-header">
-                        <h4>Remove <span data-bind="text: pruning.profiles.profile"></span> from available profiles?</h4>
+                        <h4>Retirer <span data-bind="text: pruning.profiles.profile"></span> des profils disponibles ?</h4>
                     </div>
                     <div class="modal-body">
-                        <p>All downloaded files for this profile will be deleted.</p>
+                        <p>Tous les fichiers téléchargés pour ce profil seront supprimés.</p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn" data-dismiss="modal" aria-hidden="true">Keep this Profile</button>
-                        <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Remove Profile</button>
+                        <button class="btn" data-dismiss="modal" aria-hidden="true">Garger ce profil</button>
+                        <button data-bind="click: $root.prune_profile" data-dismiss="modal" class="btn btn-danger">Retirer le profil</button>
                     </div>
                 </div>
 
@@ -1437,9 +1437,9 @@ Is the information correct? [Y/n]
 
             <!-- START Template Footer -->
             <footer id="footer" class="">
-                <div><span><a href="http://minecraft.codeemo.com">MineOS</a> created and maintained by <a href="mailto:wdchromium@gmail.com">William Dizon</a></span> 
-                - <span>Released via <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3.0</a></span> - 
-                    <span>MineOS is free; show your support through Paypal!
+                <div><span><a href="http://minecraft.codeemo.com">MineOS</a> créé et maintenu par <a href="mailto:wdchromium@gmail.com">William Dizon</a></span> 
+                - <span>Publié sous <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3.0</a></span> - 
+                    <span>MineOS est totalement gratuit; montrez votre soutien via Paypal!
                         <form id="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post">
                           <input type="hidden" name="cmd" value="_s-xclick">
                           <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
