@@ -336,12 +336,12 @@
                         <table id="table_status" class="table table-hover">
                           <thead>
                             <tr>
-                              <th scope="col">Name</th>
-                              <th scope="col">Profile</th>
+                              <th scope="col">Nom</th>
+                              <th scope="col">Profil</th>
                               <th scope="col">Port</th>
-                              <th scope="col">Status</th>
-                              <th scope="col">Online</th>
-                              <th scope="col">Memory</th>
+                              <th scope="col">Statut</th>
+                              <th scope="col">En ligne</th>
+                              <th scope="col">RAM</th>
                             </tr>
                           </thead>
                           <tbody data-bind="foreach: vmdata.pings">
@@ -792,17 +792,17 @@ Is the information correct? [Y/n]
                                 <td data-bind="text: url"></td>
                                 <td data-bind=""><span class="icon" data-bind="css: {'icon-ok': run_as_md5, 'icon-remove': !run_as_md5}"></span></td>
                                 <td>
-                                	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Update </button>
-                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Remove </button>
+                                	<button class="btn btn-success btn-mini" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Mettre à jour </button>
+                                    <button class="btn btn-warning btn-mini" data-bind="click: $root.remember_profile" data-toggle="modal" data-target="#remove_profile_modal">Retirer </button>
                                 </td>
                             </tr>
                           </tbody>
                           <tfoot>
                             <tr>
                               <td colspan="6">
-                                <button class="btn" data-toggle="dropdown" data-bind="click: show_page" data-page="define_profile">Create Custom Profile</button>
+                                <button class="btn" data-toggle="dropdown" data-bind="click: show_page" data-page="define_profile">Créer un profil personnalisé</button>
                               	<div class="btn-group">
-                                    <button class="btn dropdown-toggle" data-toggle="dropdown">Create Stock Profile <span class="caret"></span></button>
+                                    <button class="btn dropdown-toggle" data-toggle="dropdown">Créer un profil en stock <span class="caret"></span></button>
                                     <ul class="dropdown-menu" data-bind="foreach: $root.dashboard.stock_profiles">
                                         <li><a data-required="profile" data-cmd="stock_profile" data-bind="click: $root.command, attr: {'data-profile': $data}, text: $data"></a></li>
                                     </ul>
@@ -818,10 +818,10 @@ Is the information correct? [Y/n]
                     <div class="row-fluid">
                         <section class="body">
                             <div class="body-inner">
-                                <p>Server profiles may be prototyped by any user, but may only be updated by a user with write permissions on <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="chmod g+w profile.config">profile.config</strong>.
-                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">The <strong>root</strong> user may extend these privileges to additional users by assigning <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> to a new group and then adding authorized users to this group.</span>
-                                <span data-bind="visible: $root.dashboard.whoami() == 'root'">You may share this privilege with additional users by assigning <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> to a new group and then adding authorized users to this group.</span></p>
-                                Members of this group may update and remove profiles: 
+                                <p>Les profils peuvent être créés par n'importe quel utilisateur, mais ne peuvent être mis à jour uniquement par un utilisateur possédant les droits d'écriture sur <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="chmod g+w profile.config">profile.config</strong>.
+                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">L'utilisateur <strong>root</strong> peut étendre ces privilèges à d'autres utilisateurs en attribuant <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> à un nouveau groupe, puis en ajoutant des utilisateurs autorisés à ce groupe.</span>
+                                <span data-bind="visible: $root.dashboard.whoami() == 'root'">Vous pouvez partager ce privilège avec d'autres utilisateurs en attribuant <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> à un nouveau groupe, puis en ajoutant des utilisateurs autorisés à ce groupe.</span></p>
+                                Les membres de ce groupe peuvent mettre à jour et supprimer des profils: 
                                 <select id="pc_group" name="pc_group" data-bind="visible: $root.dashboard.whoami() == 'root', options: $root.dashboard.groups, event: { change: $root.change_pc_group }"></select>
                                 <strong data-bind="visible: $root.dashboard.whoami() != 'root', text: $root.dashboard.pc_group"></strong>
                             </div>
@@ -838,7 +838,7 @@ Is the information correct? [Y/n]
                         <!-- START Line Chart - Filled -->
                         <div class="span12 widget" data-bind="with: profile()">
                             <header>
-                                <h4 class="title">Profile Definition</h4>
+                                <h4 class="title">Définition du profil</h4>
                                 <!-- START Toolbar -->
                                 <!--/ END Toolbar -->
                             </header>
@@ -849,7 +849,7 @@ Is the information correct? [Y/n]
                                         <figure class="stats summary pull-left">
                                             <div data-bind="css: {'green': run_as_md5, 'red': !run_as_md5}" class="icon circle"><span data-bind="css: {'icone-ok': run_as_md5, 'icone-off': !run_as_md5}"></span></div>
                                             <figcaption>
-                                                <h3><span data-bind="text: run_as"></span><small><a class="pointer" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command">Download Now</a></small></h3>
+                                                <h3><span data-bind="text: run_as"></span><small><a class="pointer" data-required="profile" data-refresh="500" data-cmd="update_profile" data-bind="click: $root.command"Télécharger maintenant</a></small></h3>
                                             </figcaption>
                                         </figure>
                                         <!--/ END Summary -->
@@ -868,7 +868,7 @@ Is the information correct? [Y/n]
                                         <figure class="stats summary">
                                             <div class="icon circle teal"><span class="icone-trophy"></span></div>
                                             <figcaption>
-                                                <h3><span data-bind="text: version"></span><small>Detected Version</small></h3>
+                                                <h3><span data-bind="text: version"></span><small>Version détectée</small></h3>
                                             </figcaption>
                                         </figure>
                                         <!-- /ko -->
@@ -886,7 +886,7 @@ Is the information correct? [Y/n]
                         <!-- START General Elements -->
                         <div class="span12 widget dark" data-bind="with: profile()">
                             <header>
-                                <h4 class="title"><span class="icon icone-keyboard"></span> Profile Notes</h4>
+                                <h4 class="title"><span class="icon icone-keyboard"></span> Notes du profil</h4>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
@@ -912,12 +912,12 @@ Is the information correct? [Y/n]
                         <!-- START General Elements -->
                         <div class="" data-bind="">
                             <header>
-                                <h4 class="title">Create a Server</h4>
+                                <h4 class="title">Créer un serveur</h4>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
-                                    <p>Creating and running a server should be done strictly as an unprivileged user to contain potential damage from server exploits, faulty plugins or java secuirty issues.</p>
-                                    <p>You can create a user from the command line using <strong>adduser</strong></p>
+                                    <p>La création et l'éxécution d'un serveur doit être strictement effectué par un utilisateur <strong>non privilégié</strong> pour éviter des dommages potentiels, des plugins défectueux ou les problèmes de sécurité de Java.</p>
+                                    <p>Vous pouvez créer un utilisateur à partir de la console avec la commande <strong>adduser</strong></p>
                                 </div>
                             </section>
                         </div>
@@ -927,7 +927,7 @@ Is the information correct? [Y/n]
                             <section class="body">
                                 <div class="body-inner">
                                     <pre class="bash">
-root@core ~# adduser will
+root@core ~# adduser will (remplacez "will" par le nom de votre choix)
 Adding user `will' ...
 Adding new group `will' (1001) ...
 Adding new user `will' (1000) with group `will' ...
@@ -956,7 +956,7 @@ Is the information correct? [Y/n]
                     <div class="row-fluid" data-bind="visible: dashboard.whoami() != 'root'">
                         <!-- START Form Wizard With Validation -->
                         <form data-bind="submit: create_server" class="span12 widget dark shadowed form-horizontal bordered" id="createnewserver">
-                            <header><h4 class="title">Create a New Server</h4></header>
+                            <header><h4 class="title">Créer un serveur</h4></header>
                             <section class="body">
                                 <div class="body-inner">
                                     <fieldset class="step" id="step1">
@@ -964,20 +964,20 @@ Is the information correct? [Y/n]
                                             <span class="icon icone-lock lime"></span>
                                             <h5>
                                                 STEP 1<br/>
-                                                <small>Ownership Information</small>
+                                                <small>Informations sur le propriétaire</small>
                                             </h5>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Server Name:</label>
+                                            <label class="control-label">Nom du serveur:</label>
                                             <div class="controls">
                                                 <input type="text" name="server_name" class="input-medium required" required>
                                             </div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Group Ownership:</label>
+                                            <label class="control-label">Groupe propriétaire:</label>
                                             <div class="controls">
                                                 <select name="group" data-bind="options: $root.dashboard.groups"></select>
-                                                <span class="help-block">Other members of this group will have full control of the server</span>
+                                                <span class="help-block">Les autres membres de ce groupe détiendront le contrôle intégral du serveur</span>
                                             </div>
                                         </div>
                                     </fieldset>
@@ -997,7 +997,7 @@ Is the information correct? [Y/n]
                                             <label class="control-label">server-ip</label>
                                             <div class="controls">
                                                 <input type="text" name="server-ip" class="input-medium" placeholder="0.0.0.0">
-                                                <span class="help-block">The default "0.0.0.0" means the server will listen on all available network interfaces</span>
+                                                <span class="help-block">Par défaut "0.0.0.0" signifie que le serveur est visible sur toutes les interfaces réseau disponibles</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
@@ -1012,7 +1012,7 @@ Is the information correct? [Y/n]
                                             <label class="control-label">level-seed</label>
                                             <div class="controls">
                                                 <input type="text" name="level-seed" class="input-medium" placeholder="">
-                                                <span class="help-block">level-seed must be entered before the server is started for the first time</span>
+                                                <span class="help-block">level-seed doit être saisi avant de démarrer le serveur pour la première fois</span>
                                             </div>
                                         </div>
                                         
@@ -1020,14 +1020,14 @@ Is the information correct? [Y/n]
                                             <label class="control-label">difficulty</label>
                                             <div class="controls">
                                             <select class="input-medium" name="difficulty" data-bind="">
-                                                <option value="0">Peaceful</option><option value="1">Easy</option><option value="2">Normal</option><option value="3">Hard</option>
+                                                <option value="0">Paisible (0)</option><option value="1">Facile (1)</option><option value="2">Normal (2)</option><option value="3">Difficile (3)</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">gamemode</label>
                                             <div class="controls">
                                             <select class="input-medium" name="gamemode" data-bind="">
-                                                <option value="0">Survival</option><option value="1">Creative</option><option value="2">Adventure</option>
+                                                <option value="0">Survie (0)</option><option value="1">Créatif (1)</option><option value="2">Aventure (2)</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
@@ -1038,7 +1038,7 @@ Is the information correct? [Y/n]
                                             </select></div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Generate Structures</label>
+                                            <label class="control-label">Générer des structures</label>
                                             <div class="controls">
                                                 <label class="checkbox">
                                                     <input type="checkbox" name="generate-structures" value="true" checked>
@@ -1056,7 +1056,7 @@ Is the information correct? [Y/n]
                                             </h5>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">profile</label>
+                                            <label class="control-label">Profil</label>
                                             <div class="controls">
                                                 <select class="input-medium" data-section="minecraft" name="profile" data-bind="foreach: vmdata.profiles" required>
                                                     <option data-bind="text: profile, attr: {value: profile}"></option>
@@ -1085,35 +1085,35 @@ Is the information correct? [Y/n]
                                             </div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Archive Interval</label>
+                                            <label class="control-label">Interval d'archive</label>
                                             <div class="controls">
                                             <select class="input-medium" data-section="crontabs" name="archive_interval" data-bind="">
-                                                <option value="">Skip</option>
-                                                <option value="30">Every 30 minutes</option>
-                                                <option value="60">1 Hour</option>
-                                                <option value="120">2 Hours</option>
-                                                <option value="180">3 Hours</option>
-                                                <option value="360">6 Hours</option>
-                                                <option value="720">12 Hours</option>
-                                                <option value="0">24 Hours</option>
+                                                <option value="">Passer</option>
+                                                <option value="30">Toutes les 30 minutes</option>
+                                                <option value="60">1 heure</option>
+                                                <option value="120">2 heures</option>
+                                                <option value="180">3 heures</option>
+                                                <option value="360">6 heures</option>
+                                                <option value="720">12 heures</option>
+                                                <option value="0">24 heures</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Backup Interval</label>
+                                            <label class="control-label">Interval de sauvegarde</label>
                                             <div class="controls">
                                             <select class="input-medium" data-section="crontabs" name="backup_interval" data-bind="">
-                                                <option value="">Skip</option>
-                                                <option value="30">Every 30 minutes</option>
-                                                <option value="60">1 Hour</option>
-                                                <option value="120">2 Hours</option>
-                                                <option value="180">3 Hours</option>
-                                                <option value="360">6 Hours</option>
-                                                <option value="720">12 Hours</option>
-                                                <option value="0">24 Hours</option>
+                                                <option value="">Passer</option>
+                                                <option value="30">Toutes les 30 minutes</option>
+                                                <option value="60">1 heure</option>
+                                                <option value="120">2 heures</option>
+                                                <option value="180">3 heures</option>
+                                                <option value="360">6 heures</option>
+                                                <option value="720">12 heures</option>
+                                                <option value="0">24 heures</option>
                                             </select></div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Start Server on Boot</label>
+                                            <label class="control-label">Démarer le serveur au démarage</label>
                                             <div class="controls">
                                                 <label class="checkbox">
                                                     <input data-section="onreboot" type="checkbox" name="start" value="true">
@@ -1154,12 +1154,12 @@ Is the information correct? [Y/n]
                           <thead>
                             <tr>
                               <th scope="col" class="span4">Option</th>
-                              <th scope="col">Value</th>
+                              <th scope="col">Valeur</th>
                             </tr>
                           </thead>
                           <tfoot>
                             <tr>
-                            	<td><button class="btn btn-primary" data-config="sp" data-bind="click: new_property"><span class="icone-edit"></span> New Property</button></td>
+                            	<td><button class="btn btn-primary" data-config="sp" data-bind="click: new_property"><span class="icone-edit"></span> Ajouter une option</button></td>
                             </tr>
                           </tfoot>
                           <tbody data-bind="foreach: vmdata.sp">
@@ -1208,12 +1208,12 @@ Is the information correct? [Y/n]
                             <tr>
                               <th scope="col" class="span3">Section</th>
                               <th scope="col" class="span4">Option</th>
-                              <th scope="col">Value</th>
+                              <th scope="col">Valeur</th>
                             </tr>
                           </thead>
                           <tfoot>
                             <tr>
-                            	<td><button class="btn btn-primary" data-config="sc" data-bind="click: new_property"><span class="icone-edit"></span> New Property</button></td>
+                            	<td><button class="btn btn-primary" data-config="sc" data-bind="click: new_property"><span class="icone-edit"></span> Ajouter une option</button></td>
                             </tr>
                           </tfoot>
                           <tbody data-bind="foreach: vmdata.sc">
@@ -1233,15 +1233,15 @@ Is the information correct? [Y/n]
                                         </span>
                                         <span data-bind="if: $data.type == 'interval'">
                                             <select class="input-medium" data-bind="attr: {id: $data.id}, event: { change: $data.change_select }">
-                                                <option value="">Skip</option>
-                                                <option value="30">Every 30 minutes</option>
-                                                <option value="60">1 Hour</option>
-                                                <option value="120">2 Hours</option>
-                                                <option value="180">3 Hours</option>
-                                                <option value="240">4 Hours</option>
-                                                <option value="360">6 Hours</option>
-                                                <option value="720">12 Hours</option>
-                                                <option value="0">24 Hours</option>
+                                                <option value="">Passer</option>
+                                                <option value="30">Toues les 30 minutes</option>
+                                                <option value="60">1 heure</option>
+                                                <option value="120">2 heures</option>
+                                                <option value="180">3 heures</option>
+                                                <option value="240">4 heures</option>
+                                                <option value="360">6 heures</option>
+                                                <option value="720">12 heures</option>
+                                                <option value="0">24 heures</option>
                                             </select>
                                         </span>
                                     </div>
@@ -1261,52 +1261,52 @@ Is the information correct? [Y/n]
                     <div class="row-fluid">
                         <!-- START Form Wizard With Validation -->
                         <form data-bind="submit: define_profile" class="span12 widget dark shadowed form-horizontal bordered" id="definenewprofile">
-                            <header><h4 class="title">Create a New Server Profile</h4></header>
+                            <header><h4 class="title">Créer un profil</h4></header>
                             <section class="body">
                                 <div class="body-inner">
 
                                     <fieldset id="step1" class="step">
                                         <div class="control-group">
-                                            <label class="control-label">profile name</label>
+                                            <label class="control-label">Nom du profil</label>
                                             <div class="controls">
                                                 <input type="text" name="name" class="input-medium required" placeholder="vanilla162">
                                             </div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">type</label>
+                                            <label class="control-label">Type</label>
                                             <div class="controls">
                                                 <select class="input-xlarge" name="type" data-bind="value: profile_type">
-                                                    <option value="standard_jar">Standalone, runnable JAR</option>
-                                                    <option value="archived_jar">Archive containing runnable JAR</option>
-                                                    <option value="unmanaged">Unmanaged</option>
+                                                    <option value="standard_jar">Standalone, JAR exécutable</option>
+                                                    <option value="archived_jar">Archive contenant un JAR éxécutable</option>
+                                                    <option value="unmanaged">Placer le JAR manuellement</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
-                                            <label class="control-label">Download URL</label>
+                                            <label class="control-label">URL de téléchargement</label>
                                             <div class="controls">
-                                                <input type="text" name="url" class="input-xlarge" placeholder="http://dl.bukkit.org/latest-rb/craftbukkit.jar">
-                                                <span class="help-block">Preferably enter a direct URL rather than a server-side redirected URL</span>
+                                                <input type="text" name="url" class="input-xlarge" placeholder="https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar">
+                                                <span class="help-block">Entrer un lien direct de préférence</span>
                                             </div>
                                         </div>
                                         <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
-                                            <label class="control-label">Save download as</label>
+                                            <label class="control-label">Sauvegarder le fichier sous</label>
                                             <div class="controls">
                                                 <input type="text" name="save_as" class="input-xlarge" placeholder="craftbukkit.jar">
-                                                <span class="help-block">Be sure <em>only</em> the filename is here</span>
+                                                <span class="help-block">Vérifiez que ce soit <em>uniquement</em> le nom du fichier</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Jarfile to run</label>
+                                            <label class="control-label">Fichier JAR à exécuter</label>
                                             <div class="controls">
                                             <input type="text" name="run_as" class="input-xlarge" placeholder="craftbukkit.jar" required>
-                                                <span class="help-block" data-bind="visible: profile_type() == 'standard_jar'">In most cases, this will match the above line 'save download as'.</span>
-                                                <span class="help-block" data-bind="visible: profile_type() == 'archived_jar'">The name of the server jar within the archive file to execute.</span>
-                                                <span class="help-block" data-bind="visible: profile_type() == 'unmanaged'">Manually place this file directly in the <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title=".../servers/servername/jarfile.jar">server's directory</strong>.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'standard_jar'">Dans la plupart des cas, mettre la même valeur que 'Sauvegarder le fichier sous'.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'archived_jar'">Le nom du JAR contenu dans le fichier d'archive à exécuter.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'unmanaged'">Placez ce fichier manuellement dans <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title=".../servers/servername/jarfile.jar">le répertoire du serveur</strong>.</span>
                                             </div>
                                         </div>
                                      	<div class="control-group">
-                                            <label class="control-label">Jarfile arguments</label>
+                                            <label class="control-label">Arguments Java</label>
                                             <div class="controls">
                                             <input type="text" name="jar_args" class="input-xlarge" placeholder="nogui">
                                                 <span class="help-block"></span>
@@ -1315,11 +1315,11 @@ Is the information correct? [Y/n]
                                         
                                         <!-- Tags -->
                                         <div class="control-group" data-bind="visible: profile_type() == 'archived_jar'">
-                                            <label class="control-label">Files to not process</label>
+                                            <label class="control-label">Fichiers à exclure</label>
                                             <div class="controls">
                                                 <ul class="input-xlarge" id="ignore_files">
                                                 </ul>
-                                                <span class="help-block">Files that <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Some archives may come with default configs, e.g., server.properties. Ignore-list these files to preserve user configs">should not</strong> be copied from the archive to the server directory.</span>
+                                                <span class="help-block">Les fichiers qui <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Some archives may come with default configs, e.g., server.properties. Ignore-list these files to preserve user configs">ne doivent pas</strong> être copiés à partir de l'archive dans le répertoire du serveur.</span>
                                             </div>
                                         </div><!--/ Tags -->
                                     </fieldset>
