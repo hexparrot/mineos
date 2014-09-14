@@ -424,10 +424,11 @@
                         <button data-required="server_name" data-cmd="accept_eula" data-bind="click: $root.command, visible: !server().eula_ok" type="button" class="btn btn-info span2" data-refresh="1000">Accepter l'EULA</button> 
                         <!-- Button Dropdown -->
                         <div class="btn-group">
-                            <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Stop <span class="caret"></span></button>
+                            <button class="btn btn-danger dropdown-toggle" data-toggle="dropdown">Arrêter <span class="caret"></span></button>
                             <ul class="dropdown-menu">
-                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Stop</a></li> 
-                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: $root.command" data-refresh="2000">Kill</a></li>
+                                <li><a data-required="server_name" data-cmd="stop" data-bind="click: $root.command" data-refresh="2000">Arrêt</a></li>
+                                <li><a data-required="server_name" data-cmd="stop_and_backup" data-bind="click: $root.command" data-refresh="2000">Arrêt + sauvegarde</a></li>
+                                <li><a data-required="server_name" data-cmd="kill" data-bind="click: $root.command" data-refresh="2000">Forcer l'arrêt</a></li>
                             </ul>
                         </div><!--/ Button Dropdown -->
                     </div>
