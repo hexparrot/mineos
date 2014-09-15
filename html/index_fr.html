@@ -35,6 +35,12 @@
     <link rel="stylesheet" href="assets/tagit/css/jquery.tagit.min.css">
     <link rel="stylesheet" href="assets/gritter/css/jquery.gritter.min.css">
     <!--/ Stylesheet(Plugins) -->
+    <style text="text/css">
+	.noleftrightmargin {
+		margin-left: 0px !important; 
+		margin-right: 0px !important;
+	}
+    </style>
     <!--/ END STYLESHEET SECTION -->
 
     <!-- START JAVASCRIPT SECTION - Load only modernizr script here -->
@@ -146,7 +152,7 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'importable'}">
                                         <a data-bind="click: show_page" data-page="importable">
                                             <span class="icon icone-share"></span>
-                                            <span class="text">Créer un serveur via une archive</span>
+                                            <span class="text noleftrightmargin">Créer un serveur via une archive</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
