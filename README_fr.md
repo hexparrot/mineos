@@ -1,12 +1,12 @@
-This is the github repository for MineOS Minecraft hosting and management scripts.
+Ceci est le repository de la traduction de MineOS en français.
 
-While MineOS can always be found with a distributable ISO (currently Turnkey), these scripts are distro-agnostic and can be installed atop any Linux or BSD system. See the wiki for details.
+Comme MineOS est distrubué par défaut sur Turnkey GNU/Linux, ces sripts peuvent-être installés sur n'importe quel autre système basé sur Linux ou BSD. Voir le Wiki pour plus de détails.
 
-Features
-========
+Caractéristiques
+================
 
-- Web user interface with modern Knockout templating
-- Scheduled backups, archives, and restarts
+- Une interface utilisateur web avec un template moderne
+- Planification des sauvegardes, archives et redémarrage
 - Command-line scriptable
 - Leverages host system's existing user passwords (/etc/shadow) and HTTPS
 - Shared administration functionality using group permissions
