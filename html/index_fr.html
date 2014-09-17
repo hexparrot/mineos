@@ -7,7 +7,7 @@
     <!-- START META SECTION -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>MineOS - Web User Interface</title>
+    <title>MineOS - Interface web</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1.0">
     <meta http-equiv="Content-Language" content="fr" />
@@ -88,7 +88,7 @@
                             <ul class="body" data-bind="foreach: vmdata.pings">
                                 <li data-bind="click: $root.select_server">
                                     <a class="text"><span class="icon icon-th-large"></span> <span data-bind="text: server_name"></span></a>
-                                    <span class="action show"><a href="" class="label" data-bind="text: (up ? capacity() : 'offline'), css: {'label-success': up, 'label-important': !up}"></a></span>
+                                    <span class="action show"><a href="" class="label" data-bind="text: (up ? capacity() : 'hors ligne'), css: {'label-success': up, 'label-important': !up}"></a></span>
                                 </li>
                             </ul>
                             <footer>
@@ -132,7 +132,7 @@
                                     <li class="accordion-group" data-bind="css: {'active': page() == 'profiles' || page() == 'define_profile'}">
                                         <a data-bind="click: show_page" data-page="profiles">
                                             <span class="icon icone-tags"></span>
-                                            <span class="text">Gérer les profiles</span>
+                                            <span class="text">Gérer les profils</span>
                                             <span class=""></span>
                                         </a>
                                     </li>
@@ -538,7 +538,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <div class="control-group">
-                            <label class="control-label">Retirer les points de restauration âgés de plus de:</label>
+                            <label class="control-label">Retirer les points de restauration :</label>
                             <div class="controls">
                                 <input type="text" id="prune_increment_input" data-bind="value: pruning.increments.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Choisissez une date ou étape"> <button data-bind="click: prune_increments, visible: pruning.increments.remove_count() > 0" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Nettoyer les points de restauration</button>
                             </div>
@@ -551,7 +551,7 @@
                     <div class="row-fluid" data-bind="if: pruning.increments.user_input().length > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
-                            <header><h4 class="title">Résumé des suppressions</h4></header>
+                            <header><h4 class="title">Résumé du nettoyage</h4></header>
                             <section class="body">
                                 <div class="body-inner" style="">
                                     <!-- START Summary 1 -->
@@ -611,7 +611,7 @@
                     <!-- START Row -->
                     <div class="row-fluid">
                         <div class="control-group">
-                            <label class="control-label">Retirer les archives âgés de plus de:</label>
+                            <label class="control-label">Retirer les archives :</label>
                             <div class="controls">
                                 <input type="text" id="prune_archive_input" data-bind="value: pruning.archives.user_input, valueUpdate:['afterkeydown','propertychange','input']" placeholder="Choisissez une date"> <button data-bind="visible: pruning.archives.remove_count, click: prune_archives" type="button" class="btn btn-danger"><span class="icone-remove-circle"></span> Nettoyer les archives</button>
                             </div>
@@ -623,7 +623,7 @@
                     <div class="row-fluid" data-bind="if: pruning.archives.remove_count() > 0">
                         <!-- START Icon Statistic - Circle -->
                         <div class="span12 widget">
-                            <header><h4 class="title">Résumé des suppressions</h4></header>
+                            <header><h4 class="title">Résumé du nettoyage</h4></header>
                             <section class="body">
                                 <div class="body-inner" style="">
                                     <!-- START Summary 1 -->
@@ -826,9 +826,9 @@ Is the information correct? [Y/n]
                         <section class="body">
                             <div class="body-inner">
                                 <p>Les profils peuvent être créés par n'importe quel utilisateur, mais ne peuvent être mis à jour uniquement par un utilisateur possédant les droits d'écriture sur <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="chmod g+w profile.config">profile.config</strong>.
-                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">L'utilisateur <strong>root</strong> peut étendre ces privilèges à d'autres utilisateurs en attribuant <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> à un nouveau groupe, puis en ajoutant des utilisateurs autorisés à ce groupe.</span>
+                                <span data-bind="visible: $root.dashboard.whoami() != 'root'">L'utilisateur <strong>root</strong> peut assigner ces privilèges à d'autres utilisateurs en attribuant <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> à un nouveau groupe, puis en ajoutant des utilisateurs autorisés à ce groupe.</span>
                                 <span data-bind="visible: $root.dashboard.whoami() == 'root'">Vous pouvez partager ce privilège avec d'autres utilisateurs en attribuant <strong><span data-bind="text: $root.dashboard.base_directory"></span>/profiles/profile.config</strong> à un nouveau groupe, puis en ajoutant des utilisateurs autorisés à ce groupe.</span></p>
-                                Les membres de ce groupe peuvent mettre à jour et supprimer des profils: 
+                                Groupe actuellement autorisé : 
                                 <select id="pc_group" name="pc_group" data-bind="visible: $root.dashboard.whoami() == 'root', options: $root.dashboard.groups, event: { change: $root.change_pc_group }"></select>
                                 <strong data-bind="visible: $root.dashboard.whoami() != 'root', text: $root.dashboard.pc_group"></strong>
                             </div>
@@ -971,7 +971,7 @@ Is the information correct? [Y/n]
                                             <span class="icon icone-lock lime"></span>
                                             <h5>
                                                 STEP 1<br/>
-                                                <small>Informations sur le propriétaire</small>
+                                                <small>Informations générales</small>
                                             </h5>
                                         </div>
                                         <div class="control-group">
@@ -1074,21 +1074,21 @@ Is the information correct? [Y/n]
                                             <label class="control-label">java_xmx</label>
                                             <div class="controls">
                                                 <input type="text" data-section="java" name="java_xmx" class="input-medium" placeholder="256">
-                                                <span class="help-block">Maximum memory heap available exclusively to Minecraft (not including overhead)</span>
+                                                <span class="help-block">Le maximum de la mémoire vive (RAM) allouée au serveur</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_xms</label>
                                             <div class="controls">
                                                 <input type="text" data-section="java" name="java_xms" class="input-medium" placeholder="256">
-                                                <span class="help-block">Minimum heapsize Minecraft will allocate (recommended same as java_xmx)</span>
+                                                <span class="help-block">Le minimum de la mémoire vive (RAM) allouée au serveur</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">java_tweaks</label>
                                             <div class="controls">
                                                 <input type="text" data-section="java" name="java_tweaks" class="input-medium" placeholder="">
-                                                <span class="help-block">Additional java command-line arguments</span>
+                                                <span class="help-block">Arguments Java additionnels</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
@@ -1120,7 +1120,7 @@ Is the information correct? [Y/n]
                                             </select></div>
                                         </div>
                                         <div class="control-group">
-                                            <label class="control-label">Démarer le serveur au démarage</label>
+                                            <label class="control-label">Démarer le serveur au démarage du système</label>
                                             <div class="controls">
                                                 <label class="checkbox">
                                                     <input data-section="onreboot" type="checkbox" name="start" value="true">
@@ -1292,23 +1292,23 @@ Is the information correct? [Y/n]
                                         <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
                                             <label class="control-label">URL de téléchargement</label>
                                             <div class="controls">
-                                                <input type="text" name="url" class="input-xlarge" placeholder="https://s3.amazonaws.com/Minecraft.Download/versions/1.6.2/minecraft_server.1.6.2.jar">
+                                                <input type="text" name="url" class="input-xlarge" placeholder="http://exemple.com/minecraft_server.jar">
                                                 <span class="help-block">Entrer un lien direct de préférence</span>
                                             </div>
                                         </div>
                                         <div class="control-group" data-bind="visible: profile_type() != 'unmanaged'">
                                             <label class="control-label">Sauvegarder le fichier sous</label>
                                             <div class="controls">
-                                                <input type="text" name="save_as" class="input-xlarge" placeholder="craftbukkit.jar">
+                                                <input type="text" name="save_as" class="input-xlarge" placeholder="minecraft_server.jar">
                                                 <span class="help-block">Vérifiez que ce soit <em>uniquement</em> le nom du fichier</span>
                                             </div>
                                         </div>
                                         <div class="control-group">
                                             <label class="control-label">Fichier JAR à exécuter</label>
                                             <div class="controls">
-                                            <input type="text" name="run_as" class="input-xlarge" placeholder="craftbukkit.jar" required>
+                                            <input type="text" name="run_as" class="input-xlarge" placeholder="minecraft_server.jar" required>
                                                 <span class="help-block" data-bind="visible: profile_type() == 'standard_jar'">Dans la plupart des cas, mettre la même valeur que 'Sauvegarder le fichier sous'.</span>
-                                                <span class="help-block" data-bind="visible: profile_type() == 'archived_jar'">Le nom du JAR contenu dans le fichier d'archive à exécuter.</span>
+                                                <span class="help-block" data-bind="visible: profile_type() == 'archived_jar'">Le nom du JAR contenu dans l'archive à exécuter.</span>
                                                 <span class="help-block" data-bind="visible: profile_type() == 'unmanaged'">Placez ce fichier manuellement dans <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title=".../servers/servername/jarfile.jar">le répertoire du serveur</strong>.</span>
                                             </div>
                                         </div>
@@ -1326,7 +1326,7 @@ Is the information correct? [Y/n]
                                             <div class="controls">
                                                 <ul class="input-xlarge" id="ignore_files">
                                                 </ul>
-                                                <span class="help-block">Les fichiers qui <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Some archives may come with default configs, e.g., server.properties. Ignore-list these files to preserve user configs">ne doivent pas</strong> être copiés à partir de l'archive dans le répertoire du serveur.</span>
+                                                <span class="help-block">Les fichiers qui <strong class="text-success" data-placement="top" title="" rel="tooltip" data-original-title="Certaines archives peuvent contenir des configrations par défaut, ex : server.properties. Ajoutez ce genre de fichier dans cette liste pour préserver les configrations de l'utilisateur.">ne doivent pas</strong> être copiés à partir de l'archive dans le répertoire du serveur.</span>
                                             </div>
                                         </div><!--/ Tags -->
                                     </fieldset>
@@ -1380,7 +1380,7 @@ Is the information correct? [Y/n]
                                             <tr>
                                                 <th>Entrées
                                                     <div class="btn-group pull-right">
-                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">Ordre inversé</a>
+                                                        <a href="#" class="btn btn-small" data-bind="click: function() { logs.reversed(!logs.reversed()) }">Inverser l'ordre</a>
                                                         <!--<a href="#" class="btn btn-small" data-bind="click: reset_logs">Show most recent 100 lines</a>-->
                                                     </div>
                                                 </th>
@@ -1417,8 +1417,8 @@ Is the information correct? [Y/n]
                     </div>
                     <div class="modal-body" data-bind="if: $root.import_information()">
                         <p><strong data-bind="text: $root.import_information().filename"></strong> sera extrait.</p>
-                        <p>Merci d'entrer le nom du serveur pour à créer :</p>
-                        <input type="text" name="newname" class="input-medium required" placeholder="server_name">
+                        <p>Merci d'entrer le nom du serveur à créer :</p>
+                        <input type="text" name="newname" class="input-medium required" placeholder="nom_du_serveur">
                     </div>
                     <div class="modal-footer">
                         <button class="btn" data-dismiss="modal" aria-hidden="true">Annuler</button>

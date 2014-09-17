@@ -1,4 +1,4 @@
-Ceci est le repository de la traduction de MineOS en français.
+Ceci est la traduction du fichier "README.md" original de MineOS.
 
 Comme MineOS est distrubué par défaut sur Turnkey GNU/Linux, ces sripts peuvent-être installés sur n'importe quel autre système basé sur Linux ou BSD. Voir le Wiki pour plus de détails.
 
