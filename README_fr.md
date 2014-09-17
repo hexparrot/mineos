@@ -7,14 +7,14 @@ Caractéristiques
 
 - Une interface utilisateur web avec un template moderne
 - Planification des sauvegardes, archives et redémarrage
-- Command-line scriptable
-- Leverages host system's existing user passwords (/etc/shadow) and HTTPS
-- Shared administration functionality using group permissions
-- Works on Linux and BSD
+- Ligne de commande scriptable
+- S'appuie sur les mots de passe existants des utilisateurs du système (/etc/shadow) et HTTPS
+- Fonctionnalités d'administration partagés en utilisant les permissions de groupe
+- Fonctionne sur n'importe quel système Linux ou BSD
 
-Tutorials
+Tutoriels
 =========
 
-Installation tutorial: http://minecraft.codeemo.com/mineoswiki/index.php?title=Installing_MineOS
+Tutoriel d'installation en anglais : http://minecraft.codeemo.com/mineoswiki/index.php?title=Installing_MineOS
 
-Youtube Instructions: http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
+Vidéo d'installation en anglais : http://www.youtube.com/watch?v=idEAnpa4yUQ&feature=share&list=UUTdhIeaydDUDLCDSN7PEBaQ
