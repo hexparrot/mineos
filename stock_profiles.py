@@ -43,37 +43,5 @@ STOCK_PROFILES = [
         'run_as': 'minecraft_server.jar',
         'ignore': '',
         'desc': 'official minecraft_server.jar'
-        }, 
-    {
-        'name': 'bukkit-recommended',
-        'type': 'standard_jar',
-        'url': 'http://dl.bukkit.org/latest-rb/craftbukkit.jar',
-        'save_as': 'craftbukkit.jar',
-        'run_as': 'craftbukkit.jar',
-        'ignore': '',
-        }, 
-    {
-        'name': 'bukkit-beta',
-        'type': 'standard_jar',
-        'url': 'http://dl.bukkit.org/latest-beta/craftbukkit.jar',
-        'save_as': 'craftbukkit.jar',
-        'run_as': 'craftbukkit.jar',
-        'ignore': '',
-        }, 
-    {
-        'name': 'bukkit-dev',
-        'type': 'standard_jar',
-        'url': 'http://dl.bukkit.org/latest-dev/craftbukkit.jar',
-        'save_as': 'craftbukkit.jar',
-        'run_as': 'craftbukkit.jar',
-        'ignore': '',
-        }, 
-    {
-        'name': 'spigot',
-        'type': 'standard_jar',
-        'url': 'http://ci.md-5.net/job/Spigot/lastSuccessfulBuild/artifact/Spigot-Server/target/spigot.jar',
-        'save_as': 'spigot.jar',
-        'run_as': 'spigot.jar',
-        'ignore': '',
         }
 ]
