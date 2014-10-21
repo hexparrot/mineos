@@ -17,7 +17,7 @@ export PATH=$PATH:/usr/local/bin
 name=mineos
 rcvar=mineos_enable
 
-command="/usr/local/bin/python"
+command="/usr/local/bin/python2.7"
 command_args="/usr/local/games/minecraft/server.py -c /usr/local/etc/mineos.conf"
 pidfile="/var/run/mineos.pid"
 
