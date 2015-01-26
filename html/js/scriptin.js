@@ -1,3 +1,5 @@
+$.ajaxSetup({ cache: false }); //prevent ajax caching but adds {'_':timestamp} to request that must be removed
+
 /* webui functions */
 
 function model_server(data) {
