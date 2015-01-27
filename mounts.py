@@ -39,7 +39,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def status(self, **raw_args):
+    def status(self):
         servers = []
         for i in self.server_list():
             instance = mc(i, self.login, self.base_directory)
@@ -83,7 +83,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def profiles(self, **raw_args):
+    def profiles(self):
         def pdict():
             for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
                 path_ = os.path.join(self.base_directory, 'profiles', profile)
@@ -119,19 +119,19 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def increments(self, server_name, **raw_args):
+    def increments(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
         return [dict(d._asdict()) for d in instance.list_increment_sizes()]
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def archives(self, server_name, **raw_args):
+    def archives(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
         return [dict(d._asdict()) for d in instance.list_archives()]
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def server_summary(self, server_name, **raw_args):
+    def server_summary(self, server_name):
         from procfs_reader import disk_usage
         from pwd import getpwuid
         from grp import getgrgid
@@ -157,13 +157,13 @@ class ViewModel(object):
     
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def loadavg(self, **raw_args):
+    def loadavg(self):
         from procfs_reader import proc_loadavg
         return proc_loadavg()     
                     
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def dashboard(self, **raw_args):
+    def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
         from grp import getgrall, getgrgid
         from pwd import getpwnam
@@ -201,7 +201,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def importable(self, **raw_args):
+    def importable(self):
         path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['import'])
         return [{
             'path': path,
@@ -245,7 +245,6 @@ class Root(object):
     def host(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         command = args.pop('cmd')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -333,7 +332,6 @@ class Root(object):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         command = args.pop('cmd')
         server_name = args.pop('server_name')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -384,7 +382,6 @@ class Root(object):
     def logs(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -429,7 +426,6 @@ class Root(object):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
         group = args.pop('group', None)
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -491,7 +487,6 @@ class Root(object):
     def import_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -532,7 +527,6 @@ class Root(object):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
         group = args.pop('group')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -570,7 +564,6 @@ class Root(object):
     def change_pc_group(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         group = args.pop('group')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
@@ -607,7 +600,6 @@ class Root(object):
     def delete_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
         server_name = args.pop('server_name')
-        timestamp = args.pop('_', None)
         retval = None
 
         response = {
