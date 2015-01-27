@@ -66,6 +66,8 @@ li.accordion-group a, ul.nav, .pointer  {
 .table-hover tbody tr:hover > td,
 .table-hover tbody tr:hover > td{
 	background-color: #ddd !important;
+	border-top: none;
+	padding-top: 9px;
 }
 
 #delete_server label {
