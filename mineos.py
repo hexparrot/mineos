@@ -352,7 +352,7 @@ class mc(object):
         if not self.profile_current:
             self.profile = self.profile
             
-        if self.profile_config[self.profile:'profile_type'] == 'php_phar':
+        if self.profile_config[self.profile:'type'] == 'php_phar':
             self._command_direct(self.command_start_phar, self.env['cwd'])
         else:
             self._command_direct(self.command_start, self.env['cwd'])
