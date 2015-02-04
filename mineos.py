@@ -87,7 +87,7 @@ class mc(object):
         'nice': find_executable('nice'),
         'tar': find_executable('tar'),
         'kill': find_executable('kill'),
-        'wget': find_executable('wget'),
+        'wget': find_executable('wget')
         }
     LOG_PATHS = {
         'legacy': 'server.log',
@@ -1084,6 +1084,20 @@ class mc(object):
         return '%(screen)s -dmS %(screen_name)s ' \
                '%(java)s -server %(java_debug)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
                '-jar %(jar_file)s %(jar_args)s' % required_arguments
+
+    @property
+    @sanitize
+    def command_start_phar(self):
+        """Returns the actual command used to start up a php/phar-based minecraft server"""
+        required_arguments = {
+            'screen_name': 'mc-%s' % self.server_name,
+            'screen': self.BINARY_PATHS['screen'],
+            'php': 'bin/php5/bin/php',
+            'phar_file': self.profile_config[self.profile:'run_as']
+            }
+            
+        return '%(screen)s -dmS %(screen_name)s ' \
+               '%(php)s %(phar_file)s' % required_arguments
 
     @property
     @sanitize
