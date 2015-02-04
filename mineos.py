@@ -351,8 +351,11 @@ class mc(object):
         self._load_config(generate_missing=True)
         if not self.profile_current:
             self.profile = self.profile
-
-        self._command_direct(self.command_start, self.env['cwd'])
+            
+        if self.profile_config[self.profile:'profile_type'] == 'php_phar':
+            self._command_direct(self.command_start_phar, self.env['cwd'])
+        else:
+            self._command_direct(self.command_start, self.env['cwd'])
 
     @server_exists(True)
     @server_up(True)
@@ -634,6 +637,48 @@ class mc(object):
                     pc[profile:'run_as_md5'] = active_md5
                 
                 return self._md5sum(old_file_path)
+        elif profile_dict['type'] == 'php_phar':
+            with self.profile_config as pc:
+                pc[profile:'save_as'] = self.valid_filename(os.path.basename(pc[profile:'save_as']))
+                pc[profile:'run_as'] = self.valid_filename(os.path.basename(pc[profile:'run_as']))
+
+            old_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'])
+
+            try:
+                old_file_md5 = self._md5sum(old_file_path)
+            except IOError:
+                old_file_md5 = None
+            finally:
+                if expected_md5 and old_file_md5 == expected_md5:
+                    raise RuntimeWarning('Did not download; expected md5 == existing md5')
+
+            new_file_path = os.path.join(self.env['pwd'], profile, profile_dict['save_as'] + '.new')
+
+            from subprocess import CalledProcessError
+            try:
+                self._command_direct(self.command_wget_profile(profile),
+                                     os.path.join(self.env['pwd'], profile))
+            except CalledProcessError:
+                self._command_direct(self.command_wget_profile(profile, True),
+                                     os.path.join(self.env['pwd'], profile))
+
+            new_file_md5 = self._md5sum(new_file_path)
+
+            if expected_md5 and expected_md5 != new_file_md5:
+                raise RuntimeError('Discarding download; expected md5 != actual md5')
+            elif old_file_md5 == new_file_md5:
+                os.unlink(new_file_path)
+                raise RuntimeWarning('Discarding download; new md5 == existing md5')
+            from shutil import move
+
+            move(new_file_path, old_file_path)
+            active_md5 = self._md5sum(old_file_path)
+
+            with self.profile_config as pc:
+                pc[profile:'save_as_md5'] = active_md5
+                pc[profile:'run_as_md5'] = active_md5
+            
+            return self._md5sum(old_file_path)
         else:
             raise NotImplementedError("This type of profile is not implemented yet.")
 
