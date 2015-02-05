@@ -1096,7 +1096,7 @@ class mc(object):
             'screen_name': 'mc-%s' % self.server_name,
             'screen': self.BINARY_PATHS['screen'],
             'php': 'bin/php5/bin/php',
-            'phar_file': self.profile_config[self.profile:'run_as']
+            'phar_file': os.path.join(self.env['cwd'], self.profile_config[self.profile:'run_as'])
             }
             
         return '%(screen)s -dmS %(screen_name)s ' \
@@ -1402,9 +1402,9 @@ class mc(object):
 
             for cmdline in pids.itervalues():
                 if 'screen' in cmdline.lower():
-                    serv = re.search(r'SCREEN.*?mc-([\w._]+).*?-jar ([\w._/]+)\1', cmdline, re.IGNORECASE)
+                    serv = re.search(r'SCREEN.*?mc-([\w._]+).*?(-jar|php) ([\w._/]+)\1', cmdline, re.IGNORECASE)
                     try:
-                        yield (serv.groups()[0], serv.groups()[1]) #server_name, base_dir
+                        yield (serv.groups()[0], serv.groups()[2]) #server_name, base_dir
                     except AttributeError:
                         continue
 
@@ -1429,6 +1429,14 @@ class mc(object):
                         java = int(pid)
                     if java and screen:
                         break
+                elif 'pocketmine' in cmdline.lower():
+                    if 'screen' in cmdline.lower() and 'mc-%s' % name in cmdline:
+                        screen = int(pid)
+                        break
+                    #elif 'pocketmine' in cmdline.lower():
+                    #    java = int(pid)
+                    ''' can't depend on this yet because multiple instances
+                    are not uniquely identifiable '''
             yield instance_pids(name,
                                 java,
                                 screen,
