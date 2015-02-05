@@ -149,7 +149,7 @@ class mc(object):
         else:
             self._server_type = 'unknown'
         
-        path = os.path.join(self.env['cwd'], 'PocketMine-MP.phar')
+        path = os.path.join(self.env['cwd'], 'pocketmine.yml')
         if os.path.isfile(path):
             self._server_type = 'mcpe'
 
