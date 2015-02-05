@@ -937,7 +937,7 @@ class mc(object):
         if self.server_type == 'bungee':
             return server_ping(None,None,'','0',1)
         elif self.server_type == 'mcpe':
-            return server_ping(None,None,'','0',0)
+            return error_ping
         elif self.up:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
