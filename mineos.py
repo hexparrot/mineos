@@ -937,7 +937,14 @@ class mc(object):
         if self.server_type == 'bungee':
             return server_ping(None,None,'','0',1)
         elif self.server_type == 'mcpe':
-            return error_ping
+            if self.up:
+                return error_ping
+            else:
+                return server_ping(None,
+                                   None,
+                                   self.server_properties['motd'::''],
+                                   '0',
+                                   self.server_properties['max-players'])
         elif self.up:
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
