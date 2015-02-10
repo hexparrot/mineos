@@ -92,7 +92,8 @@ class mc(object):
     LOG_PATHS = {
         'legacy': 'server.log',
         'current': os.path.join('logs', 'latest.log'),
-        'bungee': 'proxy.log.0'
+        'bungee': 'proxy.log.0',
+        'forgemod': 'ForgeModLoader-server-0.log'
         } 
     
     def __init__(self,
