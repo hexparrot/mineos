@@ -1037,16 +1037,10 @@ function str_to_bytes(str) {
 }
 
 function bytes_to_mb(bytes){
-	//http://stackoverflow.com/a/15901418/1191579
-    if ( ( bytes >> 30 ) & 0x3FF )
-        bytes = ( bytes >>> 30 ) + '.' + (bytes & (3*0x3FF )).toString().substring(0,2) + 'GB';
-    else if ( ( bytes >> 20 ) & 0x3FF )
-        bytes = ( bytes >>> 20 ) + '.' + (bytes & (2*0x3FF )).toString().substring(0,2) + 'MB';
-    else if ( ( bytes >> 10 ) & 0x3FF )
-        bytes = ( bytes >>> 10 ) + '.' + (bytes & (0x3FF )).toString().substring(0,2) + 'KB';
-    else if ( ( bytes >> 1 ) & 0x3FF )
-        bytes = ( bytes >>> 1 ) + ' b' ;
-    else
-        bytes = bytes + ' b' ;
-    return bytes;
+	//http://stackoverflow.com/a/18650828
+	if(bytes == 0) return '0 Byte';
+	var k = 1024;
+	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+	var i = Math.floor(Math.log(bytes) / Math.log(k));
+	return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
 }
