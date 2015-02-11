@@ -1040,8 +1040,6 @@ function bytes_to_mb(bytes){
 	//http://stackoverflow.com/a/18650828
 	if (bytes == 0)
 		return '0B';
-	else if (bytes < 1024);
-		return bytes + 'B'
 
 	var k = 1024;
 	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -1049,4 +1047,3 @@ function bytes_to_mb(bytes){
 
 	return (bytes / Math.pow(k, i)).toPrecision(3) + sizes[i];
 }
-
