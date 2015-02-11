@@ -1038,9 +1038,15 @@ function str_to_bytes(str) {
 
 function bytes_to_mb(bytes){
 	//http://stackoverflow.com/a/18650828
-	if(bytes == 0) return '0 Byte';
+	if (bytes == 0)
+		return '0B';
+	else if (bytes < 1024);
+		return bytes + 'B'
+
 	var k = 1024;
 	var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 	var i = Math.floor(Math.log(bytes) / Math.log(k));
-	return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i]
+
+	return (bytes / Math.pow(k, i)).toPrecision(3) + sizes[i];
 }
+
