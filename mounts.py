@@ -14,6 +14,17 @@ from mineos import mc
 from auth import require
 from subprocess import CalledProcessError
 
+def strongly_expire(func):
+    """Decorator that sends headers that instruct browsers and proxies not to cache.
+       Borrowed from: http://www.thesamet.com/blog/2006/07/14/making-ie-cache-less/
+    """
+    def newfunc(*args, **kwargs):
+        cherrypy.response.headers['Expires'] = 'Sun, 19 Nov 1978 05:00:00 GMT'
+        cherrypy.response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
+        cherrypy.response.headers['Pragma'] = 'no-cache' 
+        return func(*args, **kwargs)
+    return newfunc
+
 def to_jsonable_type(retval):
     import types
 
@@ -39,6 +50,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def status(self):
         servers = []
         for i in self.server_list():
@@ -83,6 +95,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def profiles(self):
         def pdict():
             for profile, opt_dict in mc.list_profiles(self.base_directory).iteritems():
@@ -119,18 +132,21 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def increments(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
         return [dict(d._asdict()) for d in instance.list_increment_sizes()]
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def archives(self, server_name):
         instance = mc(server_name, self.login, self.base_directory)
         return [dict(d._asdict()) for d in instance.list_archives()]
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def server_summary(self, server_name):
         from procfs_reader import disk_usage
         from pwd import getpwuid
@@ -157,12 +173,14 @@ class ViewModel(object):
     
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def loadavg(self):
         from procfs_reader import proc_loadavg
         return proc_loadavg()     
                     
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def dashboard(self):
         from procfs_reader import entries, proc_uptime, disk_free, git_hash
         from grp import getgrall, getgrgid
@@ -201,6 +219,7 @@ class ViewModel(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def importable(self):
         path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['import'])
         return [{
@@ -220,6 +239,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     def webui_config(self):
         return {k.lstrip('webui.'):v for k,v in cherrypy.config.iteritems() if k.startswith('webui.')}
 
@@ -241,6 +261,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def host(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -327,6 +348,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -378,6 +400,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def logs(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -421,6 +444,7 @@ class Root(object):
         
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def create(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -483,6 +507,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def import_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -522,6 +547,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def change_group(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -560,6 +586,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def change_pc_group(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
@@ -596,6 +623,7 @@ class Root(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @strongly_expire
     @require()
     def delete_server(self, **raw_args):
         args = {k:str(v) for k,v in raw_args.iteritems()}
