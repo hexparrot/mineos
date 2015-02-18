@@ -52,6 +52,12 @@ def path_owner(path):
     uid = st.st_uid
     return getpwuid(uid).pw_name
 
+def path_group_owner(path):
+    from grp import getgrgid
+    st = os.stat(path)
+    gid = st.st_gid
+    return getgrgid(gid).gr_name
+
 def pid_owner(pid):
     from pwd import getpwuid
     
