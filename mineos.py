@@ -694,7 +694,7 @@ class mc(object):
         return check_output(split(command),
                             cwd=working_directory,
                             stderr=STDOUT,
-                            preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
+                            preexec_fn=self._demote(self.owner.pw_uid, self.owner_gid))
 
     @server_exists(True)
     @server_up(True)
@@ -764,7 +764,7 @@ class mc(object):
     @property
     def owner_gid(self):
         """Returns grp named tuple"""
-        return os.stat(self.env['cwd']).st_gid)
+        return os.stat(self.env['cwd']).st_gid
 
     @property
     def up(self):
