@@ -694,7 +694,7 @@ class mc(object):
         return check_output(split(command),
                             cwd=working_directory,
                             stderr=STDOUT,
-                            preexec_fn=self._demote(self.owner.pw_uid, self.owner_gid))
+                            preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
     @server_exists(True)
     @server_up(True)
@@ -709,7 +709,7 @@ class mc(object):
                                                                   self.screen_pid,
                                                                   stuff_text)
         check_call(split(command),
-                   preexec_fn=self._demote(self.owner.pw_uid, self.owner_gid))
+                   preexec_fn=self._demote(self.owner.pw_uid, self.owner.pw_gid))
 
 #validation checks
 
@@ -760,11 +760,6 @@ class mc(object):
         """Returns pwd named tuple"""
         from pwd import getpwnam
         return getpwnam(self._owner)
-
-    @property
-    def owner_gid(self):
-        """Returns grp named tuple"""
-        return os.stat(self.env['cwd']).st_gid
 
     @property
     def up(self):
