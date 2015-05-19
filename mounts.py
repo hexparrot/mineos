@@ -54,7 +54,10 @@ class ViewModel(object):
     def status(self):
         servers = []
         for i in self.server_list():
-            instance = mc(i, self.login, self.base_directory)
+            try:
+                instance = mc(i, self.login, self.base_directory)
+            except ValueError:
+                continue #fails valid_server_name
 
             try:
                 java_xmx = int(instance.server_config['java':'java_xmx'])
