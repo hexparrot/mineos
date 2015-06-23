@@ -263,7 +263,7 @@
                             <header>
                                 <h4 class="title">Состояние системы</h4>
                                 <!-- START Toolbar -->
-                                <ul class="toolbar pull-right">
+                                <ul class="toolbar pull-right" style="margin-top: 12px">
                                     <li>
                                         <a href="#" class="link" data-toggle="dropdown">
                                             <span data-bind="click: toggle_loadaverages, css: {'icon-pause': load_averages.autorefresh(), 'icon-play': !load_averages.autorefresh()}" class="icon"></span>
@@ -316,11 +316,11 @@
                                     </div>
 
                                     <!-- START Auto Update Chart -->
-                                    <div class="span11 pull-left widget">
+                                    <div class="span12 pull-left widget" style="margin-left: 0px">
                                         <header>
                                             <h4 class="title">Загрузка процессора за последнюю минуту</h4>
                                         </header>
-                                        <div class="flot" id="load_averages"></div>
+                                        <div style="margin-left: 8px" class="flot" id="load_averages"></div>
                                     </div>
                                     <!--/ END Auto Update Chart -->
 
@@ -392,7 +392,7 @@
                                     <!--/ END Summary -->
 
                                     <!-- START Circular 1 -->
-                                    <figure class="stats circular stacked">
+                                    <figure class="stats circular pull-left">
                                         <div class="gauge" data-bind="attr: {'data-percent': online_pct}" data-percent="">
                                             <span><span class="text" data-bind="text: online_pct"></span>%</span>
                                         </div>
@@ -402,7 +402,7 @@
                                     </figure><!--/ END Circular 1 -->
 
                                     <!-- START Circular 2 -->
-                                    <figure class="stats circular stacked">
+                                    <figure class="stats circular pull-left">
                                         <div class="gauge" data-bind="attr: {'data-percent': memory_pct}" data-percent="">
                                             <span class="text" data-bind="text: memory_pct() + '%', style: {color: overextended() ? 'orange' : 'black'}"></span>
                                         </div>
@@ -419,7 +419,7 @@
                     <!--/ END Row -->
          
                     <!-- START Row -->
-                    <div class="row-fluid">
+                    <div class="row-fluid" style="margin-bottom: 25px">
                         <button data-required="server_name" data-cmd="start" data-bind="click: $root.command, visible: server().eula_ok" type="button" class="btn btn-success span2" data-refresh="5000">Запустить</button> 
                         <button data-required="server_name" data-cmd="accept_eula" data-bind="click: $root.command, visible: !server().eula_ok" type="button" class="btn btn-info span2" data-refresh="1000">Accept EULA</button> 
                         <!-- Button Dropdown -->
@@ -487,7 +487,7 @@
                         <!-- START Default Widget -->
                         <div class="span6 widget" data-bind="">
                             <header>
-                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Владельцы и использование диска</h4>
+                                <h4 class="title" data-bind=""><span class="icon icone-bookmark"></span> Остальное</h4>
                             </header>
                             <section class="body">
                                 <div class="body-inner">
@@ -1443,21 +1443,7 @@ Is the information correct? [Y/n]
 
             <!-- START Template Footer -->
             <footer id="footer" class="">
-                <div><span><a href="http://minecraft.codeemo.com">MineOS</a> создан и поддерживается <a href="mailto:wdchromium@gmail.com">William Dizon</a></span> 
-                - <span>Распространяется по лицензии <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3.0</a></span> - 
-                    <span>MineOS - свободное ПО; окажите поддержку через Paypal!
-                        <form id="donate" action="https://www.paypal.com/cgi-bin/webscr" method="post">
-                          <input type="hidden" name="cmd" value="_s-xclick">
-                          <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----
-                        ">
-                          <input type="image" src="https://www.paypal.com/ru_RU/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-                          <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
-                        </form>
-                    </span>
-
-                </div>
-
-                <!-- START To Top Scroller -->
+			<!-- START To Top Scroller -->
                 <a href="#" class="totop"><span class="icon icone-angle-up"></span></a>
                 <!--/ END To Top Scroller -->
             </footer>
