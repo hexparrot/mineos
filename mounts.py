@@ -189,9 +189,15 @@ class ViewModel(object):
         from grp import getgrall, getgrgid
         from pwd import getpwnam
         from stock_profiles import STOCK_PROFILES
-        
-        kb_free = dict(entries('', 'meminfo'))['MemFree']
-        mb_free = str(round(float(kb_free.split()[0])/1000, 2))
+
+        def convert_entry_kb_to_mb_int(value):
+            return round(float(value.split()[0])/1000, 2)
+
+        entries_dict = dict(entries('', 'meminfo'))
+        mb_free = convert_entry_kb_to_mb_int(entries_dict['MemFree'])
+        mb_buffers = convert_entry_kb_to_mb_int(entries_dict['Buffers'])
+        mb_cached = convert_entry_kb_to_mb_int(entries_dict['Cached'])
+        total_mb_free = str(mb_free + mb_buffers + mb_cached)
 
         try:
             pc_path = os.path.join(self.base_directory, mc.DEFAULT_PATHS['profiles'], 'profile.config')
@@ -208,7 +214,7 @@ class ViewModel(object):
     
         return {
             'uptime': int(proc_uptime()[0]),
-            'memfree': mb_free,
+            'memfree': total_mb_free,
             'whoami': self.login,
             'group': primary_group,
             'df': dict(disk_free(cherrypy.config['misc.base_directory'])._asdict()),
