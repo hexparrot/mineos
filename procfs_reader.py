@@ -11,7 +11,8 @@ import os
 from binascii import b2a_qp
 
 _PROCFS_PATHS = ['/proc',
-                 '/usr/compat/linux/proc']
+                 '/usr/compat/linux/proc',
+                 '/system/lxproc']
 
 for procfs in _PROCFS_PATHS:
     try:
