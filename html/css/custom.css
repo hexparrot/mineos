@@ -6,6 +6,9 @@
  *
  */
 
+.nocaps {
+    text-transform: none !important;
+}
 input[name=password] {
   padding-left: 6px !important;
   margin-bottom: 10px;
