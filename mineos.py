@@ -1081,8 +1081,8 @@ class mc(object):
 
         self._previous_arguments = required_arguments
         return '%(screen)s -dmS %(screen_name)s ' \
-               '%(java)s -server %(java_debug)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
-               '-jar %(jar_file)s %(jar_args)s' % required_arguments
+               '%(java)s %(java_debug)s %(jar_args)s -Xmx%(java_xmx)sM -Xms%(java_xms)sM %(java_tweaks)s ' \
+               '-jar %(jar_file)s -server' % required_arguments
 
     @property
     @sanitize
