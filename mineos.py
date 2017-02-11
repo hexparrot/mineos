@@ -194,7 +194,8 @@ class mc(object):
             new_config = defaultdict(dict)
             kept_attributes = {
                 'onreboot': ['restore', 'start'],
-                'java': ['java_tweaks', 'java_xmx', 'java_xms']
+                'java': ['java_tweaks', 'java_xmx', 'java_xms'],
+                'onstop': ['backup']
                 }
 
             for section in kept_attributes:
@@ -277,6 +278,9 @@ class mc(object):
                 'java_xmx': 256,
                 'java_xms': 256,
                 'java_debug': False
+                },
+            'onstop': {
+                'backup': False
                 }
             }
 
@@ -390,6 +394,8 @@ class mc(object):
             self._command_stuff('end')
         else:
             self._command_stuff('stop')
+            if self.server_config.getboolean('onstop', 'backup'):
+                self._command_direct(self.command_backup, self.env['cwd'])
 
     @server_exists(True)
     def archive(self):
